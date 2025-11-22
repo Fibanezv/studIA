@@ -1,0 +1,184 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/item_background_plan"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp">
+
+    <!-- Título del plan -->
+    <TextView
+    android:id="@+id/plan_name"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Plan de Historia"
+    android:textSize="20sp"
+    android:textStyle="bold"
+    android:textColor="@color/beige_300_theme" />
+
+    <!-- Documento origen -->
+    <TextView
+    android:id="@+id/plan_document_name"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Generado por el documento: historia.pdf"
+    android:textSize="14sp"
+    android:textColor="@color/black"
+    android:alpha="0.84"
+    android:layout_marginTop="4dp"/>
+
+    <!-- Progress grid: Flashcards | Hot topics | Quizzes (icon+count above, label below) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="3"
+        android:layout_marginTop="8dp">
+
+        <!-- Flashcards block -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="6dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_flashcard_24"
+                    app:tint="@color/beige_300_theme"
+                    android:contentDescription="icon_flashcard"
+                    android:layout_marginEnd="6dp" />
+                <TextView
+                    android:id="@+id/flashcard_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0/0"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Flashcards"
+                android:textColor="@color/beige_300_theme"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Vertical separator -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="44dp"
+            android:background="@color/beige_300_theme"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Hot topics block -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="6dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_hot_topics_24"
+                    app:tint="@color/beige_300_theme"
+                    android:contentDescription="icon_hot_topics"
+                    android:layout_marginEnd="6dp" />
+                <TextView
+                    android:id="@+id/hot_topics_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hot topics"
+                android:textColor="@color/beige_300_theme"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Vertical separator -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="44dp"
+            android:background="@color/beige_300_theme"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Quizzes block -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="6dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_quizz_24"
+                    app:tint="@color/beige_300_theme"
+                    android:contentDescription="icon_quiz"
+                    android:layout_marginEnd="6dp" />
+                <TextView
+                    android:id="@+id/quiz_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0/0"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quizzes"
+                android:textColor="@color/beige_300_theme"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

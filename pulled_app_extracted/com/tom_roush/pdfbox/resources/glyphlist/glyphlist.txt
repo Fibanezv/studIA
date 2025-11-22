@@ -1,0 +1,47 @@
+# Minimal glyphlist for pdfbox-android
+# Format: name;hex
+space;0020
+exclam;0021
+quotedbl;0022
+numbersign;0023
+dollar;0024
+percent;0025
+ampersand;0026
+quotesingle;0027
+parenleft;0028
+parenright;0029
+asterisk;002A
+plus;002B
+comma;002C
+hyphen;002D
+period;002E
+slash;002F
+zero;0030
+one;0031
+a;0061
+b;0062
+c;0063
+d;0064
+e;0065
+f;0066
+g;0067
+h;0068
+i;0069
+j;006A
+k;006B
+l;006C
+m;006D
+n;006E
+o;006F
+p;0070
+q;0071
+r;0072
+s;0073
+t;0074
+u;0075
+v;0076
+w;0077
+x;0078
+y;0079
+z;007A
+# End

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="languages">
+        <item>Español</item>
+        <item>Inglés</item>
+        <item>Portugués</item>
+        <item>Francés</item>
+    </string-array>
+
+    <string-array name="levels">
+        <item>Principiante</item>
+        <item>Intermedio</item>
+        <item>Avanzado</item>
+    </string-array>
+    
+    <string-array name="quiz_types">
+        <item>A, B, C, D</item>
+        <item>A, B, C</item>
+        <item>True/False</item>
+        <item>Palabras hueccas</item>
+    </string-array>
+
+    <string-array name="question_limits">
+        <item>Hasta 5 preguntas</item>
+        <item>Hasta 10 preguntas</item>
+        <item>Hasta 20 preguntas</item>
+        <item>Hasta 50 preguntas</item>
+    </string-array>
+
+    <string-array name="quiz_limits">
+        <item>Hasta 5 quizzes</item>
+        <item>Hasta 10 quizzes</item>
+        <item>Hasta 25 quizzes</item>
+        <item>Personalizado</item>
+    </string-array>
+    
+    <string-array name="flashcard_limits">
+        <item>Hasta 5 flashcards</item>
+        <item>Hasta 10 flashcards</item>
+        <item>Hasta 20 flashcards</item>
+        <item>Hasta 50 flashcards</item>
+    </string-array>
+    
+    <string-array name="hot_topic_limits">
+        <item>Hasta 5 temas</item>
+        <item>Hasta 10 temas</item>
+        <item>Hasta 25 temas</item>
+        <item>Hasta 50 temas</item>
+        <item>Personalizado</item>
+    </string-array>
+</resources>

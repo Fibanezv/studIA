@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">EstudiaApp</string>
+    <!-- OpenAI API key (temporary): paste your key here for in-app testing. -->
+    <!-- WARNING: embedding secrets in the app is insecure. Use a server proxy for production. -->
+    <string name="openai_api_key"></string>
+    <!-- Cloud Function base URL (without function name) kept for reference -->
+    <string name="cloud_functions_url"></string>
+    <!-- Exact Cloud Function endpoint used by the app (must include function name '/processDocument') -->
+    <string name="cloud_function_url"></string>
+</resources>

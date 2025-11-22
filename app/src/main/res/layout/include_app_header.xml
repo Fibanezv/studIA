@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Header: left menu icon + centered app icon (visual only) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp">
+
+        <ImageButton
+            android:id="@+id/header_menu_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_menu_24"
+            android:contentDescription="Abrir menú"
+            android:tint="?attr/headerIconColor" />
+
+        <ImageView
+            android:id="@+id/app_header_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_icono_app"
+            android:contentDescription="icono_app"
+            android:tint="?attr/headerIconColor"
+            android:adjustViewBounds="true"
+            android:scaleType="centerInside" />
+
+    </FrameLayout>
+
+</merge>

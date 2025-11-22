@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Selected state: draw a centered circle using a fixed size so it appears as a dot/ball behind the icon -->
+    <item android:state_checked="true">
+        <inset android:insetTop="6dp" android:insetBottom="6dp" android:insetLeft="6dp" android:insetRight="6dp">
+            <shape android:shape="oval">
+                <size android:width="40dp" android:height="40dp" />
+                <solid android:color="@color/colorPrimary" />
+            </shape>
+        </inset>
+    </item>
+
+    <!-- Default: transparent background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core neutral colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="red">#B00020</color>
+
+    <!-- App semantic colors (Light theme palette) -->
+    <!-- Palette provided by the user for light mode -->
+    <color name="palette_light_background">#fef7d5</color>
+    <color name="palette_light_secondary">#abee93</color>
+    <color name="palette_light_primary">#2d938e</color>
+    <color name="palette_light_primary_variant">#0b4462</color>
+    <color name="palette_light_accent">#f7a48b</color>
+
+    <!-- Semantic aliases used in styles/themes -->
+    <color name="colorPrimary">#2d938e</color>
+    <color name="colorPrimaryVariant">#0b4462</color>
+    <color name="colorOnPrimary">#FFFFFFFF</color>
+
+    <color name="colorSecondary">#abee93</color>
+    <color name="colorOnSecondary">#0B4462</color>
+
+    <color name="colorBackground">#fef7d5</color>
+    <color name="colorOnBackground">#0B4462</color>
+
+    <color name="colorSurface">#FFFFFFFF</color>
+    <color name="colorOnSurface">#0B4462</color>
+
+    <color name="colorAccent">#f7a48b</color>
+    <color name="colorAccentOn">#0B4462</color>
+
+    <!-- Additional utility colors -->
+    <color name="colorError">#B00020</color>
+    <color name="colorSuccess">#4CAF50</color>
+
+    <!-- Backwards-compatible legacy names used across layouts (aliases) -->
+    <color name="white_theme">#FFFFFFFF</color>
+    <color name="beige_300_theme">#fef7d5</color>
+    <color name="beige_700_theme">#0b4462</color>
+    <color name="peach_700_theme">#f7a48b</color>
+    <color name="navi_700_theme">#0b4462</color>
+    <color name="navi_500_theme">#2d938e</color>
+
+</resources>

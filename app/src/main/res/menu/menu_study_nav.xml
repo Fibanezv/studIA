@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_details"
+        android:icon="@drawable/ic_details_24"
+        android:title="Dashboard" />
+    <item
+        android:id="@+id/nav_flashcard"
+        android:icon="@drawable/ic_flashcard_24"
+        android:title="Flashcards" />
+    <item
+        android:id="@+id/nav_hot_topics"
+        android:icon="@drawable/ic_hot_topics_24"
+        android:title="Hot Topics" />
+    <item
+        android:id="@+id/nav_quiz"
+        android:icon="@drawable/ic_quizz_24"
+        android:title="Quizzes" />
+</menu>

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "782252239859",
+    "project_id": "studia-cdd51",
+    "storage_bucket": "studia-cdd51.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782252239859:android:78de9db4e6542052cac086",
+        "android_client_info": {
+          "package_name": "com.app.estudiaapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "782252239859-fsbn5vagq765a8la64lbrkj0hbjfilrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUBTsibKAbqOaBdYUvkt3YBDJjJf8XmrI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "782252239859-fsbn5vagq765a8la64lbrkj0hbjfilrt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

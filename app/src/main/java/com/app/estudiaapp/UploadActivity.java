@@ -1,0 +1,225 @@
+package com.app.estudiaapp;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.app.estudiaapp.ui.OverlayManager;
+import androidx.appcompat.app.AlertDialog;
+import android.widget.EditText;
+import com.app.estudiaapp.utils.OpenAiKeyStore;
+
+public class UploadActivity extends BaseActivity {
+
+    private static final int PICK_FILE = 100;
+    private Button uploadFileBtn;
+    private Button createPlanBtn;
+    private Uri selectedFileUri;
+    private TextView selectedFileNameText;
+    private static final String TAG = "UploadActivity";
+    private OverlayManager overlayManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_upload);
+
+        uploadFileBtn = findViewById(R.id.button_upload_file);
+        createPlanBtn = findViewById(R.id.button_get_study_plan);
+        selectedFileNameText = findViewById(R.id.selected_file_name);
+
+        // Initialize overlay manager with ids (use getIdentifier for cancel which may be absent in some layouts)
+        int overlayId = getResources().getIdentifier("processing_overlay", "id", getPackageName());
+        int msgId = getResources().getIdentifier("processing_message", "id", getPackageName());
+        int cancelId = getResources().getIdentifier("processing_cancel_button", "id", getPackageName());
+        overlayManager = new OverlayManager(this, overlayId, msgId, cancelId);
+
+        uploadFileBtn.setOnClickListener(v -> openFileChooser());
+        createPlanBtn.setOnClickListener(v -> {
+            if (selectedFileUri == null) {
+                showTemporaryStatus("Seleccione un documento primero", 2000);
+                return;
+            }
+            createPlanInApp(selectedFileUri);
+        });
+
+        try {
+            debugFetchRemoteConfig();
+        } catch (Exception ignored) {}
+    }
+
+    private void debugFetchRemoteConfig() {
+        FirebaseRemoteConfig remoteConfig = FirebaseRemoteConfig.getInstance();
+        remoteConfig.setConfigSettingsAsync(new FirebaseRemoteConfigSettings.Builder().setMinimumFetchIntervalInSeconds(0).build());
+        remoteConfig.setDefaultsAsync(java.util.Collections.singletonMap("OPENAI_API_KEY", "<LOCAL_PLACEHOLDER>"))
+                .addOnCompleteListener(defTask -> remoteConfig.fetchAndActivate().addOnCompleteListener(fetchTask -> {
+                    try {
+                        android.util.Log.i(TAG, "[debugFetch] RemoteConfig fetchAndActivate success=" + fetchTask.isSuccessful());
+                        java.util.Map<String, com.google.firebase.remoteconfig.FirebaseRemoteConfigValue> all = remoteConfig.getAll();
+                        android.util.Log.i(TAG, "[debugFetch] RemoteConfig keys count=" + (all != null ? all.size() : 0));
+                        String key = "";
+                        try { key = remoteConfig.getString("OPENAI_API_KEY"); } catch (Exception ignored) {}
+                        boolean present = key != null && !key.isEmpty();
+                        String masked = present ? (key.length() <= 8 ? "****" : (key.substring(0,4) + "..." + key.substring(key.length()-4))) : "<missing>";
+                        android.util.Log.i(TAG, "[debugFetch] OPENAI_API_KEY present=" + present + " masked=" + masked + " len=" + (key != null ? key.length() : 0));
+                    } catch (Exception e) {
+                        android.util.Log.w(TAG, "[debugFetch] RemoteConfig debug fetch failed", e);
+                    }
+                }));
+    }
+
+    private void createPlanInApp(Uri uri) {
+        showProcessing("Procesando documento...");
+
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            runOnUiThread(() -> showTemporaryStatus("Iniciando sesión anónima...", 1000));
+            FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) createPlanInApp(uri);
+                else runOnUiThread(() -> showTemporaryStatus("No se pudo iniciar sesión.", 2000));
+            });
+            return;
+        }
+
+        // Collect form fields to pass to the Worker so it can enforce requested sizes
+        String title = "";
+        try { android.widget.EditText t = findViewById(R.id.input_plan_title); if (t != null) title = t.getText().toString().trim(); } catch (Exception ignored) {}
+        boolean includeQuizzes = false;
+        boolean includeFlashcards = false;
+        boolean includeHotTopics = false;
+        int quizLimit = 0;
+        int questionsLimit = 0;
+        int flashcardLimit = 0;
+        try { android.widget.Switch s = findViewById(R.id.switch_include_quizzes); if (s != null) includeQuizzes = s.isChecked(); } catch (Exception ignored) {}
+        try { android.widget.Spinner sp = findViewById(R.id.spinner_quiz_limit); if (sp != null) quizLimit = Integer.parseInt(String.valueOf(sp.getSelectedItem())); } catch (Exception ignored) {}
+        try { android.widget.Spinner spq = findViewById(R.id.spinner_questions_limit); if (spq != null) questionsLimit = Integer.parseInt(String.valueOf(spq.getSelectedItem())); } catch (Exception ignored) {}
+        try { android.widget.Switch s2 = findViewById(R.id.switch_include_flashcards); if (s2 != null) includeFlashcards = s2.isChecked(); } catch (Exception ignored) {}
+        try { android.widget.Spinner sfl = findViewById(R.id.spinner_flashcard_limit); if (sfl != null) flashcardLimit = Integer.parseInt(String.valueOf(sfl.getSelectedItem())); } catch (Exception ignored) {}
+        try { android.widget.Switch s3 = findViewById(R.id.switch_include_hot_topics); if (s3 != null) includeHotTopics = s3.isChecked(); } catch (Exception ignored) {}
+
+        androidx.work.Data workInput = new androidx.work.Data.Builder()
+            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_URI, uri.toString())
+            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_TITLE, title)
+            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_QUIZZES, includeQuizzes)
+            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_QUIZ_LIMIT, quizLimit)
+            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_QUESTIONS_LIMIT, questionsLimit)
+            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_FLASHCARDS, includeFlashcards)
+            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_FLASHCARD_LIMIT, flashcardLimit)
+            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_HOT_TOPICS, includeHotTopics)
+            .build();
+
+        androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.app.estudiaapp.workers.StudyPlanWorker.class)
+            .setInputData(workInput)
+                .build();
+
+        androidx.work.WorkManager.getInstance(this).enqueue(work);
+
+        androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(work.getId()).observe(this, workInfo -> {
+            if (workInfo == null) return;
+            androidx.work.Data progress = workInfo.getProgress();
+            String status = progress.getString("status");
+            if (status != null) showProcessing("Procesando: " + status);
+            if (workInfo.getState().isFinished()) {
+                hideProcessing();
+                if (workInfo.getState() == androidx.work.WorkInfo.State.SUCCEEDED) {
+                    showTemporaryStatus("Plan guardado correctamente.", 1500);
+                    try {
+                        Intent i = new Intent(UploadActivity.this, MainActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                        finish();
+                    } catch (Exception ignored) {}
+                } else {
+                    androidx.work.Data out = workInfo.getOutputData();
+                    String err = out != null ? out.getString("error") : null;
+                    if (err == null || err.trim().isEmpty()) err = "No se pudo generar StudyPlan. Revise logs.";
+                    final String errFinal = err;
+
+                    // Generic error dialog with retry option. API key must be provided via
+                    // Firebase Remote Config and persisted by the Application startup flow.
+                    new AlertDialog.Builder(UploadActivity.this)
+                            .setTitle("Error al generar plan")
+                            .setMessage(errFinal)
+                            .setPositiveButton("Reintentar", (dialog, which) -> {
+                                if (selectedFileUri != null) createPlanInApp(selectedFileUri);
+                            })
+                            .setNegativeButton("Cerrar", (d, w) -> { /* no-op */ })
+                            .show();
+                }
+            }
+        });
+
+        // Show overlay and pass cancel action (so the manager binds cancel listener once)
+        try {
+            overlayManager.show("Procesando documento...", () -> androidx.work.WorkManager.getInstance(UploadActivity.this).cancelWorkById(work.getId()));
+        } catch (Exception ignored) {}
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_FILE && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                try {
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) {}
+                selectedFileUri = uri;
+                String name = queryName(uri);
+                if (selectedFileNameText != null && name != null) selectedFileNameText.setText(name);
+            }
+        }
+    }
+
+    private String queryName(Uri uri) {
+        String result = null;
+        try (android.database.Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) result = cursor.getString(idx);
+            }
+        } catch (Exception ignored) {}
+        if (result == null) result = uri.getLastPathSegment();
+        return result;
+    }
+
+    private void openFileChooser() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        try {
+            startActivityForResult(intent, PICK_FILE);
+        } catch (Exception e) {
+            android.util.Log.w(TAG, "openFileChooser failed", e);
+        }
+    }
+
+    private void showProcessing(String message) {
+        try { overlayManager.show(message, null); } catch (Exception ignored) {}
+    }
+
+    private void hideProcessing() {
+        try { overlayManager.hide(); } catch (Exception ignored) {}
+    }
+
+    private void showTemporaryStatus(String message, int millis) {
+        try {
+            android.widget.Toast t = android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG);
+            t.show();
+        } catch (Exception ignored) {}
+    }
+
+    private boolean isAppDebug() {
+        try {
+            return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+}

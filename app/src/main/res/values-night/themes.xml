@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Night overrides for the main application theme. The style name matches the light theme so
+         resource merging will replace the same attributes for night mode. -->
+    <style name="Theme.EstudiaApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Only change the window background in dark mode. Keep all other colors identical to light mode. -->
+        <item name="android:windowBackground">@color/colorPrimaryVariant</item>
+        <!-- In night mode, change header/menu icons and navigation background/text color as requested -->
+        <item name="headerIconColor">@color/beige_300_theme</item>
+        <item name="navBackgroundColor">@color/colorPrimaryVariant</item>
+        <item name="navTextColor">@color/beige_300_theme</item>
+        <item name="navIconColor">@color/beige_300_theme</item>
+        <!-- Action buttons should use colorPrimary in dark mode as requested -->
+        <item name="actionButtonColor">@color/colorPrimary</item>
+    </style>
+</resources>

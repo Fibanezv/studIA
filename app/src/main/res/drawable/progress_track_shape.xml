@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <!-- Track (not-yet-answered) uses the beige background to match previous look -->
+    <solid android:color="@color/beige_300_theme" />
+    <corners android:radius="14dp" />
+    <size android:height="28dp" />
+</shape>

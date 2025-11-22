@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/item_background"
+    android:padding="16dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp">
+
+    <!-- Título grande del quiz -->
+    <TextView
+        android:id="@+id/quiz_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Quiz title"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimary" />
+
+    <!-- Nota: Se elimina la barra de progreso en el item. El % se muestra junto al icono y hay un botón Reiniciar si está al 100% -->
+
+    <!-- Fila simple: icono + % completado + botón Reiniciar (solo visible al 100%) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <!-- Progreso label + porcentaje -->
+        <TextView
+            android:id="@+id/quiz_progress_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Progreso:"
+            android:textSize="14sp"
+            android:textColor="@color/colorPrimary"
+            android:layout_marginEnd="5dp"
+            android:textStyle="bold"
+            android:layout_gravity="center_vertical" />
+
+        <TextView
+            android:id="@+id/quiz_percent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:layout_marginEnd="10dp"
+            android:layout_gravity="center_vertical" />
+
+        <!-- Nota final label + value -->
+        <TextView
+            android:id="@+id/quiz_score_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nota final:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
+            android:layout_marginStart="2dp"
+            android:visibility="gone"
+            android:layout_gravity="center_vertical" />
+
+        <TextView
+            android:id="@+id/quiz_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginStart="5dp"
+            android:visibility="gone"
+            android:layout_gravity="center_vertical" />
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Botón Reiniciar: solo visible cuando el quiz está al 100% -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_reset_quiz"
+            style="?attr/materialButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reiniciar"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            app:backgroundTint="@color/colorPrimaryVariant"
+            android:textColor="@color/beige_300_theme"
+            android:layout_marginStart="5dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

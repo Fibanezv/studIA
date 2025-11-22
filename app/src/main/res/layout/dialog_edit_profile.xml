@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/edit_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Elegir avatar"
+        android:layout_marginTop="12dp"
+        android:textStyle="bold" />
+
+    <!-- Avatar chooser: 3 arriba, 2 abajo centrados, botones un poco más grandes -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="8dp">
+
+        <!-- Top row: 3 avatars -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+            <ImageButton
+                android:id="@+id/profile_choice_1"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_profile_1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="profile1"
+                android:tag="ic_profile_1" />
+
+            <ImageButton
+                android:id="@+id/profile_choice_2"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_profile_2"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="profile2"
+                android:tag="ic_profile_2"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp" />
+
+            <ImageButton
+                android:id="@+id/profile_choice_3"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_profile_3"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="profile3"
+                android:tag="ic_profile_3" />
+
+        </LinearLayout>
+
+        <!-- Bottom row: 2 avatars centered -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="4dp">
+
+            <ImageButton
+                android:id="@+id/profile_choice_4"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:src="@drawable/ic_profile_4"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="profile4"
+                android:tag="ic_profile_4"
+                android:layout_marginEnd="12dp" />
+
+            <ImageButton
+                android:id="@+id/profile_choice_5"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
+                android:src="@drawable/ic_profile_5"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="profile5"
+                android:tag="ic_profile_5"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

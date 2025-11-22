@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/nav_drawer_plans"
+        android:icon="@drawable/ic_plan_study"
+        android:title="Mis planes" />
+
+    <item
+        android:id="@+id/nav_drawer_user"
+        android:icon="@drawable/ic_user_profile"
+        android:title="Mi perfil" />
+
+    <item
+        android:id="@+id/nav_drawer_library"
+        android:icon="@drawable/ic_biblioteca"
+        android:title="Biblioteca" />
+
+    <item
+        android:id="@+id/nav_drawer_info"
+        android:icon="@drawable/ic_informacion"
+        android:title="Información" />
+
+    <item
+        android:id="@+id/nav_drawer_logout"
+        android:icon="@drawable/ic_log_out"
+        android:title="Cerrar sesión" />
+
+</menu>

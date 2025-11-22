@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Outer subtle shadow simulated with gradient -->
+    <gradient
+        android:startColor="#FFFDF9"
+        android:centerColor="#FBF7F2"
+        android:endColor="#F0E4D3"
+        android:angle="270" />
+
+    <corners android:radius="60dp" />
+    <size android:height="30dp" />
+</shape>

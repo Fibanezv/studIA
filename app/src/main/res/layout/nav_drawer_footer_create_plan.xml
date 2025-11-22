@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/create_plan_card"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    app:cardCornerRadius="12dp"
+    app:cardUseCompatPadding="true"
+    android:layout_marginStart="24dp"
+    android:layout_marginEnd="24dp"
+    app:cardPreventCornerOverlap="false">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorPrimary"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_icono_add"
+                android:contentDescription="crear plan icon"
+                app:tint="@color/beige_300_theme"
+                android:layout_marginStart="25dp"/>
+
+            <TextView
+                android:id="@+id/create_plan_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Crear Plan de Estudio"
+                android:textColor="@color/beige_300_theme"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- No shimmer or overlay for this card -->
+
+    </FrameLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Declare custom theme attributes used in themes.xml and layouts so resource linking succeeds -->
+    <attr name="colorBackground" format="color" />
+    <attr name="colorOnBackground" format="color" />
+    <attr name="colorSurface" format="color" />
+    <attr name="colorOnSurface" format="color" />
+    <attr name="colorAccentOn" format="color" />
+    <!-- Custom theme attributes for header/navigation coloring -->
+    <attr name="headerIconColor" format="reference|color" />
+    <attr name="navBackgroundColor" format="reference|color" />
+    <attr name="navTextColor" format="reference|color" />
+    <attr name="navIconColor" format="reference|color" />
+    <attr name="actionButtonColor" format="reference|color" />
+</resources>

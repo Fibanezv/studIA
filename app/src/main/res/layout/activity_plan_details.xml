@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:windowBackground">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ScrollView
+            android:id="@+id/scroll_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/study_nav"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <include layout="@layout/include_app_header" />
+
+                <!-- Plan title -->
+                <TextView
+                    android:id="@+id/user_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Plan name"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textColor="?attr/navTextColor"
+                    android:layout_marginBottom="10dp"
+                    android:textAlignment="center"/>
+
+                <!-- Stats (highlighted) - card style like User Activity, adapted for single plan -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:weightSum="3"
+                        android:background="@color/colorPrimary">
+
+                        <!-- Flashcards: percent on top with icon, label below -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <ImageView
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_marginEnd="6dp"
+                                    android:src="@drawable/ic_flashcard_24"
+                                    android:contentDescription="Flashcards"
+                                    app:tint="@color/beige_300_theme" />
+
+                                <TextView
+                                    android:id="@+id/tv_flashcards_pct"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0%"
+                                    android:textStyle="bold"
+                                    android:textSize="18sp"
+                                    android:textColor="@color/beige_300_theme" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Flashcards"
+                                android:textStyle="bold"
+                                android:textColor="@color/beige_300_theme"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="2dp"
+                            android:layout_height="48dp"
+                            android:background="@color/beige_300_theme"
+                            android:layout_marginTop="4dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <ImageView
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:src="@drawable/ic_hot_topics_24"
+                                    android:contentDescription="Hot topics"
+                                    app:tint="@color/beige_300_theme" />
+
+                                <TextView
+                                    android:id="@+id/tv_hot_topics_count"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:textStyle="bold"
+                                    android:textSize="18sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginStart="6dp" />
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hot topics"
+                                android:textStyle="bold"
+                                android:textColor="@color/beige_300_theme"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="2dp"
+                            android:layout_height="48dp"
+                            android:background="@color/beige_300_theme"
+                            android:layout_marginTop="4dp" />
+
+                        <!-- Quizzes: percent on top with icon, label below -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <ImageView
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_marginEnd="6dp"
+                                    android:src="@drawable/ic_quizz_24"
+                                    android:contentDescription="Quizzes"
+                                    app:tint="@color/beige_300_theme" />
+
+                                <TextView
+                                    android:id="@+id/tv_quizzes_pct"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0%"
+                                    android:textStyle="bold"
+                                    android:textSize="18sp"
+                                    android:textColor="@color/beige_300_theme" />
+
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Quizzes"
+                                android:textStyle="bold"
+                                android:textColor="@color/beige_300_theme"
+                                android:layout_marginTop="6dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Badges card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/user_badges_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="10dp"
+                    app:cardElevation="6dp"
+                    app:cardCornerRadius="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:background="@color/beige_300_theme">
+
+                        <TextView
+                            android:id="@+id/badges_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Logros"
+                            android:textStyle="bold"
+                            android:textSize="18sp"
+                            android:textColor="?attr/navTextColor"
+                            android:textAlignment="center"
+                            android:layout_marginBottom="12dp" />
+
+                        <GridLayout
+                            android:id="@+id/badges_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="4"
+                            android:orientation="horizontal"
+                            android:useDefaultMargins="true"
+                            android:alignmentMode="alignMargins"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                
+                <!-- New sections: quizzes to start, quizzes in progress, flashcards, relevant topics -->
+                <!-- Quizzes por empezar -->
+                <TextView
+                    android:id="@+id/section_quizzes_to_start_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Quizzes por empezar"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:textColor="?attr/navTextColor"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="6dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_quizzes_to_start"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:overScrollMode="never"
+                    android:clipToPadding="false" />
+
+                <!-- Quizzes en progreso -->
+                <TextView
+                    android:id="@+id/section_quizzes_in_progress_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Quizzes en progreso"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:textColor="?attr/navTextColor"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="6dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_quizzes_in_progress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:overScrollMode="never"
+                    android:clipToPadding="false" />
+
+                <!-- Flashcards pendientes -->
+                <TextView
+                    android:id="@+id/section_flashcards_pending_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Flashcards pendientes"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:textColor="?attr/navTextColor"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="6dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_flashcards_pending"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:overScrollMode="never"
+                    android:clipToPadding="false" />
+
+                <!-- Topics relevantes -->
+                <TextView
+                    android:id="@+id/section_topics_relevant_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Topics relevantes"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textAlignment="center"
+                    android:textColor="?attr/navTextColor"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="6dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_topics_relevant"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:overScrollMode="never"
+                    android:clipToPadding="false" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/user_reset_plan"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Reiniciar Plan"
+                        android:layout_marginTop="10dp"
+                        app:backgroundTint="?attr/actionButtonColor"
+                        android:textColor="@color/white" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/user_delete_plan"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Eliminar Plan"
+                        android:layout_marginTop="5dp"
+                        app:backgroundTint="@color/red"
+                        android:textColor="@color/white" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/study_nav"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/menu_study_nav"
+            android:background="@android:color/transparent"
+            app:itemRippleColor="@android:color/transparent"
+            app:itemIconTint="@color/selector_nav_color"
+            app:itemTextColor="@color/selector_nav_text"
+            app:itemActiveIndicatorStyle="@style/CustomActiveIndicator"/>
+
+    </RelativeLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header_drawer"
+        app:menu="@menu/drawer_menu"
+        app:itemIconTint="@color/black"
+        app:itemTextColor="@color/black"
+        app:itemTextAppearance="@style/DrawerMenuTextAppearance" />
+
+</androidx.drawerlayout.widget.DrawerLayout>
