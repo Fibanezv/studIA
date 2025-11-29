@@ -22,6 +22,12 @@ public class HotTopicsAdapter extends RecyclerView.Adapter<HotTopicsAdapter.View
         if (items != null) this.items = items;
     }
 
+    public void updateItems(List<HotTopic> newItems) {
+        if (newItems == null) newItems = new ArrayList<>();
+        this.items = newItems;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

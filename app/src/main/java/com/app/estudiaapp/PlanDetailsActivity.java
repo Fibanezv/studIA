@@ -99,6 +99,12 @@ public class PlanDetailsActivity extends BaseActivity {
         // UI refs and top-level stats
         TextView planTitle = findViewById(R.id.user_text);
         planTitle.setText(plan.nombre != null ? plan.nombre : "Plan");
+        
+        // Persist last viewed plan id so other activities can fallback to it
+        try {
+            android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
+            prefs.edit().putString("last_plan_id", plan.id != null ? plan.id : "").apply();
+        } catch (Exception ignored) {}
 
     int totalFlash = (plan.flashcards == null) ? 0 : plan.flashcards.size();
     int studiedFlash = (plan.progreso == null) ? 0 : plan.progreso.flashcardsEstudiadas;

@@ -6,6 +6,9 @@ public class Question {
     public String question;
     public List<String> options;
     public String answer;
+    public String difficulty;
+    public Boolean inferred;
+    public String evidence;
 
     public Question() {
         // Constructor vacío para GSON

@@ -45,17 +45,11 @@ adb logcat --buffer main -v time | Select-String "DocumentExtractor|StudyPlanWor
 - Expect OCR to extract text from images; it may take longer depending on page count and device.
 - If OCR fails due to memory/time, the worker will return an error message; capture the logs for `PdfRenderer/OCR fallback failed` or `OOM` entries.
 
-Notes and troubleshooting
-- The extractor limits processing to 50 pages to avoid extremely long runs; large PDFs may be truncated.
-- If you see OOM warnings in logcat, lower `HIGH_MAX` and `THUMB_MAX` in `DocumentExtractor.java` or test on a device with more memory.
-- If worker fails with "OpenAI API key not available", ensure Remote Config has been fetched and the key persisted into `OpenAiKeyStore` or test with a local key via Remote Config.
-- Check permission issues: when picking files with SAF, ensure the app retains read permission; re-select the file if permission lost.
+````markdown
+OCR Manual (DEPRECATED)
 
-Collecting artifacts
-- On failure, collect logcat output and the PDF used. Save logcat to a file:
+Nota: La extracción de texto (OCR / PdfRenderer) fue eliminada del módulo. Cualquier prueba o flujo de validación de OCR debe realizarse fuera de este repositorio o en una rama anterior donde esa funcionalidad existía.
 
-```powershell
-adb logcat -d > logcat_output.txt
-```
+Si necesitas que integremos una nueva implementación de extracción (por ejemplo, un servicio nativo diferente, una función en backend o una librería de ML actualizada), dime cuál prefieres y preparo el parche.
 
-If you want, I can also add a small instrumentation/test harness that drives the UI automatically using Espresso or UI Automator; tell me if you want that next.
+````

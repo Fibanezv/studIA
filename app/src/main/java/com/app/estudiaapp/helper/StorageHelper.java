@@ -88,19 +88,90 @@ public class StorageHelper {
                 if (obj.has("quizzes")) {
                     // Volver a crear desde el string JSON
                     String json = obj.toString();
-                    return gson.fromJson(json, StudyPlan.class);
+                        StudyPlan loaded = gson.fromJson(json, StudyPlan.class);
+                        // Sanitize loaded plan: remove obvious placeholder/generated items
+                        sanitizePlan(loaded);
+                        // Persist sanitized plan back to local storage so placeholders do not reappear
+                        try { guardarPlan(context, loaded); } catch (Exception ignored) {}
+                        return loaded;
                 }
             }
 
             // Fallback: intentar deserializar directamente leyendo el contenido completo
             try (FileInputStream fis2 = context.openFileInput(planId + ".json");
                  InputStreamReader reader2 = new InputStreamReader(fis2)) {
-                return gson.fromJson(reader2, StudyPlan.class);
+                StudyPlan loaded = gson.fromJson(reader2, StudyPlan.class);
+                sanitizePlan(loaded);
+                try { guardarPlan(context, loaded); } catch (Exception ignored) {}
+                return loaded;
             }
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Remove common placeholder/generated items created by older flows so UI shows empty lists.
+    private static void sanitizePlan(StudyPlan plan) {
+        if (plan == null) return;
+        // Flashcards: remove entries that look like placeholders
+        try {
+            if (plan.flashcards != null) {
+                java.util.Iterator<Flashcard> it = plan.flashcards.iterator();
+                while (it.hasNext()) {
+                    Flashcard f = it.next();
+                    if (f == null) { it.remove(); continue; }
+                    String q = f.pregunta == null ? "" : f.pregunta.toLowerCase();
+                    String a = f.respuesta == null ? "" : f.respuesta.toLowerCase();
+                    boolean placeholder = false;
+                    if (q.contains("(sin pregunta)") || a.contains("(sin respuesta)")) placeholder = true;
+                    if (q.matches("^ficha\\s*\\d+.*")) placeholder = true;
+                    if (q.contains("pregunta de ejemplo") || q.contains("ejemplo") || q.contains("generado")) placeholder = true;
+                    if (a.contains("generado") || a.contains("ejemplo")) placeholder = true;
+                    if (placeholder) it.remove();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // HotTopics: remove entries with clearly empty or placeholder titles
+        try {
+            if (plan.hotTopics != null) {
+                java.util.Iterator<HotTopic> it = plan.hotTopics.iterator();
+                while (it.hasNext()) {
+                    HotTopic t = it.next();
+                    if (t == null) { it.remove(); continue; }
+                    String title = t.title == null ? "" : t.title.toLowerCase();
+                    if (title.contains("(sin titulo)") || title.trim().isEmpty()) {
+                        it.remove();
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Quizzes: remove questions that look placeholder, and drop quizzes with no questions
+        try {
+            if (plan.quizzes != null) {
+                java.util.Iterator<Quiz> itq = plan.quizzes.iterator();
+                while (itq.hasNext()) {
+                    Quiz qz = itq.next();
+                    if (qz == null) { itq.remove(); continue; }
+                    if (qz.questions != null) {
+                        java.util.Iterator<Question> itq2 = qz.questions.iterator();
+                        while (itq2.hasNext()) {
+                            Question qq = itq2.next();
+                            if (qq == null) { itq2.remove(); continue; }
+                            String qtxt = qq.question == null ? "" : qq.question.toLowerCase();
+                            if (qtxt.contains("pregunta de ejemplo") || qtxt.contains("generado") || qtxt.matches("^pregunta\\s*\\d+.*")) {
+                                itq2.remove();
+                            }
+                        }
+                    }
+                    if (qz.questions == null || qz.questions.isEmpty()) {
+                        itq.remove();
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     public static ArrayList<StudyPlan> listarPlanes(Context context) {

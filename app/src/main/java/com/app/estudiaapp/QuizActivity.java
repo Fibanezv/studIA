@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.RadioButton;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -53,38 +54,40 @@ public class QuizActivity extends BaseActivity {
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         quizId = getIntent().getStringExtra("quiz_id");
         if (planId == null) {
+            try {
+                android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
+                planId = prefs.getString("last_plan_id", null);
+            } catch (Exception ignored) { planId = null; }
+        }
+        if (planId == null) {
             Toast.makeText(this, "Error: plan_id no recibido", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
-        // Load plan from Firestore (preferred) or fallback to local StorageHelper
+
+        // Load plan from Firestore (preferred) or fallback to local StorageHelper.
+        // If no plan or quizzes exist, still open the Activity and present an empty state.
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
         if (uid != null) {
             new UserRepository(this).getPlan(uid, planId, plan -> {
-                if (plan == null || plan.quizzes == null || plan.quizzes.isEmpty()) {
-                    Toast.makeText(this, "No hay quizzes disponibles.", Toast.LENGTH_SHORT).show();
-                    finish();
-                    return;
+                if (plan == null) {
+                    // create an empty plan object so the activity can still open
+                    plan = new StudyPlan(planId, "");
                 }
+                if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
                 initializeWithPlan(plan);
             }, e -> {
                 StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-                if (plan == null || plan.quizzes == null || plan.quizzes.isEmpty()) {
-                    Toast.makeText(this, "No hay quizzes disponibles.", Toast.LENGTH_SHORT).show();
-                    finish();
-                    return;
-                }
+                if (plan == null) plan = new StudyPlan(planId, "");
+                if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
                 initializeWithPlan(plan);
             });
             return;
         } else {
             StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-            if (plan == null || plan.quizzes == null || plan.quizzes.isEmpty()) {
-                Toast.makeText(this, "No hay quizzes disponibles.", Toast.LENGTH_SHORT).show();
-                finish();
-                return;
-            }
+            if (plan == null) plan = new StudyPlan(planId, "");
+            if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
             initializeWithPlan(plan);
         }
 
@@ -114,13 +117,34 @@ public class QuizActivity extends BaseActivity {
             }
         }
 
-        // Initialize UI
-        showQuestion();
-        setupNavigation();
-        // find progress UI
-        progressContainer = findViewById(R.id.quiz_progress_container);
-        progressFill = findViewById(R.id.quiz_progress_fill);
-        refreshProgressUI();
+        // Initialize UI. If there is no selected quiz, show an empty state message instead
+        if (currentQuiz == null) {
+            // hide quiz card and progress UI
+            android.view.View card = findViewById(R.id.card_upload);
+            if (card != null) card.setVisibility(android.view.View.GONE);
+            android.view.View progress = findViewById(R.id.quiz_progress_container);
+            if (progress != null) progress.setVisibility(android.view.View.GONE);
+
+            // add a simple centered message so the screen isn't empty
+            android.view.ViewGroup root = findViewById(android.R.id.content);
+            if (root != null) {
+                android.widget.TextView tv = new android.widget.TextView(this);
+                tv.setText("No hay quizzes disponibles para este plan.");
+                tv.setTextSize(18f);
+                tv.setTextColor(ContextCompat.getColor(this, R.color.black));
+                tv.setPadding(24,24,24,24);
+                tv.setGravity(android.view.Gravity.CENTER);
+                root.addView(tv, new android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+        } else {
+            // Initialize UI for a real quiz
+            showQuestion();
+            setupNavigation();
+            // find progress UI
+            progressContainer = findViewById(R.id.quiz_progress_container);
+            progressFill = findViewById(R.id.quiz_progress_fill);
+            refreshProgressUI();
+        }
     }
 
     private void showQuestion() {
@@ -142,6 +166,9 @@ public class QuizActivity extends BaseActivity {
         for (String opt : q.options) {
             RadioButton rb = new RadioButton(this);
             rb.setText(opt);
+            rb.setTextSize(14f);
+            rb.setMaxLines(2);
+            rb.setEllipsize(TextUtils.TruncateAt.END);
             // ensure each RadioButton has a unique id so getCheckedRadioButtonId() resolves correctly
             rb.setId(View.generateViewId());
 

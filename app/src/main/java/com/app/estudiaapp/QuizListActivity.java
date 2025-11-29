@@ -15,6 +15,7 @@ import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.models.Quiz;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.UserRepository;
 import java.util.ArrayList;
 
 public class QuizListActivity extends BaseActivity {
@@ -33,6 +34,9 @@ public class QuizListActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Inflate layout early so activity UI exists even if there are no quizzes
+        setContentView(R.layout.activity_quiz_list);
+
         String planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         if (planId == null) {
             Toast.makeText(this, "Error: plan_id no recibido", Toast.LENGTH_SHORT).show();
@@ -40,25 +44,13 @@ public class QuizListActivity extends BaseActivity {
             return;
         }
 
-        StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-        if (plan == null || plan.quizzes == null || plan.quizzes.isEmpty()) {
-            Toast.makeText(this, "No hay quizzes disponibles.", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-
-        // Mostrar lista de quizzes con RecyclerView (misma UX que QuizActivity)
-        setContentView(R.layout.activity_quiz_list);
-
-        // setup RecyclerView
+        // setup RecyclerView with an empty adapter first (empty-state allowed)
         androidx.recyclerview.widget.RecyclerView recyclerView = findViewById(R.id.recycler_quizzes);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // guardar planId y preparar lista/adaptador para poder refrescar en onResume
         this.planIdField = planId;
         quizzesList = new java.util.ArrayList<>();
-        quizzesList.addAll(plan.quizzes);
 
         adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, planId, quiz -> {
             // Abrir QuizActivity con planId + quiz.id
@@ -66,6 +58,34 @@ public class QuizListActivity extends BaseActivity {
         });
 
         recyclerView.setAdapter(adapter);
+
+        // Load plan data: prefer Firestore if user is signed in, otherwise fallback to local storage
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        if (uid != null) {
+            new UserRepository(this).getPlan(uid, planId, plan -> {
+                if (plan != null && plan.quizzes != null) {
+                    quizzesList.clear();
+                    quizzesList.addAll(plan.quizzes);
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                }
+            }, e -> {
+                // fallback: load locally but do not finish if not present
+                StudyPlan p = StorageHelper.cargarPlan(this, planId);
+                if (p != null && p.quizzes != null) {
+                    quizzesList.clear();
+                    quizzesList.addAll(p.quizzes);
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                }
+            });
+        } else {
+            StudyPlan p = StorageHelper.cargarPlan(this, planId);
+            if (p != null && p.quizzes != null) {
+                quizzesList.clear();
+                quizzesList.addAll(p.quizzes);
+                if (adapter != null) adapter.notifyDataSetChanged();
+            }
+        }
 
         // setup bottom navigation (marcar Quizzes como seleccionado y abrir pantallas desde aquí)
         com.google.android.material.bottomnavigation.BottomNavigationView nav = findViewById(R.id.study_nav);
@@ -98,12 +118,30 @@ public class QuizListActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if (this.planIdField == null) return;
-        StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
-        if (plan == null) return;
-        // actualizar lista y notificar adapter
-        quizzesList.clear();
-        if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
-        if (adapter != null) adapter.notifyDataSetChanged();
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        if (uid != null) {
+            new UserRepository(this).getPlan(uid, this.planIdField, plan -> {
+                if (plan != null && plan.quizzes != null) {
+                    quizzesList.clear();
+                    quizzesList.addAll(plan.quizzes);
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                }
+            }, e -> {
+                StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
+                if (plan == null) return;
+                quizzesList.clear();
+                if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
+                if (adapter != null) adapter.notifyDataSetChanged();
+            });
+        } else {
+            StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
+            if (plan == null) return;
+            // actualizar lista y notificar adapter
+            quizzesList.clear();
+            if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
+            if (adapter != null) adapter.notifyDataSetChanged();
+        }
     }
 
     

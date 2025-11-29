@@ -9,13 +9,13 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.app.estudiaapp.utils.DocumentExtractor;
-import com.app.estudiaapp.utils.OpenAiClient;
-import com.app.estudiaapp.utils.OpenAiKeyStore;
-import com.app.estudiaapp.utils.RetryUtils;
-import com.app.estudiaapp.utils.TokenUtils;
+// Document extraction has been removed from the app. The worker now expects
+// pre-extracted text provided via the input data key `INPUT_EXTRACTED_TEXT`.
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 import com.google.firebase.Timestamp;
 import com.google.gson.JsonObject;
+import com.google.gson.Gson;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -42,6 +42,13 @@ public class StudyPlanWorker extends Worker {
     public static final String INPUT_INCLUDE_FLASHCARDS = "input_include_flashcards";
     public static final String INPUT_FLASHCARD_LIMIT = "input_flashcard_limit";
     public static final String INPUT_INCLUDE_HOT_TOPICS = "input_include_hot_topics";
+    // Legacy: level/days/goal removed. New inputs:
+    public static final String INPUT_LIMITS_JSON = "input_limits_json"; // JSON string with limits
+    public static final String INPUT_MEMBERSHIP = "input_membership"; // free|pro|premium
+    public static final String INPUT_LANGUAGE = "input_language";
+    public static final String INPUT_QUIZ_TYPOLOGY = "input_quiz_typology";
+    public static final String INPUT_PRIORITY_POINTS = "input_priority_points";
+    public static final String INPUT_LEVEL = "input_level";
 
     public StudyPlanWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -115,194 +122,18 @@ public class StudyPlanWorker extends Worker {
 
         Uri uri = Uri.parse(uriStr);
         try {
-            setProgressAsync(new Data.Builder().putString("status", "extracting").build());
-            String extracted = DocumentExtractor.extractTextFromUri(getApplicationContext(), uri);
-            if (extracted == null) extracted = "";
-
-            // Resolve API key from local store (UploadActivity stores RemoteConfig fetched key there)
-            String apiKey = OpenAiKeyStore.getKey(getApplicationContext());
-            if (apiKey == null || apiKey.isEmpty()) {
-                Log.w(TAG, "OpenAI key missing in worker");
-                return failureWithMessage("OpenAI API key not available");
-            }
-
-            // If text is large, do chunk summarization
-            int est = TokenUtils.estimateTokens(extracted);
-            boolean needsChunking = TokenUtils.needsChunking(extracted, 128000);
-            if (needsChunking) {
-                setProgressAsync(new Data.Builder().putString("status", "summarizing").build());
-                OpenAiClient client = new OpenAiClient();
-                int chunkSize = 30000;
-                List<String> chunks = new ArrayList<>();
-                for (int i = 0; i < extracted.length(); i += chunkSize) {
-                    int end = Math.min(i + chunkSize, extracted.length());
-                    chunks.add(extracted.substring(i, end));
-                }
-                List<String> summaries = new ArrayList<>();
-                for (String ch : chunks) {
-                    if (isStopped()) {
-                        Log.i(TAG, "Work stopped during chunk summarization");
-                        return failureWithMessage("Cancelled");
-                    }
-                    try {
-                        String summary = RetryUtils.runWithRetries(() -> client.summarizeChunk(apiKey, ch), 2, 500L, (Exception ex) -> {
-                            if (ex instanceof com.app.estudiaapp.utils.OpenAiException) {
-                                return ((com.app.estudiaapp.utils.OpenAiException) ex).isRetryable();
-                            }
-                            return true;
-                        });
-                        if (summary == null || summary.trim().isEmpty()) summary = ch.length() > 1000 ? ch.substring(0, 1000) : ch;
-                        summaries.add(summary);
-                    } catch (Exception e) {
-                        Log.w(TAG, "Chunk summarization failed: " + e.getMessage());
-                        summaries.add(ch.length() > 1000 ? ch.substring(0, 1000) : ch);
-                    }
-                }
-                StringBuilder combined = new StringBuilder();
-                for (String s : summaries) combined.append(s).append('\n').append('\n');
-                extracted = combined.toString();
-            }
-
-            // Parse worker input options (form data) early so we can include them in the schema request
-            String inputTitle = getInputData().getString(INPUT_TITLE);
-            boolean includeQuizzes = getInputData().getBoolean(INPUT_INCLUDE_QUIZZES, false);
-            int quizLimit = getInputData().getInt(INPUT_QUIZ_LIMIT, 0);
-            int questionsLimit = getInputData().getInt(INPUT_QUESTIONS_LIMIT, 0);
-            boolean includeFlashcards = getInputData().getBoolean(INPUT_INCLUDE_FLASHCARDS, false);
-            int flashcardLimit = getInputData().getInt(INPUT_FLASHCARD_LIMIT, 0);
-            boolean includeHotTopics = getInputData().getBoolean(INPUT_INCLUDE_HOT_TOPICS, false);
-
-            setProgressAsync(new Data.Builder().putString("status", "calling_ai").build());
-            OpenAiClient client = new OpenAiClient();
-            final AtomicReference<String> aiResponse = new AtomicReference<>();
-            try {
-                final String finalExtracted = extracted; // lambda requires effectively final variable
-
-                // Build a minimal JSON Schema for the StudyPlan
-                JsonObject schema = new JsonObject();
-                schema.addProperty("type", "object");
-                JsonObject props = new JsonObject();
-
-                JsonObject idS = new JsonObject(); idS.addProperty("type", "string"); props.add("id", idS);
-                JsonObject nombreS = new JsonObject(); nombreS.addProperty("type", "string"); props.add("nombre", nombreS);
-
-                // flashcards
-                JsonObject flashcardsS = new JsonObject(); flashcardsS.addProperty("type", "array");
-                JsonObject flashcardItem = new JsonObject(); flashcardItem.addProperty("type", "object");
-                JsonObject fcProps = new JsonObject(); JsonObject p1 = new JsonObject(); p1.addProperty("type", "boolean"); fcProps.add("completada", p1);
-                JsonObject p2 = new JsonObject(); p2.addProperty("type", "string"); fcProps.add("pregunta", p2);
-                JsonObject p3 = new JsonObject(); p3.addProperty("type", "string"); fcProps.add("respuesta", p3);
-                flashcardItem.add("properties", fcProps);
-                flashcardItem.add("required", new com.google.gson.JsonArray());
-                flashcardsS.add("items", flashcardItem);
-                props.add("flashcards", flashcardsS);
-
-                // hotTopics
-                JsonObject htS = new JsonObject(); htS.addProperty("type", "array");
-                JsonObject htItem = new JsonObject(); htItem.addProperty("type", "object");
-                JsonObject htProps = new JsonObject(); JsonObject htTitle = new JsonObject(); htTitle.addProperty("type", "string"); htProps.add("title", htTitle);
-                JsonObject htDesc = new JsonObject(); htDesc.addProperty("type", "string"); htProps.add("description", htDesc);
-                htItem.add("properties", htProps);
-                htItem.add("required", new com.google.gson.JsonArray());
-                htS.add("items", htItem);
-                props.add("hotTopics", htS);
-
-                // progreso
-                JsonObject progS = new JsonObject(); progS.addProperty("type", "object");
-                JsonObject progProps = new JsonObject(); JsonObject estProp = new JsonObject(); estProp.addProperty("type", "number"); progProps.add("estimatedStudyTimeMinutes", estProp);
-                JsonObject fe = new JsonObject(); fe.addProperty("type", "number"); progProps.add("flashcardsEstudiadas", fe);
-                JsonObject niv = new JsonObject(); niv.addProperty("type", "number"); progProps.add("nivel", niv);
-                progS.add("properties", progProps);
-                props.add("progreso", progS);
-
-                // quizzes
-                JsonObject qzS = new JsonObject(); qzS.addProperty("type", "array");
-                JsonObject qzItem = new JsonObject(); qzItem.addProperty("type", "object");
-                JsonObject qzProps = new JsonObject(); JsonObject qid = new JsonObject(); qid.addProperty("type", "string"); qzProps.add("id", qid);
-                JsonObject qtitle = new JsonObject(); qtitle.addProperty("type", "string"); qzProps.add("titulo", qtitle);
-                JsonObject questions = new JsonObject(); questions.addProperty("type", "array"); JsonObject qItem = new JsonObject(); qItem.addProperty("type", "object"); JsonObject qItemProps = new JsonObject(); JsonObject qQuestion = new JsonObject(); qQuestion.addProperty("type", "string"); qItemProps.add("question", qQuestion); JsonObject qAnswer = new JsonObject(); qAnswer.addProperty("type", "string"); qItemProps.add("answer", qAnswer); qItem.add("properties", qItemProps); questions.add("items", qItem);
-                qzProps.add("questions", questions);
-                qzItem.add("properties", qzProps);
-                qzS.add("items", qzItem);
-                props.add("quizzes", qzS);
-
-                schema.add("properties", props);
-                com.google.gson.JsonArray req = new com.google.gson.JsonArray(); req.add(new com.google.gson.JsonPrimitive("id")); req.add(new com.google.gson.JsonPrimitive("nombre")); req.add(new com.google.gson.JsonPrimitive("flashcards")); req.add(new com.google.gson.JsonPrimitive("hotTopics")); req.add(new com.google.gson.JsonPrimitive("progreso")); req.add(new com.google.gson.JsonPrimitive("quizzes"));
-                schema.add("required", req);
-
-                // Perform structured request using Responses API
-                int useQuizLimit = quizLimit > 0 ? quizLimit : 3;
-                int useQuestionsLimit = questionsLimit > 0 ? questionsLimit : 5;
-                int useFlashcardLimit = flashcardLimit > 0 ? flashcardLimit : 10;
-                int useHotTopicsLimit = 5;
-                String resp = RetryUtils.runWithRetries(() -> client.generateStudyPlanWithSchema(apiKey, inputTitle == null ? "" : inputTitle, "", "", useQuizLimit, useQuestionsLimit, useFlashcardLimit, useHotTopicsLimit, finalExtracted, schema), 3, 700L, (Exception ex) -> {
-                    if (ex instanceof com.app.estudiaapp.utils.OpenAiException) {
-                        return ((com.app.estudiaapp.utils.OpenAiException) ex).isRetryable();
-                    }
-                    return true;
-                });
-                aiResponse.set(resp);
-            } catch (Exception e) {
-                Log.w(TAG, "OpenAI generateStudyPlan failed: " + e.getMessage());
-                return failureWithMessage("OpenAI call failed: " + (e.getMessage() != null ? e.getMessage() : "unknown"));
-            }
-
-            // Validate response and enforce NO_PLAN_POSSIBLE sentinel
-            if (aiResponse.get() == null || aiResponse.get().trim().isEmpty()) {
-                Log.w(TAG, "Empty AI response");
-                return failureWithMessage("Empty response from AI");
-            }
-            String rawResp = aiResponse.get().trim();
-            if ("NO_PLAN_POSSIBLE".equals(rawResp)) {
-                Log.i(TAG, "AI indicated no plan possible for this document");
-                return failureWithMessage("NO_PLAN_POSSIBLE");
-            }
-
-            // Try to extract first JSON object/array from the Responses API raw body (it may include wrappers)
-            String json = extractFirstJson(rawResp);
-            if (json == null) {
-                // As a fallback, try to find JSON inside an "output" or similar field
-                try {
-                    com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(rawResp).getAsJsonObject();
-                    if (root.has("output") && root.get("output").isJsonArray()) {
-                        com.google.gson.JsonArray outArr = root.getAsJsonArray("output");
-                        for (int i = 0; i < outArr.size(); i++) {
-                            com.google.gson.JsonObject o = outArr.get(i).getAsJsonObject();
-                            if (o.has("content") && o.get("content").isJsonArray()) {
-                                com.google.gson.JsonArray content = o.getAsJsonArray("content");
-                                for (int j = 0; j < content.size(); j++) {
-                                    try {
-                                        String candidate = content.get(j).toString();
-                                        String candJson = extractFirstJson(candidate);
-                                        if (candJson != null) { json = candJson; break; }
-                                    } catch (Exception ignored) {}
-                                }
-                            }
-                            if (json != null) break;
-                        }
-                    }
-                } catch (Exception ignored) {}
-            }
-            if (json == null) {
-                Log.w(TAG, "Could not extract JSON from AI response");
-                return failureWithMessage("Invalid response from AI (no JSON)");
-            }
+            // New flow: upload the PDF to Firebase Storage, then call a Cloud Function
+            // `generateStudyPlan` which will call OpenAI, save the plan in Firestore and
+            // return the plan id + JSON. The worker simply orchestrates upload + function call.
 
             setProgressAsync(new Data.Builder().putString("status", "uploading").build());
 
-            // Upload source file to Storage
             FirebaseStorage storage = FirebaseStorage.getInstance();
             String uid = "unknown";
             try { uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid(); } catch (Exception ignored) {}
-            // Allocate a canonical planId using a Firestore transaction (per-user counter)
-            String planId = null;
-            try {
-                planId = allocateCanonicalPlanId(FirebaseFirestore.getInstance(), uid);
-            } catch (Exception e) {
-                Log.w(TAG, "Failed to allocate canonical planId, falling back to UUID: " + e.getMessage());
-            }
-            if (planId == null) planId = UUID.randomUUID().toString();
-            com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/plans/" + planId + "/source.pdf");
+
+            String uploadId = UUID.randomUUID().toString();
+            com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/uploads/" + uploadId + "/source.pdf");
 
             final CountDownLatch uploadLatch = new CountDownLatch(1);
             final AtomicReference<com.google.firebase.storage.UploadTask.TaskSnapshot> uploadSnapshotRef = new AtomicReference<>();
@@ -319,7 +150,6 @@ public class StudyPlanWorker extends Worker {
                 uploadLatch.countDown();
             });
 
-            // Wait in short intervals so we can notice cancellation
             while (uploadLatch.getCount() > 0) {
                 if (isStopped()) {
                     UploadTask ut = uploadTaskRef.get();
@@ -336,41 +166,169 @@ public class StudyPlanWorker extends Worker {
                 return failureWithMessage("Upload failed: " + (uploadEx.get().getMessage() != null ? uploadEx.get().getMessage() : "unknown"));
             }
 
-            // Save plan JSON to Firestore
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            final CountDownLatch saveLatch = new CountDownLatch(1);
-            final AtomicReference<Exception> saveEx = new AtomicReference<>();
-
+            // Obtain a public download URL for the uploaded file
+            final AtomicReference<String> downloadUrlRef = new AtomicReference<>();
+            final CountDownLatch urlLatch = new CountDownLatch(1);
             try {
-                // Parse AI response and normalize to expected plan schema
-                com.google.gson.Gson gson = new com.google.gson.Gson();
-                java.util.Map parsed = gson.fromJson(json, java.util.Map.class);
-                java.util.Map<String, Object> data = normalizePlan(parsed, planId, ref.getPath());
-                // Apply form overrides and validate/fill missing sections — try asking OpenAI for missing sections first
-                validateAndFillPlan(data, extracted, inputTitle, includeQuizzes, quizLimit, questionsLimit, includeFlashcards, flashcardLimit, includeHotTopics, client, apiKey);
-                data.put("createdAt", Timestamp.now());
-                db.collection("users").document(uid).collection("plans").document(planId).set(data)
-                        .addOnSuccessListener(aVoid -> saveLatch.countDown())
-                        .addOnFailureListener(e -> { saveEx.set(e); saveLatch.countDown(); });
-                // Wait with cancellation checks
-                while (saveLatch.getCount() > 0) {
-                    if (isStopped()) {
-                        Log.i(TAG, "Worker stopped while saving plan to Firestore");
-                        return failureWithMessage("Cancelled while saving plan");
-                    }
-                    saveLatch.await(200, TimeUnit.MILLISECONDS);
-                }
-                if (saveEx.get() != null) {
-                    Log.w(TAG, "Save plan failed: " + saveEx.get().getMessage());
-                    return failureWithMessage("Save plan failed: " + (saveEx.get().getMessage() != null ? saveEx.get().getMessage() : "unknown"));
-                }
+                ref.getDownloadUrl().addOnSuccessListener(uri1 -> {
+                    downloadUrlRef.set(uri1.toString());
+                    urlLatch.countDown();
+                }).addOnFailureListener(e -> {
+                    uploadEx.set(e);
+                    urlLatch.countDown();
+                });
             } catch (Exception e) {
-                Log.w(TAG, "Exception saving plan: " + e.getMessage());
-                return failureWithMessage("Exception saving plan: " + (e.getMessage() != null ? e.getMessage() : "unknown"));
+                return failureWithMessage("Failed to request download URL: " + e.getMessage());
+            }
+            while (urlLatch.getCount() > 0) {
+                if (isStopped()) return failureWithMessage("Cancelled");
+                urlLatch.await(200, TimeUnit.MILLISECONDS);
+            }
+            if (uploadEx.get() != null) {
+                return failureWithMessage("Failed to obtain download URL: " + uploadEx.get().getMessage());
+            }
+
+            String pdfUrl = downloadUrlRef.get();
+            if (pdfUrl == null || pdfUrl.isEmpty()) return failureWithMessage("Could not obtain file URL");
+
+            // Prepare data for cloud function
+            // New flow: pass limits as a JSON string and membership. Older nivel/dias/objetivo removed.
+            String limitsJson = getInputData().getString(INPUT_LIMITS_JSON);
+            String membership = getInputData().getString(INPUT_MEMBERSHIP);
+            String inputTitle = getInputData().getString(INPUT_TITLE);
+            if (membership == null || membership.trim().isEmpty()) membership = "free";
+            java.util.Map limitsMap = null;
+            if (limitsJson != null) {
+                try {
+                    limitsMap = new Gson().fromJson(limitsJson, java.util.Map.class);
+                } catch (Exception ignored) { limitsMap = null; }
+            }
+
+            setProgressAsync(new Data.Builder().putString("status", "calling_function").build());
+
+            final AtomicReference<String> planIdRef = new AtomicReference<>();
+            final AtomicReference<java.util.Map> planMapRef = new AtomicReference<>();
+            final AtomicReference<Exception> funcEx = new AtomicReference<>();
+            final CountDownLatch funcLatch = new CountDownLatch(1);
+
+            // Collect form configuration options to forward to the Cloud Function
+            boolean includeQuizzes = getInputData().getBoolean(INPUT_INCLUDE_QUIZZES, false);
+            int quizLimit = getInputData().getInt(INPUT_QUIZ_LIMIT, 0);
+            int questionsLimit = getInputData().getInt(INPUT_QUESTIONS_LIMIT, 0);
+            boolean includeFlashcards = getInputData().getBoolean(INPUT_INCLUDE_FLASHCARDS, false);
+            int flashcardLimit = getInputData().getInt(INPUT_FLASHCARD_LIMIT, 0);
+            boolean includeHotTopics = getInputData().getBoolean(INPUT_INCLUDE_HOT_TOPICS, false);
+
+                // Allocate canonical plan id on-device so saved document IDs are predictable (U0#####)
+                String clientPlanId = null;
+                try {
+                    clientPlanId = allocateCanonicalPlanId(FirebaseFirestore.getInstance(), uid);
+                } catch (InterruptedException e) {
+                    // ignore and let server create its own uuid
+                    clientPlanId = null;
+                }
+
+                java.util.Map<String, Object> funcPayload = new java.util.HashMap<>();
+                funcPayload.put("pdfUrl", pdfUrl);
+                funcPayload.put("membership", membership);
+                funcPayload.put("limits", limitsMap != null ? limitsMap : new java.util.HashMap<String,Object>());
+                    // include language/typology/priority points if provided
+                    try {
+                        String lang = getInputData().getString(INPUT_LANGUAGE);
+                        if (lang != null) funcPayload.put("language", lang);
+                    } catch (Exception ignored) {}
+                    try {
+                        String typ = getInputData().getString(INPUT_QUIZ_TYPOLOGY);
+                        if (typ != null) funcPayload.put("quizTypology", typ);
+                    } catch (Exception ignored) {}
+                    try {
+                        String pp = getInputData().getString(INPUT_PRIORITY_POINTS);
+                        if (pp != null) funcPayload.put("priorityPoints", pp);
+                    } catch (Exception ignored) {}
+                    try {
+                        String lvl = getInputData().getString(INPUT_LEVEL);
+                        if (lvl != null) funcPayload.put("difficulty", lvl);
+                    } catch (Exception ignored) {}
+                if (clientPlanId != null) funcPayload.put("clientPlanId", clientPlanId);
+                if (inputTitle != null && !inputTitle.trim().isEmpty()) funcPayload.put("inputTitle", inputTitle.trim());
+                funcPayload.put("includeQuizzes", includeQuizzes);
+                funcPayload.put("quizLimit", quizLimit);
+                funcPayload.put("questionsLimit", questionsLimit);
+                funcPayload.put("includeFlashcards", includeFlashcards);
+                funcPayload.put("flashcardLimit", flashcardLimit);
+                funcPayload.put("includeHotTopics", includeHotTopics);
+
+                // Call the Cloud Function with retries. Some executions may be slow
+                // (OpenAI/model latency) and can cause timeouts; retry transient failures.
+                final int MAX_ATTEMPTS = 3;
+                final long WAIT_PER_ATTEMPT_MS = 90000; // 90s per attempt
+                for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                    final CountDownLatch attemptLatch = new CountDownLatch(1);
+                    // reset exception for this attempt
+                    funcEx.set(null);
+                    planIdRef.set(null);
+                    planMapRef.set(null);
+
+                    FirebaseFunctions.getInstance()
+                        .getHttpsCallable("generateStudyPlan")
+                        .call(funcPayload)
+                        .addOnSuccessListener((HttpsCallableResult result) -> {
+                            try {
+                                Object data = result.getData();
+                                if (data instanceof java.util.Map) {
+                                    java.util.Map map = (java.util.Map) data;
+                                    Object id = map.get("id");
+                                    Object plan = map.get("plan");
+                                    if (id != null) planIdRef.set(String.valueOf(id));
+                                    if (plan instanceof java.util.Map) planMapRef.set((java.util.Map) plan);
+                                }
+                            } catch (Exception e) {
+                                funcEx.set(e);
+                            } finally {
+                                attemptLatch.countDown();
+                            }
+                        }).addOnFailureListener(e -> {
+                            funcEx.set(e instanceof Exception ? (Exception) e : new Exception(e.toString()));
+                            attemptLatch.countDown();
+                        });
+
+                    long waited = 0L;
+                    while (attemptLatch.getCount() > 0 && waited < WAIT_PER_ATTEMPT_MS) {
+                        if (isStopped()) return failureWithMessage("Cancelled");
+                        long toWait = Math.min(500, WAIT_PER_ATTEMPT_MS - waited);
+                        attemptLatch.await(toWait, TimeUnit.MILLISECONDS);
+                        waited += toWait;
+                    }
+
+                    if (attemptLatch.getCount() > 0) {
+                        // this attempt timed out waiting for the callable listener
+                        if (attempt < MAX_ATTEMPTS) {
+                            Log.w(TAG, "Attempt " + attempt + " timed out waiting for Cloud Function; retrying...");
+                            try { Thread.sleep(1000 * attempt); } catch (InterruptedException ignored) {}
+                            continue; // retry
+                        } else {
+                            funcEx.set(new Exception("Callable request timed out after " + WAIT_PER_ATTEMPT_MS + "ms"));
+                        }
+                    }
+
+                    // If there was an exception captured by listeners, break and handle it
+                    if (funcEx.get() != null) break;
+                    // If we got a result, break out of retry loop
+                    if (planIdRef.get() != null) break;
+                }
+
+            if (funcEx.get() != null) {
+                Log.w(TAG, "Cloud Function failed: " + funcEx.get().getMessage());
+                return failureWithMessage("Cloud Function failed: " + (funcEx.get().getMessage() != null ? funcEx.get().getMessage() : "unknown"));
+            }
+
+            String returnedPlanId = planIdRef.get();
+            if (returnedPlanId == null || returnedPlanId.isEmpty()) {
+                return failureWithMessage("Cloud Function did not return a plan id");
             }
 
             setProgressAsync(new Data.Builder().putString("status", "done").build());
-            return Result.success(new Data.Builder().putString("planId", planId).build());
+            return Result.success(new Data.Builder().putString("planId", returnedPlanId).build());
 
         } catch (Exception e) {
             Log.w(TAG, "Worker failed: " + e.getMessage(), e);
@@ -408,12 +366,15 @@ public class StudyPlanWorker extends Worker {
                     Object c = m.get("completada");
                     if (c instanceof Boolean) completada = (Boolean) c;
                 }
-                if (pregunta == null) pregunta = String.format("Ficha %d: (sin pregunta)", i + 1);
-                if (respuesta == null) respuesta = "(sin respuesta)";
-                fm.put("pregunta", pregunta);
-                fm.put("respuesta", respuesta);
-                fm.put("completada", completada);
-                flashcards.add(fm);
+                // Only include flashcards that have both question and answer
+                if (pregunta != null && respuesta != null) {
+                    fm.put("pregunta", pregunta);
+                    fm.put("respuesta", respuesta);
+                    fm.put("completada", completada);
+                    flashcards.add(fm);
+                } else {
+                    // skip incomplete/placeholder flashcards
+                }
             }
         }
         out.put("flashcards", flashcards);
@@ -429,11 +390,13 @@ public class StudyPlanWorker extends Worker {
                     java.util.Map<String, Object> hm = new java.util.HashMap<>();
                     String title = pickString(m, "title", "titulo", "name");
                     String desc = pickString(m, "description", "descripcion", "desc");
-                    if (title == null) title = "(sin titulo)";
-                    if (desc == null) desc = "";
-                    hm.put("title", title);
-                    hm.put("description", desc);
-                    hotTopics.add(hm);
+                    // Only include hotTopics with a title (and optional description)
+                    if (title != null && !title.trim().isEmpty()) {
+                        if (desc == null) desc = "";
+                        hm.put("title", title);
+                        hm.put("description", desc);
+                        hotTopics.add(hm);
+                    }
                 }
             }
         }
@@ -484,21 +447,31 @@ public class StudyPlanWorker extends Worker {
                                 java.util.List options = new java.util.ArrayList();
                                 Object opts = qom.get("options");
                                 if (opts instanceof java.util.List) options.addAll((java.util.List) opts);
-                                qmap.put("question", question != null ? question : "(sin pregunta)");
-                                qmap.put("options", options);
-                                qmap.put("answer", answer != null ? answer : (options.size() > 0 ? options.get(0) : ""));
+                                // Only include questions that have a question text and at least an answer or options
+                                if (question != null && (!options.isEmpty() || (answer != null && !answer.trim().isEmpty()))) {
+                                    qmap.put("question", question);
+                                    qmap.put("options", options);
+                                    qmap.put("answer", answer != null ? answer : (options.size() > 0 ? options.get(0) : ""));
+                                    questions.add(qmap);
+                                } else {
+                                    // skip this question
+                                }
                             }
-                            questions.add(qmap);
                         }
                     }
                 }
-                if (qid == null) qid = String.format("qz%d", qi);
-                if (titulo == null) titulo = "Quiz " + (qi + 1);
-                qout.put("id", qid);
-                qout.put("titulo", titulo);
-                qout.put("progreso", progreso);
-                qout.put("questions", questions);
-                quizzes.add(qout);
+                // Only include quizzes that have at least one valid question
+                if (questions.size() > 0) {
+                    if (qid == null) qid = String.format("qz%d", qi);
+                    if (titulo == null) titulo = "Quiz " + (qi + 1);
+                    qout.put("id", qid);
+                    qout.put("titulo", titulo);
+                    qout.put("progreso", progreso);
+                    qout.put("questions", questions);
+                    quizzes.add(qout);
+                } else {
+                    // skip quiz without valid questions
+                }
             }
         }
         out.put("quizzes", quizzes);
@@ -559,200 +532,25 @@ public class StudyPlanWorker extends Worker {
     private void validateAndFillPlan(java.util.Map<String, Object> plan, String extractedText, String inputTitle,
                                      boolean includeQuizzes, int quizLimit, int questionsLimit,
                                      boolean includeFlashcards, int flashcardLimit,
-                                     boolean includeHotTopics, OpenAiClient client, String apiKey) {
+                                     boolean includeHotTopics) {
         if (plan == null) return;
         try {
             // Title override
             if (inputTitle != null && !inputTitle.trim().isEmpty()) plan.put("nombre", inputTitle.trim());
 
-            // Flashcards
+            // Flashcards: ensure list exists but do not auto-generate placeholders
             java.util.List flashcards = (java.util.List) plan.get("flashcards");
             if (flashcards == null) flashcards = new java.util.ArrayList();
-            // If user didn't provide limits, set sensible defaults
-            if (flashcardLimit <= 0) flashcardLimit = 10;
-            // Try to generate flashcards if requested OR if plan currently has none
-            if ((includeFlashcards || flashcards.isEmpty()) && flashcards.size() < flashcardLimit) {
-                // Try to ask OpenAI specifically for flashcards if none or insufficient
-                if (client != null && apiKey != null && !apiKey.isEmpty()) {
-                    try {
-                        String instr = "You MUST respond with ONLY a JSON array (no explanation, no markdown).\n" +
-                                "Return up to " + flashcardLimit + " flashcards extracted from the DOCUMENT.\n" +
-                                "Each flashcard must be an object with exactly these keys: \"pregunta\" (string) and \"respuesta\" (string).\n" +
-                                "Example response:\n" +
-                                "[ {\"pregunta\": \"¿Qué es X?\", \"respuesta\": \"X es ...\"} ]\n\n" +
-                                "DOCUMENT:\n" + extractedText;
-                        String resp = RetryUtils.runWithRetries(() -> client.generateJsonForSection(apiKey, instr, 600), 2, 500L, (Exception ex) -> {
-                            if (ex instanceof com.app.estudiaapp.utils.OpenAiException) return ((com.app.estudiaapp.utils.OpenAiException) ex).isRetryable();
-                            return true;
-                        });
-                        String json = extractFirstJson(resp);
-                        if (json != null) {
-                            try {
-                                com.google.gson.Gson gg = new com.google.gson.Gson();
-                                java.util.List parsedFc = gg.fromJson(json, java.util.List.class);
-                                if (parsedFc != null && parsedFc.size() > 0) {
-                                    flashcards.clear();
-                                    for (Object o : parsedFc) flashcards.add(o);
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    } catch (Exception e) {
-                        Log.i(TAG, "OpenAI flashcards request failed: " + e.getMessage());
-                    }
-                }
-                int needed = Math.max(0, flashcardLimit - flashcards.size());
-                java.util.List<String> snippets = extractTopSnippets(extractedText, needed);
-                for (int i = 0; i < needed; i++) {
-                    java.util.Map<String,Object> fm = new java.util.HashMap<>();
-                    String snippet = i < snippets.size() ? snippets.get(i) : null;
-                    String q;
-                    String a;
-                    if (snippet != null) {
-                        String shortSnippet = snippet.length() > 120 ? snippet.substring(0, 120) + "..." : snippet;
-                        q = String.format("Explica brevemente: %s", shortSnippet);
-                        a = snippet;
-                    } else {
-                        q = String.format("Ficha %d: Concepto clave", flashcards.size() + 1);
-                        a = "(detalles sobre el concepto)";
-                    }
-                    fm.put("pregunta", q);
-                    fm.put("respuesta", a);
-                    fm.put("completada", false);
-                    flashcards.add(fm);
-                }
-            }
             plan.put("flashcards", flashcards);
 
-            // Hot topics
+            // Hot topics: ensure list exists but do not auto-generate placeholders
             java.util.List hotTopics = (java.util.List) plan.get("hotTopics");
             if (hotTopics == null) hotTopics = new java.util.ArrayList();
-            // Always attempt to populate hotTopics if none present (or explicitly requested)
-            if ((includeHotTopics || hotTopics.isEmpty()) && hotTopics.isEmpty()) {
-                if (client != null && apiKey != null && !apiKey.isEmpty()) {
-                    try {
-                        String instr = "You MUST respond with ONLY a JSON array (no explanation, no markdown).\n" +
-                                "Return up to 5 hot topics extracted from the DOCUMENT.\n" +
-                                "Each element must be an object with keys: \"title\" (short string) and \"description\" (longer string).\n" +
-                                "Example response:\n" +
-                                "[ {\"title\": \"Tema A\", \"description\": \"Descripción breve del tema A...\"} ]\n\n" +
-                                "DOCUMENT:\n" + extractedText;
-                        String resp = RetryUtils.runWithRetries(() -> client.generateJsonForSection(apiKey, instr, 400), 2, 500L, (Exception ex) -> {
-                            if (ex instanceof com.app.estudiaapp.utils.OpenAiException) return ((com.app.estudiaapp.utils.OpenAiException) ex).isRetryable();
-                            return true;
-                        });
-                        String json = extractFirstJson(resp);
-                        if (json != null) {
-                            try {
-                                com.google.gson.Gson gg = new com.google.gson.Gson();
-                                java.util.List parsedHt = gg.fromJson(json, java.util.List.class);
-                                if (parsedHt != null && parsedHt.size() > 0) {
-                                    hotTopics.clear();
-                                    for (Object o : parsedHt) hotTopics.add(o);
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    } catch (Exception e) {
-                        Log.i(TAG, "OpenAI hotTopics request failed: " + e.getMessage());
-                    }
-                }
-                java.util.List<String> snippets = extractTopSnippets(extractedText, 5);
-                for (int i = 0; i < Math.min(5, snippets.size()); i++) {
-                    java.util.Map<String,Object> hm = new java.util.HashMap<>();
-                    String s = snippets.get(i);
-                    String title = s.split("\\.")[0];
-                    if (title.length() > 60) title = title.substring(0, 60) + "...";
-                    hm.put("title", title);
-                    hm.put("description", s);
-                    hotTopics.add(hm);
-                }
-            }
             plan.put("hotTopics", hotTopics);
 
-            // Quizzes
+            // Quizzes: ensure list exists but do not auto-generate placeholders
             java.util.List quizzes = (java.util.List) plan.get("quizzes");
             if (quizzes == null) quizzes = new java.util.ArrayList();
-            // sensible defaults
-            if (quizLimit <= 0) quizLimit = 3;
-            if (questionsLimit <= 0) questionsLimit = 5;
-            // Try to generate quizzes if requested OR if none present
-            if ((includeQuizzes || quizzes.isEmpty()) && quizzes.size() < quizLimit) {
-                // Ask OpenAI specifically for quizzes if possible
-                if (client != null && apiKey != null && !apiKey.isEmpty()) {
-                    try {
-                        String instr = "You MUST respond with ONLY a JSON array (no explanation, no markdown).\n" +
-                                "Return up to " + quizLimit + " quizzes extracted from the DOCUMENT.\n" +
-                                "Each quiz element must be an object with keys: \"id\" (string), \"titulo\" (string), \"progreso\" (object), and \"questions\" (array).\n" +
-                                "Each question must be an object with keys: \"question\" (string), \"options\" (array of strings), and \"answer\" (one of the options).\n" +
-                                "Example response (one quiz with one question):\n" +
-                                "[ {\"id\": \"qz1\", \"titulo\": \"Repaso 1\", \"progreso\": {\"currentIndex\":0}, \"questions\": [ {\"question\":\"¿Qué es X?\", \"options\": [\"A\",\"B\"], \"answer\":\"A\"} ] } ]\n\n" +
-                                "DOCUMENT:\n" + extractedText + "\n\nReturn up to " + questionsLimit + " questions per quiz.";
-                        String resp = RetryUtils.runWithRetries(() -> client.generateJsonForSection(apiKey, instr, 800), 2, 500L, (Exception ex) -> {
-                            if (ex instanceof com.app.estudiaapp.utils.OpenAiException) return ((com.app.estudiaapp.utils.OpenAiException) ex).isRetryable();
-                            return true;
-                        });
-                        String json = extractFirstJson(resp);
-                        if (json != null) {
-                            try {
-                                com.google.gson.Gson gg = new com.google.gson.Gson();
-                                java.util.List parsedQz = gg.fromJson(json, java.util.List.class);
-                                if (parsedQz != null && parsedQz.size() > 0) {
-                                    quizzes.clear();
-                                    for (Object o : parsedQz) quizzes.add(o);
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    } catch (Exception e) {
-                        Log.i(TAG, "OpenAI quizzes request failed: " + e.getMessage());
-                    }
-                }
-                int needQz = Math.max(0, quizLimit - quizzes.size());
-                java.util.List<String> allSnips = extractTopSnippets(extractedText, Math.max(questionsLimit * needQz, 10));
-                for (int qi = 0; qi < needQz; qi++) {
-                    java.util.Map<String,Object> qmap = new java.util.HashMap<>();
-                    String qid = String.format("qz%d", quizzes.size());
-                    qmap.put("id", qid);
-                    qmap.put("titulo", String.format("Quiz %d", quizzes.size() + 1));
-                    java.util.Map<String,Object> progreso = new java.util.HashMap<>();
-                    progreso.put("currentIndex", 0);
-                    progreso.put("lastUpdatedMillis", 0L);
-                    progreso.put("nota", -1);
-                    progreso.put("preguntasCorrectas", 0);
-                    progreso.put("preguntasIncorrectas", 0);
-                    progreso.put("preguntasRespondidas", 0);
-                    qmap.put("progreso", progreso);
-                    java.util.List<java.util.Map<String,Object>> questions = new java.util.ArrayList<>();
-                    int qCount = Math.max(1, questionsLimit);
-                    for (int qi2 = 0; qi2 < qCount; qi2++) {
-                        java.util.Map<String,Object> qm = new java.util.HashMap<>();
-                        int snipIndex = qi * qCount + qi2;
-                        String snippet = snipIndex < allSnips.size() ? allSnips.get(snipIndex) : "(Contenido del documento)";
-                        String shortSnippet = snippet.length() > 100 ? snippet.substring(0, 100) + "..." : snippet;
-                        String question = String.format("Según el documento, ¿qué afirma sobre: '%s'?", shortSnippet);
-
-                        // Build options: correct = concise version of snippet, distractors from other snippets
-                        java.util.List<String> options = new java.util.ArrayList<>();
-                        String correct = shortSnippet;
-                        options.add(correct);
-                        // add up to 3 distractors from other snippets
-                        int added = 0;
-                        for (int d = 0; d < allSnips.size() && added < 3; d++) {
-                            if (d == snipIndex) continue;
-                            String cand = allSnips.get(d);
-                            if (cand == null || cand.trim().isEmpty()) continue;
-                            String candShort = cand.length() > 80 ? cand.substring(0, 80) + "..." : cand;
-                            if (!options.contains(candShort)) { options.add(candShort); added++; }
-                        }
-                        while (options.size() < 4) options.add("Ninguna de las anteriores");
-
-                        qm.put("question", question);
-                        qm.put("options", options);
-                        qm.put("answer", correct);
-                        questions.add(qm);
-                    }
-                    qmap.put("questions", questions);
-                    quizzes.add(qmap);
-                }
-            }
             plan.put("quizzes", quizzes);
 
             // Ensure progreso exists

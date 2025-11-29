@@ -95,11 +95,13 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Pregunta"
-                                android:textSize="24sp"
+                                android:textSize="18sp"
+                                android:maxLines="3"
+                                android:ellipsize="end"
                                 android:textColor="@color/black"
                                 android:textStyle="bold"
-                                android:layout_marginBottom="16dp"
-                                android:gravity="center"
+                                android:layout_marginBottom="12dp"
+                                android:gravity="start"
                                 android:layout_gravity="top"/>
 
                             <RadioGroup

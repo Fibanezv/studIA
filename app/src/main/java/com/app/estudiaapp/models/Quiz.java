@@ -10,6 +10,7 @@ import java.util.List;
 public class Quiz {
     public String id;
     public String titulo;
+    public String typology;
     public List<Question> questions;
     public QuizProgress progreso;
 

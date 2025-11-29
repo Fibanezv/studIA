@@ -46,6 +46,10 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
     public void onBindViewHolder(@NonNull QuizViewHolder holder, int position) {
         Quiz q = quizzes.get(position);
         holder.title.setText(q.titulo != null ? q.titulo : q.id);
+        if (holder.typology != null) {
+            holder.typology.setText(q.typology != null ? ("Tipo: " + q.typology) : "");
+            holder.typology.setVisibility(q.typology != null ? View.VISIBLE : View.GONE);
+        }
 
         // Datos del quiz: total preguntas y respondidas
         int total = (q.questions == null) ? 0 : q.questions.size();
@@ -54,16 +58,17 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
         if (total > 0) percent = (int) ((answered * 100.0f) / total);
         if (percent > 100) percent = 100; // cap
 
+        // Mostrar siempre el porcentaje de progreso como estaba originalmente
+        holder.percent.setVisibility(View.VISIBLE);
         holder.percent.setText(percent + "%");
 
         // Mostrar nota final si existe (nota >= 0)
         if (holder.score != null) {
             int nota = (q.progreso == null) ? -1 : q.progreso.nota;
-            if (nota >= 0) {
-                // show plain percentage and reveal the label
+            // Show score only when there's an actual answered count (avoid showing 0% when nothing answered)
+            if (nota >= 0 && answered > 0) {
                 holder.score.setText(nota + "%");
                 holder.score.setVisibility(View.VISIBLE);
-                // reveal label (if present)
                 if (holder.scoreLabel != null) holder.scoreLabel.setVisibility(View.VISIBLE);
             } else {
                 holder.score.setVisibility(View.GONE);
@@ -124,6 +129,7 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
 
     static class QuizViewHolder extends RecyclerView.ViewHolder {
     TextView title;
+    TextView typology;
     TextView percent;
     TextView score;
     TextView scoreLabel;
@@ -132,6 +138,7 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
         public QuizViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.quiz_title);
+            typology = itemView.findViewById(R.id.quiz_typology);
             percent = itemView.findViewById(R.id.quiz_percent);
             score = itemView.findViewById(R.id.quiz_score);
             scoreLabel = itemView.findViewById(R.id.quiz_score_label);

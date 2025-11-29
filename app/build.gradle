@@ -57,6 +57,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage'
     // Remote Config for fetching OPENAI_API_KEY at runtime
     implementation 'com.google.firebase:firebase-config'
+    // Firebase Functions client to call callable functions
+    implementation 'com.google.firebase:firebase-functions'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 

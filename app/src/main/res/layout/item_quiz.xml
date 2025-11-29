@@ -19,6 +19,15 @@
         android:textStyle="bold"
         android:textColor="@color/colorPrimary" />
 
+    <TextView
+        android:id="@+id/quiz_typology"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tipo: A,B,C,D"
+        android:textSize="12sp"
+        android:textColor="@color/black"
+        android:layout_marginTop="4dp" />
+
     <!-- Nota: Se elimina la barra de progreso en el item. El % se muestra junto al icono y hay un botón Reiniciar si está al 100% -->
 
     <!-- Fila simple: icono + % completado + botón Reiniciar (solo visible al 100%) -->

@@ -10,6 +10,43 @@ Resumen rápido (últimos cambios relevantes)
 - `UserActivity` se rediseñó: ahora muestra perfil, estadísticas (planes/quizzes/flashcards), toggles, exportación de datos, historial por plan/quiz y edición del nombre (email no editable). Se eliminó la opción de restablecer datos en la UI.
 - Se agregó `HotTopicsActivity` y recursos asociados (badges, etc.). Badges y PlanDetails fueron pulidos para mostrar solo badges alcanzados con icono `badge_perfect_plan`.
 
+Arquitectura actual (OpenAI + Firestore desde la app)
+-----------------------------------------------
+Nota importante: las Cloud Functions han sido eliminadas del repositorio. Toda la lógica de generación
+de StudyPlans se ejecuta desde la app Android. Resumen del flujo exacto:
+
+- Usuario: abre `UploadActivity` y completa el formulario + adjunta un PDF.
+- `UploadActivity` encola un `StudyPlanWorker` (WorkManager) con la `Uri` del fichero y opciones del formulario.
+- **Nota:** la extracción de texto ha sido eliminada del módulo; `StudyPlanWorker` ahora espera recibir texto pre-extraído (por ejemplo, por un preprocesado externo o enviado en el formulario).
+- Si el texto es muy grande se compacta (resúmenes por chunks) y se prepara el prompt/schema.
+- `StudyPlanWorker` usa `OpenAiClient` (con la API key que obtiene desde `OpenAiKeyStore`, poblado desde Remote Config o pruebas locales)
+  para llamar a la API de OpenAI (Responses API) pidiendo `text.format: { type: "json_schema", strict: true }`.
+- Si OpenAI devuelve el JSON del plan correctamente, el Worker sube el fichero original a Firebase Storage en
+  `users/{uid}/plans/{planId}/source.pdf` y guarda el documento del plan en Firestore en
+  `users/{uid}/plans/{planId}`.
+
+Puntos clave de configuración y pruebas
+- API key OpenAI:
+  - En producción NO incluir la clave en la app. Para pruebas locales la app puede leer `openai_api_key` en
+    `res/values/strings.xml` o, preferible, usar Firebase Remote Config con la clave en la key `OPENAI_API_KEY`.
+  - El `StudyPlanWorker` resuelve la key llamando `OpenAiKeyStore.getKey(context)` (la App tiene lógica para leer Remote Config en `UploadActivity`).
+- Habilitar Firebase:
+  - Firestore y Firebase Storage deben estar configurados en el proyecto Firebase.
+  - Reglas de seguridad: asegúrese de que sólo usuarios autenticados pueden escribir en `users/{uid}/plans/{planId}`.
+
+Cómo probar (rápido)
+1. Preparar API key: poner la clave en Remote Config o, para pruebas, añadirla temporalmente en `app/src/main/res/values/strings.xml` dentro de `openai_api_key` (no recomendado en producción).
+2. Abrir el proyecto en Android Studio y ejecutar la app (o `.
+   gradlew.bat assembleDebug`).
+3. En app: iniciar sesión (la app puede iniciar sesión anónimamente si no hay usuario), ir a `UploadActivity`, subir un PDF y pulsar "Generar plan".
+4. El Worker mostrará progreso en el overlay. Si se genera correctamente, el plan quedará en Firestore en `users/{uid}/plans/{planId}` y el PDF en Storage en `users/{uid}/plans/{planId}/source.pdf`.
+
+Notas de seguridad y límites
+- No incluir la API key en builds de producción. Usar un proxy servidor si requieres más control o para auditar llamadas.
+- Los PDFs grandes pueden requerir chunking y resúmenes — el Worker ya maneja esto. Para documentos muy grandes considera
+  preprocesarlos y enviar solo secciones relevantes al modelo.
+
+
 Índice
 - Descripción general
 - Cambios recientes y estado actual

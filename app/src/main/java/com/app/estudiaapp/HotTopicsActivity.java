@@ -14,6 +14,7 @@ import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.HotTopic;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.UserRepository;
 
 import java.util.ArrayList;
 
@@ -29,30 +30,72 @@ public class HotTopicsActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (planId == null) return;
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        androidx.recyclerview.widget.RecyclerView rv = findViewById(R.id.recycler_hot_topics);
+        if (uid != null) {
+            new UserRepository(this).getPlan(uid, planId, p -> {
+                if (p != null && p.hotTopics != null) {
+                    topics.clear();
+                    topics.addAll(p.hotTopics);
+                    if (rv != null && rv.getAdapter() instanceof com.app.estudiaapp.adapters.HotTopicsAdapter) {
+                        ((com.app.estudiaapp.adapters.HotTopicsAdapter) rv.getAdapter()).updateItems(topics);
+                    }
+                }
+            }, e -> {
+                // fallback: nothing
+            });
+        } else {
+            StudyPlan p = StorageHelper.cargarPlan(this, planId);
+            if (p != null && p.hotTopics != null) {
+                topics.clear();
+                topics.addAll(p.hotTopics);
+                if (rv != null && rv.getAdapter() instanceof com.app.estudiaapp.adapters.HotTopicsAdapter) {
+                    ((com.app.estudiaapp.adapters.HotTopicsAdapter) rv.getAdapter()).updateItems(topics);
+                }
+            }
+        }
+    }
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hot_topics);
 
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         if (planId == null) {
-            Toast.makeText(this, "Error: plan_id no recibido", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+            try {
+                android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
+                planId = prefs.getString("last_plan_id", null);
+            } catch (Exception ignored) { planId = null; }
         }
 
-        StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-        if (plan == null) {
-            Toast.makeText(this, "No se pudo cargar el plan", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-        if (plan.hotTopics != null) topics.addAll(plan.hotTopics);
+        StudyPlan plan = null;
+        if (planId != null) plan = StorageHelper.cargarPlan(this, planId);
+        // If plan couldn't be loaded, continue with an empty topics list (don't finish)
+        if (plan != null && plan.hotTopics != null) topics.addAll(plan.hotTopics);
 
         RecyclerView rv = findViewById(R.id.recycler_hot_topics);
         rv.setLayoutManager(new LinearLayoutManager(this));
         HotTopicsAdapter adapter = new HotTopicsAdapter(topics);
         rv.setAdapter(adapter);
+
+        // If user is signed-in, prefer loading plan from Firestore so freshly generated plans appear
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        if (uid != null && planId != null) {
+            new UserRepository(this).getPlan(uid, planId, p -> {
+                if (p != null && p.hotTopics != null) {
+                    topics.clear();
+                    topics.addAll(p.hotTopics);
+                    adapter.updateItems(topics);
+                }
+            }, e -> {
+                // fallback: keep whatever we loaded locally
+            });
+        }
 
         setupNavigation();
     }

@@ -22,7 +22,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardElevation="4dp"
+                android:paddingBottom="25px">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -64,25 +65,7 @@
 
                     </FrameLayout>
 
-                    <!-- Formulario de especificaciones del plan -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Titulo del Plan de Estudio"
-                        android:layout_marginTop="8dp"
-                        android:textSize="20sp"
-                        android:textColor="@color/beige_300_theme"
-                        android:textStyle="bold"/>
-
-                    <EditText
-                        android:id="@+id/input_plan_title"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="e.g. História - El Imperio Romano"
-                        android:inputType="text"
-                        android:textSize="16sp"
-                        android:textColor="@color/beige_300_theme"
-                        android:textColorHint="@color/beige_300_theme"/>
+                    <!-- Formulario de especificaciones del plan (titulo generado en servidor) -->
 
 
                     <LinearLayout
@@ -100,40 +83,62 @@
                             android:orientation="vertical"
                             android:layout_marginTop="8dp">
 
-                            <!-- Idioma block: full width title + spinner -->
-                            <TextView
+                            <!-- Idioma and Nivel as label-left / spinner-right rows to match other blocks -->
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Idioma"
-                                android:textSize="20sp"
-                                android:textColor="@color/beige_300_theme"
-                                android:textStyle="bold" />
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginTop="4dp">
 
-                            <Spinner
-                                android:id="@+id/spinner_language"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/languages" />
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Idioma"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
 
-                            <!-- Small spacer -->
+                                <Spinner
+                                    android:id="@+id/spinner_language"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:entries="@array/languages"
+                                    android:spinnerMode="dropdown"
+                                    android:popupBackground="@color/colorPrimary" />
+
+                            </LinearLayout>
+
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="8dp" />
 
-                            <!-- Nivel block: full width title + spinner -->
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Nivel"
-                                android:textSize="20sp"
-                                android:textColor="@color/beige_300_theme"
-                                android:textStyle="bold" />
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginTop="4dp">
 
-                            <Spinner
-                                android:id="@+id/spinner_level"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/levels" />
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Nivel"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <Spinner
+                                    android:id="@+id/spinner_level"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:entries="@array/levels"
+                                    android:spinnerMode="dropdown"
+                                    android:popupBackground="@color/colorPrimary" />
+
+                            </LinearLayout>
                 </LinearLayout>
             <!-- Separator -->
             <View
@@ -144,81 +149,91 @@
                 android:layout_marginBottom="8dp" />
             </LinearLayout>
                     
-                    <!-- Switch específico para incluir Quizzes (antes de los selects relacionados con quizzes) -->
+                    <!-- Quiz controls: show limits as label + select on one row -->
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="8dp">
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Incluir Quizzes"
-                            android:textSize="20sp"
-                            android:textColor="@color/beige_300_theme"
-                            android:textStyle="bold"/>
-                        <Switch
-                            android:id="@+id/switch_include_quizzes"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:thumbTint="@color/switch_thumb_selector"
-                            android:trackTint="@color/switch_track_selector"/>
-                    </LinearLayout>
-                    <LinearLayout
-                        android:id="@+id/quiz_controls_container"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:layout_marginTop="8dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Tipo de Quiz"
-                            android:textColor="@color/black"
-                            android:textStyle="bold" />
-
-                        <Spinner
-                            android:id="@+id/spinner_quiz_type"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:entries="@array/quiz_types"
-                            android:spinnerMode="dropdown"
-                            android:popupBackground="@color/colorPrimary" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
 
                             <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Tipo de Quiz"
+                                android:textColor="@color/beige_300_theme"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <Spinner
+                                android:id="@+id/spinner_quiz_type"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:entries="@array/quiz_types"
+                                android:spinnerMode="dropdown"
+                                android:textAlignment="textEnd"
+                                android:popupBackground="@color/colorPrimary" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
                                 android:text="Límite de Quizzes"
-                                android:layout_marginTop="8dp"
-                                android:textColor="@color/black"
+                                android:textColor="@color/beige_300_theme"
+                                android:textSize="16sp"
                                 android:textStyle="bold" />
 
                             <Spinner
                                 android:id="@+id/spinner_quiz_limit"
-                                android:layout_width="match_parent"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:entries="@array/quiz_limits"
                                 android:spinnerMode="dropdown"
                                 android:popupBackground="@color/colorPrimary" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Límite de preguntas"
-                            android:layout_marginTop="8dp"
-                            android:textColor="@color/black"
-                            android:textStyle="bold" />
+                        </LinearLayout>
 
-                        <Spinner
-                            android:id="@+id/spinner_questions_limit"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:entries="@array/question_limits"
-                            android:spinnerMode="dropdown"
-                            android:popupBackground="@color/colorPrimary" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="8dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Límite de preguntas"
+                                android:textColor="@color/beige_300_theme"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <Spinner
+                                android:id="@+id/spinner_questions_limit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:entries="@array/question_limits"
+                                android:spinnerMode="dropdown"
+                                android:popupBackground="@color/colorPrimary" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -230,46 +245,26 @@
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="8dp" />
 
-                    <!-- Flashcards section: switch + controls container -->
+                    <!-- Flashcards limit (label + select) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginTop="8dp">
+
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Incluir Flashcards"
-                            android:textSize="20sp"
-                            android:textColor="@color/beige_300_theme"
-                            android:textStyle="bold"/>
-                        <Switch
-                            android:id="@+id/switch_include_flashcards"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:thumbTint="@color/switch_thumb_selector"
-                            android:trackTint="@color/switch_track_selector"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/flashcard_controls_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginTop="8dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
                             android:text="Límite de Flashcards"
-                            android:textColor="@color/black"
+                            android:textColor="@color/beige_300_theme"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <Spinner
                             android:id="@+id/spinner_flashcard_limit"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:entries="@array/flashcard_limits"
                             android:spinnerMode="dropdown"
@@ -285,46 +280,26 @@
                         android:layout_marginBottom="8dp" />
                     
 
-                    <!-- Hot Topics section: switch + controls container -->
+                    <!-- Hot Topics limit (label + select) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginTop="8dp">
+
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Incluir Hot Topics"
-                            android:textSize="20sp"
-                            android:textColor="@color/beige_300_theme"
-                            android:textStyle="bold"/>
-                        <Switch
-                            android:id="@+id/switch_include_hot_topics"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:thumbTint="@color/switch_thumb_selector"
-                            android:trackTint="@color/switch_track_selector"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/hot_topics_controls_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginTop="8dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
                             android:text="Límite de Hot Topics"
-                            android:textColor="@color/black"
+                            android:textColor="@color/beige_300_theme"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <Spinner
                             android:id="@+id/spinner_hot_topics_limit"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:entries="@array/hot_topic_limits"
                             android:spinnerMode="dropdown"
