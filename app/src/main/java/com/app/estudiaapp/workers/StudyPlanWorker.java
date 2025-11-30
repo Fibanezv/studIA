@@ -258,10 +258,10 @@ public class StudyPlanWorker extends Worker {
                 funcPayload.put("flashcardLimit", flashcardLimit);
                 funcPayload.put("includeHotTopics", includeHotTopics);
 
-                // Call the Cloud Function with retries. Some executions may be slow
-                // (OpenAI/model latency) and can cause timeouts; retry transient failures.
-                final int MAX_ATTEMPTS = 3;
-                final long WAIT_PER_ATTEMPT_MS = 90000; // 90s per attempt
+                // Call the Cloud Function with reduced timeout since it returns immediately
+                // NEW: Function returns planId in ~2-5 seconds, content generates in background
+                final int MAX_ATTEMPTS = 2;
+                final long WAIT_PER_ATTEMPT_MS = 30000; // 30s = sufficient for immediate response
                 for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
                     final CountDownLatch attemptLatch = new CountDownLatch(1);
                     // reset exception for this attempt
@@ -295,9 +295,16 @@ public class StudyPlanWorker extends Worker {
                     long waited = 0L;
                     while (attemptLatch.getCount() > 0 && waited < WAIT_PER_ATTEMPT_MS) {
                         if (isStopped()) return failureWithMessage("Cancelled");
-                        long toWait = Math.min(500, WAIT_PER_ATTEMPT_MS - waited);
+                        long toWait = Math.min(5000, WAIT_PER_ATTEMPT_MS - waited);
                         attemptLatch.await(toWait, TimeUnit.MILLISECONDS);
                         waited += toWait;
+                        // Update progress every 10 seconds
+                        if (waited % 10000 < 5000) {
+                            int secondsWaited = (int)(waited / 1000);
+                            setProgressAsync(new Data.Builder()
+                                .putString("status", "Generando plan... (" + secondsWaited + "s)")
+                                .build());
+                        }
                     }
 
                     if (attemptLatch.getCount() > 0) {

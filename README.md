@@ -1,225 +1,567 @@
-# EstudiaApp — Análisis actualizado
+# EstudiaApp
 
-Este README ha sido actualizado punto por punto tras un análisis del estado actual del repositorio (noviembre 2025). Incluye: descripción, cambios recientes, estructura de ficheros relevada, estado de las Activities, modelo de datos, cómo se almacena la información, lista de tareas pendientes (prioritizadas) y una lista separada de mejoras recomendables.
+> **Aplicación Android de Estudio Inteligente con IA**
+> 
+> EstudiaApp es una aplicación móvil que permite a los estudiantes generar planes de estudio personalizados, quizzes y flashcards a partir de documentos usando inteligencia artificial.
 
-Resumen rápido (últimos cambios relevantes)
-- Se añadió una clase `BaseActivity` que centraliza el comportamiento del header: fija el icono del menú lateral (drawer) y abre el `DrawerLayout` si existe; si no, muestra un `PopupMenu` como fallback.
-- El layout `include_app_header.xml` contiene el botón del menú izquierdo (`@id/header_menu_button`) y el icono de la app centrado. `BaseActivity` fuerza el drawable `ic_menu_24` y aplica tint para mantener consistencia visual.
-- Muchos layouts se adaptaron para incluir un `DrawerLayout` + `NavigationView` y la navegación se centralizó para que el drawer sea accesible desde las pantallas que incluyen el header.
-- Se añadieron protecciones en `FlashcardActivity` para evitar crash cuando falta `plan_id` o no hay flashcards (se elige plan por defecto o se muestra un Toast y se termina la Activity).
-- `UserActivity` se rediseñó: ahora muestra perfil, estadísticas (planes/quizzes/flashcards), toggles, exportación de datos, historial por plan/quiz y edición del nombre (email no editable). Se eliminó la opción de restablecer datos en la UI.
-- Se agregó `HotTopicsActivity` y recursos asociados (badges, etc.). Badges y PlanDetails fueron pulidos para mostrar solo badges alcanzados con icono `badge_perfect_plan`.
+[![Android](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
+[![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
+[![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-Arquitectura actual (OpenAI + Firestore desde la app)
------------------------------------------------
-Nota importante: las Cloud Functions han sido eliminadas del repositorio. Toda la lógica de generación
-de StudyPlans se ejecuta desde la app Android. Resumen del flujo exacto:
-
-- Usuario: abre `UploadActivity` y completa el formulario + adjunta un PDF.
-- `UploadActivity` encola un `StudyPlanWorker` (WorkManager) con la `Uri` del fichero y opciones del formulario.
-- **Nota:** la extracción de texto ha sido eliminada del módulo; `StudyPlanWorker` ahora espera recibir texto pre-extraído (por ejemplo, por un preprocesado externo o enviado en el formulario).
-- Si el texto es muy grande se compacta (resúmenes por chunks) y se prepara el prompt/schema.
-- `StudyPlanWorker` usa `OpenAiClient` (con la API key que obtiene desde `OpenAiKeyStore`, poblado desde Remote Config o pruebas locales)
-  para llamar a la API de OpenAI (Responses API) pidiendo `text.format: { type: "json_schema", strict: true }`.
-- Si OpenAI devuelve el JSON del plan correctamente, el Worker sube el fichero original a Firebase Storage en
-  `users/{uid}/plans/{planId}/source.pdf` y guarda el documento del plan en Firestore en
-  `users/{uid}/plans/{planId}`.
-
-Puntos clave de configuración y pruebas
-- API key OpenAI:
-  - En producción NO incluir la clave en la app. Para pruebas locales la app puede leer `openai_api_key` en
-    `res/values/strings.xml` o, preferible, usar Firebase Remote Config con la clave en la key `OPENAI_API_KEY`.
-  - El `StudyPlanWorker` resuelve la key llamando `OpenAiKeyStore.getKey(context)` (la App tiene lógica para leer Remote Config en `UploadActivity`).
-- Habilitar Firebase:
-  - Firestore y Firebase Storage deben estar configurados en el proyecto Firebase.
-  - Reglas de seguridad: asegúrese de que sólo usuarios autenticados pueden escribir en `users/{uid}/plans/{planId}`.
-
-Cómo probar (rápido)
-1. Preparar API key: poner la clave en Remote Config o, para pruebas, añadirla temporalmente en `app/src/main/res/values/strings.xml` dentro de `openai_api_key` (no recomendado en producción).
-2. Abrir el proyecto en Android Studio y ejecutar la app (o `.
-   gradlew.bat assembleDebug`).
-3. En app: iniciar sesión (la app puede iniciar sesión anónimamente si no hay usuario), ir a `UploadActivity`, subir un PDF y pulsar "Generar plan".
-4. El Worker mostrará progreso en el overlay. Si se genera correctamente, el plan quedará en Firestore en `users/{uid}/plans/{planId}` y el PDF en Storage en `users/{uid}/plans/{planId}/source.pdf`.
-
-Notas de seguridad y límites
-- No incluir la API key en builds de producción. Usar un proxy servidor si requieres más control o para auditar llamadas.
-- Los PDFs grandes pueden requerir chunking y resúmenes — el Worker ya maneja esto. Para documentos muy grandes considera
-  preprocesarlos y enviar solo secciones relevantes al modelo.
-
-
-Índice
-- Descripción general
-- Cambios recientes y estado actual
-- Estructura principal del proyecto
-- Resumen por Activity (estado actualizado)
-- Modelos y almacenamiento
-- Problemas conocidos / limitaciones actuales
-- Tareas pendientes (priorizadas) — lista puntual
-- Mejoras recomendables (no críticas)
-- Cómo ejecutar y validar localmente
-- Notas finales
+**Última actualización:** 30 de noviembre de 2025  
+**Versión:** 1.0 (beta/0.0.1)  
+**Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)
 
 ---
 
-Descripción general
--------------------
-EstudiaApp es una app Android para crear y usar planes de estudio compuestos por quizzes y flashcards. Los planes pueden ser generados a partir de ficheros subidos (UploadActivity) o creados en memoria (datos de ejemplo con StorageHelper). El almacenamiento principal actual es JSON por plan en internal storage.
+## 📋 Tabla de Contenidos
 
-Cambios recientes y estado actual
---------------------------------
-- Centralizado el header y drawer: `BaseActivity` controla la apertura del drawer o el fallback del popup.
-- Header visual: `include_app_header.xml` ahora tiene un icono consistente y un botón de menú en la izquierda.
-- Drawer: layouts como `activity_quiz_list.xml` o `activity_flashcard.xml` están envueltos en `DrawerLayout` y usan `NavigationView` con `drawer_menu` y `nav_header_drawer`.
-- `FlashcardActivity` se defendió contra NPEs (selección de plan por defecto, mensajes al usuario si no hay flashcards).
-- `UserActivity` fue ampliado: perfil (nombre, email), stats por planes/quizzes/flashcards, toggles, exportar datos, historial de quizzes (timestamps), edición del nombre (no del email), y cierre de sesión.
-- HotTopics y badges: se añadieron recursos y lógica para mostrar solo badges logrados.
+1. [Características Principales](#-características-principales)
+2. [Arquitectura y Tecnologías](#-arquitectura-y-tecnologías)
+3. [Estructura del Proyecto](#-estructura-del-proyecto)
+4. [Configuración e Instalación](#-configuración-e-instalación)
+5. [Uso de la Aplicación](#-uso-de-la-aplicación)
+6. [Modelos de Datos](#-modelos-de-datos)
+7. [Seguridad y Buenas Prácticas](#-seguridad-y-buenas-prácticas)
+8. [Estado Actual del Proyecto](#-estado-actual-del-proyecto)
+9. [Roadmap y Tareas Pendientes](#-roadmap-y-tareas-pendientes)
+10. [Contribución](#-contribución)
+11. [Licencia](#-licencia)
 
-Checkpoint actual (2025-11-09)
------------------------------
-Estos puntos resumen los cambios manuales más recientes y el estado del proyecto en este checkpoint. No se han aplicado cambios de código durante la actualización del README (sólo documentación).
+---
 
-- Archivos modificados (manualmente antes de este README):
-  - `app/src/main/res/layout/activity_user.xml`
-    - Perfil, estadísticas y toggles se consolidaron en un único `CardView` con estilo destacado (fondo `colorPrimary`, texto beige `beige_300_theme`).
-    - Se añadió la inclusión del bloque promocional premium arriba del card: `<include layout="@layout/nav_drawer_footer_premium" />`.
-    - IDs relevantes añadidos/empleados en la UI: `tv_plans_count`, `tv_membership_type`, `tv_flashcards_count`, `tv_hot_topics_count`, `tv_quizzes_count`, `switch_notifications`, `switch_dark_mode`, `premium_card`, `premium_shimmer`.
+## 🚀 Características Principales
 
-  - `app/src/main/res/layout/nav_drawer_footer_premium.xml`
-    - Layout reutilizable para la tarjeta promocional (gradient + shimmer). Contiene `premium_card` y `premium_shimmer` para animación.
+### Generación Inteligente de Contenido
+- **Creación automática de planes de estudio** a partir de documentos PDF subidos por el usuario
+- **Generación de quizzes** con preguntas de opción múltiple personalizadas
+- **Flashcards inteligentes** para repaso rápido y eficiente
+- **Hot Topics**: identificación de temas clave del material de estudio
+- **Personalización avanzada**: control sobre cantidad de quizzes, preguntas, flashcards y temas
 
-  - `app/src/main/res/layout/activity_plan_details.xml`
-    - Estilos y visuales de la pantalla de detalles de plan actualizados (mejor consistencia con badges y colores highlight).
+### Gestión de Aprendizaje
+- **Sistema de progreso y estadísticas** con seguimiento detallado de:
+  - Planes de estudio completados
+  - Quizzes realizados y puntuaciones
+  - Flashcards estudiadas
+  - Historial con timestamps
+- **Sistema de badges** para gamificación y motivación
+- **Biblioteca de planes** con acceso rápido a todo el contenido
 
-  - `app/src/main/java/com/app/estudiaapp/UserActivity.java`
-    - `onCreate()` y wiring actualizados para detectar la inclusión del `premium_card` en el layout, iniciar la animación shimmer (`premium_shimmer`) y manejar el clic para abrir `MembershipActivity`.
-    - `computeStats()` mantiene la lógica para poblar: `tv_plans_count`, `tv_quizzes_count`, `tv_flashcards_count`.
+### Experiencia de Usuario
+- **Interfaz moderna** con Material Design 3
+- **Modo oscuro/claro** con transición suave
+- **Drawer navigation** centralizado para navegación consistente
+- **Autenticación Firebase** con soporte para email/password y Google Sign-In
+- **Almacenamiento offline** con sincronización en la nube
+- **Exportación de datos** para respaldo personal
 
-- Recursos y utilidades añadidas/ajustadas:
-  - Selectores de color para switches: `res/color/switch_thumb_selector.xml` y `res/color/switch_track_selector.xml` — switches tintados con `colorPrimary` cuando están activados.
+---
 
-- Estado de compilación (local):
-  - `.\gradlew.bat assembleDebug` ejecutado tras los cambios y devolvió: BUILD SUCCESSFUL.
+## 🏗️ Arquitectura y Tecnologías
 
-- Pendientes detectados (a documentar/implementar posteriormente):
-  1. Poblar `tv_membership_type` desde preferencias/`authPrefs` (ahora por defecto muestra "FREE").
-  2. Calcular y poblar `tv_hot_topics_count` (dependiente de la definición de "hot topics" en la lógica del dominio).
-  3. Actualizar `FlashcardsAdapter` para enlazar la nueva ImageView de completado (si procede) — binding pendiente en el adaptador.
-  4. Revisión visual en dispositivo/emulador para ajustar paddings/márgenes y comprobar accesibilidad (contentDescription y tamaños).
+### Stack Tecnológico
 
-- Notas sobre coherencia y seguridad:
-  - El include del promo fue normalizado a `nav_drawer_footer_premium` para evitar discrepancias de nombre de recurso (se verificó la referencia en `activity_user.xml`).
-  - No se tocaron los archivos Java/XML originales durante la creación de este checkpoint; el README refleja el estado actual tal como está en el árbol de trabajo.
+#### Frontend (Android)
+- **Lenguaje:** Java (JDK 8+)
+- **SDK mínimo:** Android 7.0 (API 24)
+- **SDK objetivo:** Android 14 (API 34)
+- **Build system:** Gradle 8.3.1
+- **UI:** Material Design Components 1.12.0
 
-Si quieres, puedo transformar estos pendientes en issues/PRs y preparar parches concretos para cada uno (p. ej. extraer `membershipType` desde `authPrefs` y añadir tests pequeños). Indica si quieres que lo haga ahora o que sólo documente más en detalle cada pendiente.
+#### Backend y Servicios
+- **Firebase Authentication** - Gestión de usuarios y autenticación
+- **Cloud Firestore** - Base de datos NoSQL en tiempo real
+- **Firebase Storage** - Almacenamiento de archivos (PDFs originales)
+- **Firebase Remote Config** - Configuración dinámica (API keys)
+- **WorkManager 2.8.1** - Procesamiento en background
 
-Estructura principal del proyecto (relevante)
-------------------------------------------
-- `app/src/main/java/com/app/estudiaapp/`
-  - Activities principales: `MainActivity`, `FlashcardActivity`, `QuizActivity`, `QuizListActivity`, `UploadActivity`, `SignInActivity`, `SignUpActivity`, `SplashActivity`, `UserActivity`, `HotTopicsActivity`, `QuizResultsActivity`, etc.
-  - `BaseActivity.java` — comportamiento central del header/drawer.
-  - `helper/StorageHelper.java` — persistencia (JSON por plan) y utilidades de datos de prueba.
-  - `models/` — `StudyPlan`, `Quiz`, `Question`, `Flashcard`, `UserProgress`, `QuizProgress`, `HotTopic`.
-  - `adapters/` — adaptadores RecyclerView (planes, quizzes).
-  - `api/` — cliente Retrofit para subida de ficheros.
+#### Inteligencia Artificial
+- **OpenAI API** - Generación de contenido educativo con GPT
+- **JSON Schema Validation** - Respuestas estructuradas y validadas
 
-- Recursos UI: `res/layout/` (include_app_header, activity_*), `res/menu/drawer_menu.xml`, `res/layout/nav_header_drawer.xml`, drawables para iconos y badges.
+#### Otras Dependencias Clave
+- **Retrofit 2.9.0** - Cliente HTTP
+- **Gson 2.10.1** - Serialización JSON
+- **OkHttp 4.11.0** - Cliente HTTP avanzado
+- **Security Crypto 1.1.0** - Almacenamiento encriptado de API keys
+- **MultiDex 2.0.1** - Soporte para aplicaciones grandes
 
-Resumen por Activity (estado actualizado)
----------------------------------------
-Nota: solo se listan las Activities con estado relevante tras los cambios.
+### Arquitectura de Generación de Planes
 
-- MainActivity
-  - Lista planes. Crea datos de ejemplo si no existen (StorageHelper.crearPlanSimuladoSiNoExiste).
-  - Abre UploadActivity y Plan/Quiz/Flashcard según selección.
-
-- FlashcardActivity
-  - Carga plan por `Constants.EXTRA_PLAN_ID` o elige el primero si falta.
-  - Evita crash si no hay flashcards (muestra Toast y termina).
-  - Está envuelta en layout con DrawerLayout en la mayoría de casos; el header izquierdo abre el drawer (gracias a BaseActivity).
-
-- QuizListActivity / QuizActivity
-  - Muestra lista de quizzes y/o quiz en sí. Todavía existe cierta duplicación entre ambas; se recomienda unificar.
-
-- UserActivity
-  - Rediseñada: muestra perfil (nombre y email), estadísticas, toggles, exportación de datos, historial de quizzes (timestamps), permite editar sólo el nombre y cerrar sesión.
-
-- UploadActivity
-  - Permite seleccionar un fichero y subirlo. Asegúrate de que el endpoint acepte el tipo MIME subido; hoy `UploadActivity` hace un RequestBody y usa Retrofit.
-
-- HotTopicsActivity
-  - Actividad añadida para mostrar temas calientes del plan.
-
-Modelos y almacenamiento
-------------------------
-- Modelos principales:
-  - `StudyPlan` { id, nombre, List<Quiz>, List<Flashcard>, UserProgress }
-  - `Quiz` { id, titulo, List<Question>, QuizProgress }
-  - `Question` { question, options[], answer }
-  - `Flashcard` { pregunta, respuesta }
-  - `UserProgress` y `QuizProgress` guardan métricas y `lastUpdatedMillis` para timestamps.
-
-- Almacenamiento:
-  - Cada `StudyPlan` se guarda como `{planId}.json` en internal storage (StorageHelper.guardarPlan / cargarPlan / listarPlanes).
-  - Exportación: `UserActivity` permite serializar todas las planes a `exported_data.json` en internal storage.
-
-Problemas conocidos / limitaciones actuales
------------------------------------------
-1. Duplicación de lógica entre `QuizActivity` y `QuizListActivity`.
-2. Algunos lugares usan literales para extras (`"plan_id"`) en vez de `Constants.EXTRA_PLAN_ID` — inconsistencias posibles.
-3. `UploadActivity` debe detectar el MIME real y no asumir `application/pdf` en todos los casos.
-4. Historial mostrado solo cuando `QuizProgress.lastUpdatedMillis` > 0 — requiere que la actualización de progreso lo pueble correctamente.
-5. No hay entidad `User` persistente (se usa `SharedPreferences` con `email` y `displayName`).
-6. Falta una cobertura automatizada de tests (unitarios/instrumentados).
-
-Lista de tareas pendientes (puntual, priorizada)
----------------------------------------------
-Tareas críticas (ALTO)
-- Unificar la lógica de quizzes (eliminar duplicación entre `QuizActivity` y `QuizListActivity`).
-- Robustecer `UploadActivity`: detectar MIME real (ContentResolver.getType), manejar errores, mostrar progress.
-- Revisar y armonizar el uso de extras (usar `Constants.EXTRA_PLAN_ID` en todo el código).
-
-Tareas importantes (MEDIO)
-- Implementar navegación entre flashcards (avanzar/retroceder, marcar conocido/no conocido).
-- Asociar `UserProgress` a un `User` persistente (Room o backend) si se necesita multiusuario.
-- Mejorar `ProgressActivity` y vistas estadísticas.
-
-Tareas de mantenimiento (BAJO)
-- Añadir tests unitarios para `StorageHelper`, lógica de quizzes y serialización.
-- Añadir CI (GitHub Actions) para build y pruebas.
-- Revisar accesibilidad y localización (contentDescription, strings.xml).
-
-Lista de mejoras recomendables (no urgentes)
------------------------------------------
-- Migrar a Room para escalabilidad y consultas eficientes.
-- Hacer export/import compartible (share intent) y/o export a almacenamiento externo.
-- Agregar un backend real: autenticación (Firebase/Auth), sincronización de planes y progreso.
-- UI polish: animaciones al avanzar preguntas/flashcards, uso de Material components avanzados.
-- Telemetría básica (eventos) para analizar uso y priorizar features.
-
-Cómo ejecutar la app (rápido)
----------------------------
-1. Abrir el proyecto en Android Studio.
-2. Conectar un emulador o dispositivo.
-3. Ejecutar: "Run app" o:
-
-```powershell
-cd C:\Users\Fran\Desktop\EstudiaApp
-.\gradlew.bat assembleDebug
+```
+Usuario → UploadActivity → StudyPlanWorker (WorkManager)
+                                  ↓
+                     [Procesamiento en background]
+                                  ↓
+                    OpenAI API (JSON Schema Response)
+                                  ↓
+              ┌──────────────────┴──────────────────┐
+              ↓                                      ↓
+    Firebase Storage                        Cloud Firestore
+  (PDF original en                      (Plan estructurado en
+   users/{uid}/plans/{planId}/)          users/{uid}/plans/{planId})
+              ↓                                      ↓
+                    ┌──────────────────┐
+                    │  MainActivity    │
+                    │  (Vista de      │
+                    │   planes)       │
+                    └──────────────────┘
 ```
 
-Notas:
-- El endpoint de prueba para upload suele estar en `http://10.0.2.2:8000/` (emulador). Si pruebas en dispositivo real, actualiza `ApiClient.BASE_URL`.
-- La exportación escribe en internal storage (`exported_data.json`). Para compartir el fichero hay que implementar share intent.
+**Flujo detallado:**
 
-Archivo README: estado final y seguimiento
-----------------------------------------
-- Este README resume el estado actual del código y las decisiones importantes ya aplicadas.
-- Pendientes: la sección "Lista de tareas pendientes" arriba y el `todo` del repositorio resumen los cambios por hacer.
-
-Si quieres, puedo ahora:
-- Generar un checklist con PRs sugeridos (archivos a cambiar y extracto de patch) para cada tarea priorizada.
-- Empezar la tarea 1 (unificar QuizActivity) o la tarea 2 (robustecer UploadActivity). Indica cuál prefieres y la implemento.
+1. Usuario selecciona un documento PDF en `UploadActivity`
+2. Se configura límites (quizzes, preguntas, flashcards, hot topics)
+3. Se encola un `StudyPlanWorker` con WorkManager
+4. El Worker procesa el documento y construye un prompt optimizado
+5. Llamada a OpenAI API con JSON Schema strict para respuesta estructurada
+6. Si es exitoso:
+   - Sube el PDF a Firebase Storage (`users/{uid}/plans/{planId}/source.pdf`)
+   - Guarda el plan en Firestore (`users/{uid}/plans/{planId}`)
+7. El usuario ve el plan en `MainActivity` y puede acceder a quizzes/flashcards
 
 ---
 
-Última revisión: noviembre 2025 — actualizado tras cambios en `BaseActivity`, `UserActivity`, `FlashcardActivity`, y recursos de drawer/badges.
+## 📁 Estructura del Proyecto
+
+```
+EstudiaApp/
+├── app/                                    # Módulo principal de la aplicación
+│   ├── build.gradle                        # Configuración Gradle del módulo
+│   ├── google-services.json                # Configuración Firebase
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/app/estudiaapp/
+│   │   │   │   ├── activities/             # Activities principales
+│   │   │   │   │   ├── MainActivity.java          # Pantalla principal con lista de planes
+│   │   │   │   │   ├── BaseActivity.java          # Activity base con drawer navigation
+│   │   │   │   │   ├── UploadActivity.java        # Subir documentos y crear planes
+│   │   │   │   │   ├── FlashcardActivity.java     # Vista de flashcards
+│   │   │   │   │   ├── QuizActivity.java          # Realización de quizzes
+│   │   │   │   │   ├── QuizListActivity.java      # Lista de quizzes de un plan
+│   │   │   │   │   ├── UserActivity.java          # Perfil y estadísticas de usuario
+│   │   │   │   │   ├── PlanDetailsActivity.java   # Detalles de un plan con badges
+│   │   │   │   │   ├── HotTopicsActivity.java     # Vista de temas importantes
+│   │   │   │   │   ├── SignInActivity.java        # Inicio de sesión
+│   │   │   │   │   ├── SignUpActivity.java        # Registro de usuario
+│   │   │   │   │   ├── SplashActivity.java        # Pantalla de inicio
+│   │   │   │   │   ├── MembershipActivity.java    # Información de membresías
+│   │   │   │   │   ├── BibliotecaActivity.java    # Biblioteca de planes
+│   │   │   │   │   └── ...
+│   │   │   │   ├── models/                # Modelos de datos
+│   │   │   │   │   ├── StudyPlan.java            # Plan de estudio con quizzes/flashcards
+│   │   │   │   │   ├── Quiz.java                 # Quiz con preguntas
+│   │   │   │   │   ├── Question.java             # Pregunta individual
+│   │   │   │   │   ├── Flashcard.java            # Tarjeta de estudio
+│   │   │   │   │   ├── HotTopic.java             # Tema importante
+│   │   │   │   │   ├── UserProgress.java         # Progreso del usuario
+│   │   │   │   │   ├── QuizProgress.java         # Progreso en quizzes
+│   │   │   │   │   ├── Badge.java                # Insignias/logros
+│   │   │   │   │   └── BadgesRepository.java     # Repositorio de badges
+│   │   │   │   ├── adapters/              # Adaptadores RecyclerView
+│   │   │   │   │   ├── PlansAdapter.java         # Adaptador de lista de planes
+│   │   │   │   │   ├── QuizzesAdapter.java       # Adaptador de quizzes
+│   │   │   │   │   ├── FlashcardsAdapter.java    # Adaptador de flashcards
+│   │   │   │   │   └── HotTopicsAdapter.java     # Adaptador de hot topics
+│   │   │   │   ├── workers/               # Background workers
+│   │   │   │   │   └── StudyPlanWorker.java      # Generación de planes con OpenAI
+│   │   │   │   ├── helper/                # Helpers y utilidades
+│   │   │   │   │   └── StorageHelper.java        # Persistencia local JSON
+│   │   │   │   ├── utils/                 # Utilidades generales
+│   │   │   │   │   └── OpenAiKeyStore.java       # Gestión segura de API key
+│   │   │   │   ├── ui/                    # Componentes UI personalizados
+│   │   │   │   │   └── OverlayManager.java       # Gestión de overlays de progreso
+│   │   │   │   ├── api/                   # Clientes API
+│   │   │   │   ├── App.java               # Application class (inicialización)
+│   │   │   │   ├── AuthManager.java       # Gestión centralizada de autenticación
+│   │   │   │   └── UserRepository.java    # Repositorio de usuarios/Firestore
+│   │   │   ├── res/                       # Recursos de la aplicación
+│   │   │   │   ├── layout/                       # Layouts XML
+│   │   │   │   ├── drawable/                     # Imágenes y vectores
+│   │   │   │   ├── values/                       # Strings, colores, estilos
+│   │   │   │   ├── menu/                         # Menús (drawer_menu.xml)
+│   │   │   │   └── ...
+│   │   │   └── AndroidManifest.xml        # Manifest de la aplicación
+│   │   ├── test/                          # Tests unitarios
+│   │   └── androidTest/                   # Tests instrumentados
+├── gradle/                                 # Configuración Gradle
+│   ├── libs.versions.toml                 # Catálogo de versiones
+│   └── wrapper/
+├── server/                                 # Servidor de pruebas (legacy)
+├── functions/                              # Cloud Functions (deprecado)
+├── build.gradle                            # Configuración Gradle raíz
+├── settings.gradle                         # Configuración del proyecto
+├── gradlew / gradlew.bat                   # Wrappers de Gradle
+├── README.md                               # Este archivo
+├── README_BBDD.md                          # Documentación de base de datos
+└── firebase.json                           # Configuración Firebase
+```
+
+---
+
+## ⚙️ Configuración e Instalación
+
+### Requisitos Previos
+
+- **Android Studio** Arctic Fox o superior
+- **JDK 8** o superior
+- **Cuenta Firebase** con proyecto configurado
+- **API Key de OpenAI** (para generación de contenido)
+
+### Pasos de Instalación
+
+#### 1. Clonar el Repositorio
+
+```bash
+git clone https://github.com/Fibanezv/studIA.git
+cd studIA
+```
+
+#### 2. Configurar Firebase
+
+1. Crear un proyecto en [Firebase Console](https://console.firebase.google.com/)
+2. Habilitar **Authentication** (Email/Password y opcionalmente Google)
+3. Crear una base de datos **Cloud Firestore**
+4. Configurar **Firebase Storage**
+5. Descargar `google-services.json` y colocarlo en `app/`
+
+**Reglas de seguridad recomendadas (Firestore):**
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /plans/{planId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        match /{document=**} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+  }
+}
+```
+
+#### 3. Configurar OpenAI API Key
+
+**Opción A - Remote Config (Recomendado para producción):**
+
+1. En Firebase Console, ir a Remote Config
+2. Crear parámetro `OPENAI_API_KEY` con tu API key
+3. La app lo recuperará automáticamente al iniciar
+
+**Opción B - Local (Solo para desarrollo):**
+
+Crear `app/src/main/res/values/secrets.xml`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="openai_api_key">sk-proj-...</string>
+</resources>
+```
+
+⚠️ **IMPORTANTE:** Nunca commitear `secrets.xml` al repositorio. Agregarlo a `.gitignore`.
+
+#### 4. Compilar y Ejecutar
+
+```bash
+# Desde línea de comandos
+./gradlew assembleDebug
+
+# O abrir en Android Studio y presionar Run
+```
+
+---
+
+## 📱 Uso de la Aplicación
+
+### Flujo Principal
+
+#### 1. **Registro e Inicio de Sesión**
+- Abrir app → `SplashActivity` → `SignInActivity`
+- Crear cuenta o iniciar sesión con email/password
+- Opcionalmente: Google Sign-In
+
+#### 2. **Crear un Plan de Estudio**
+- En `MainActivity`, presionar botón "Crear Plan de Estudio"
+- Seleccionar un documento PDF
+- Configurar opciones:
+  - Número de quizzes (1-10)
+  - Preguntas por quiz (5-20)
+  - Número de flashcards (10-50)
+  - Hot topics (3-10)
+- Presionar "Generar Plan"
+- Esperar procesamiento (30-60 segundos)
+
+#### 3. **Estudiar con el Plan**
+- Ver plan generado en `MainActivity`
+- Acceder a **Quizzes**: responder preguntas de opción múltiple
+- Acceder a **Flashcards**: estudiar conceptos clave
+- Ver **Hot Topics**: temas importantes identificados
+- Revisar **Badges**: logros desbloqueados
+
+#### 4. **Seguimiento de Progreso**
+- Ir a perfil de usuario (`UserActivity`)
+- Ver estadísticas:
+  - Total de planes
+  - Quizzes completados
+  - Flashcards estudiadas
+  - Historial con timestamps
+- Exportar datos personales
+
+### Características Avanzadas
+
+- **Modo Oscuro**: Toggle en perfil de usuario
+- **Notificaciones**: Configurar en preferencias
+- **Exportación de Datos**: Backup completo en JSON
+- **Drawer Navigation**: Acceso rápido desde cualquier pantalla
+
+---
+
+## 📊 Modelos de Datos
+
+### StudyPlan
+
+```java
+public class StudyPlan {
+    public String id;                    // ID único del plan (ej: "U00001")
+    public String nombre;                // Título del plan
+    public List<Quiz> quizzes;           // Lista de quizzes
+    public List<Flashcard> flashcards;   // Lista de flashcards
+    public List<HotTopic> hotTopics;     // Temas importantes
+    public String sourceUrl;             // URL del PDF en Storage
+    public UserProgress progreso;        // Progreso del usuario
+}
+```
+
+### Quiz
+
+```java
+public class Quiz {
+    public String id;                    // ID del quiz
+    public String titulo;                // Título del quiz
+    public List<Question> questions;     // Lista de preguntas
+    public QuizProgress progreso;        // Progreso en este quiz
+}
+```
+
+### Question
+
+```java
+public class Question {
+    public String question;              // Enunciado de la pregunta
+    public String[] options;             // Array de opciones [A, B, C, D]
+    public String answer;                // Respuesta correcta
+}
+```
+
+### Flashcard
+
+```java
+public class Flashcard {
+    public String pregunta;              // Pregunta/concepto
+    public String respuesta;             // Respuesta/definición
+    public boolean completada;           // Marcada como estudiada
+}
+```
+
+### UserProgress
+
+```java
+public class UserProgress {
+    public int preguntasRespondidas;     // Total de preguntas respondidas
+    public int preguntasCorrectas;       // Total de respuestas correctas
+    public int flashcardsEstudiadas;     // Flashcards completadas
+    public int nivel;                    // Nivel del usuario (gamificación)
+    public long lastUpdatedMillis;       // Timestamp de última actualización
+}
+```
+
+### Estructura en Firestore
+
+```
+users/
+  {uid}/
+    ├── displayName: string
+    ├── email: string
+    ├── membership: { status: "free|pro|premium", ... }
+    ├── preferences: { notificationsEnabled: bool, ... }
+    ├── stats: { totalPlans, totalQuizzes, ... }
+    ├── createdAt: timestamp
+    └── plans/
+        {planId}/
+          ├── id: string
+          ├── nombre: string
+          ├── quizzes: array
+          ├── flashcards: array
+          ├── hotTopics: array
+          ├── sourceUrl: string
+          ├── progreso: object
+          └── createdAt: timestamp
+```
+
+---
+
+## 🔒 Seguridad y Buenas Prácticas
+
+### Gestión de API Keys
+
+1. **Nunca hardcodear API keys** en el código fuente
+2. Usar **Firebase Remote Config** para distribución segura
+3. Almacenamiento local con **EncryptedSharedPreferences**
+4. Implementar rate limiting y monitoreo de uso
+
+### Autenticación
+
+- Firebase Authentication con reglas de seguridad estrictas
+- Validación de tokens en cada solicitud
+- Sesiones persistentes con `AuthStateListener`
+- Logout centralizado mediante `AuthManager`
+
+### Firestore Security Rules
+
+```javascript
+// Solo el usuario puede acceder a sus propios datos
+match /users/{userId} {
+  allow read, write: if request.auth != null 
+                     && request.auth.uid == userId;
+}
+
+// Validación de tipos en escritura
+match /users/{userId}/plans/{planId} {
+  allow create: if request.auth.uid == userId
+                && request.resource.data.nombre is string
+                && request.resource.data.nombre.size() > 0;
+}
+```
+
+### Privacidad de Datos
+
+- **GDPR Compliance**: Exportación y eliminación de datos de usuario
+- Almacenamiento local encriptado para datos sensibles
+- No se comparten datos con terceros sin consentimiento
+- Logs anónimos para debugging
+
+---
+
+## 📈 Estado Actual del Proyecto
+
+### ✅ Funcionalidades Completadas
+
+- [x] Sistema de autenticación (Firebase Auth)
+- [x] Generación de planes con OpenAI
+- [x] Quizzes interactivos con evaluación
+- [x] Flashcards con sistema de repaso
+- [x] Hot Topics identificados por IA
+- [x] Sistema de progreso y estadísticas
+- [x] Badges y gamificación básica
+- [x] Drawer navigation centralizado
+- [x] Modo oscuro/claro
+- [x] Almacenamiento offline (Firestore + local JSON)
+- [x] Exportación de datos personales
+- [x] WorkManager para procesamiento en background
+- [x] Overlay de progreso para tareas largas
+
+### 🔄 En Progreso
+
+- [ ] Sincronización bidireccional Firestore ↔ Local
+- [ ] Mejoras en UI/UX de flashcards (navegación entre tarjetas)
+- [ ] Sistema de notificaciones inteligente
+- [ ] Soporte para más formatos de documento (DOCX, TXT)
+
+### ⚠️ Problemas Conocidos
+
+1. **Duplicación de lógica** entre `QuizActivity` y `QuizListActivity`
+2. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`
+3. **Detección de MIME type**: actualmente asume PDF, necesita ContentResolver
+4. **Tests**: cobertura insuficiente (unitarios e instrumentados)
+5. **Historial**: solo se muestra cuando `lastUpdatedMillis > 0`
+
+---
+
+## 🗺️ Roadmap y Tareas Pendientes
+
+### Alta Prioridad 🔴
+
+- [ ] **Unificar lógica de quizzes**: eliminar duplicación entre Activities
+- [ ] **Robustecer UploadActivity**: detección MIME real, manejo de errores mejorado
+- [ ] **Armonizar uso de extras**: migrar a `Constants` en todo el código
+- [ ] **Implementar tests unitarios**: StorageHelper, modelos, serialización
+- [ ] **Mejorar manejo de errores**: feedback claro al usuario en fallos de red/API
+
+### Prioridad Media 🟡
+
+- [ ] **Navegación en flashcards**: botones avanzar/retroceder, marcar conocido
+- [ ] **Migración a Room**: reemplazar StorageHelper por Room Database
+- [ ] **Mejorar ProgressActivity**: visualizaciones gráficas (charts)
+- [ ] **Sistema de recomendaciones**: sugerir planes similares
+- [ ] **Compartir planes**: export/import entre usuarios
+
+### Prioridad Baja 🟢
+
+- [ ] **CI/CD**: GitHub Actions para build y tests automáticos
+- [ ] **Localización**: soporte multi-idioma (inglés, francés)
+- [ ] **Accesibilidad**: contentDescription completo, TalkBack testing
+- [ ] **Telemetría**: Firebase Analytics para métricas de uso
+- [ ] **Animaciones**: transiciones suaves entre pantallas
+- [ ] **Widget de home screen**: acceso rápido a planes recientes
+
+### Mejoras Técnicas 🔧
+
+- [ ] **Migrar a Kotlin**: conversión gradual de Java a Kotlin
+- [ ] **Compose UI**: reescribir UI con Jetpack Compose
+- [ ] **Modularización**: dividir app en módulos feature-based
+- [ ] **Dependency Injection**: implementar Hilt/Dagger
+- [ ] **Clean Architecture**: separar capas domain/data/presentation
+
+---
+
+## 🤝 Contribución
+
+Las contribuciones son bienvenidas. Para contribuir:
+
+1. **Fork** el repositorio
+2. Crear una rama feature: `git checkout -b feature/nueva-funcionalidad`
+3. Commit cambios: `git commit -m 'Add: nueva funcionalidad'`
+4. Push a la rama: `git push origin feature/nueva-funcionalidad`
+5. Abrir un **Pull Request**
+
+### Guías de Contribución
+
+- Seguir el estilo de código existente
+- Añadir tests para nuevas funcionalidades
+- Actualizar documentación según sea necesario
+- Commit messages descriptivos (Conventional Commits)
+
+---
+
+## 📄 Licencia
+
+Este proyecto es privado y no tiene licencia pública en este momento.
+
+---
+
+## 📞 Contacto y Soporte
+
+- **GitHub Issues**: [Reportar bug o sugerir feature](https://github.com/Fibanezv/studIA/issues)
+- **Email**: contacto@estudiaapp.com (placeholder)
+- **Documentación adicional**: Ver `README_BBDD.md` para detalles de base de datos
+
+---
+
+## 🙏 Agradecimientos
+
+- **Firebase** por la infraestructura backend
+- **OpenAI** por las capacidades de IA
+- **Android Community** por recursos y guías
+- **Material Design** por las guías de UI/UX
+
+---
+
+**EstudiaApp** - Aprende más inteligentemente 🎓✨

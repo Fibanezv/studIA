@@ -157,16 +157,22 @@ public class UploadActivity extends BaseActivity {
             String status = progress.getString("status");
             if (status != null) showProcessing("Procesando: " + status);
             if (workInfo.getState().isFinished()) {
-                hideProcessing();
                 if (workInfo.getState() == androidx.work.WorkInfo.State.SUCCEEDED) {
-                    showTemporaryStatus("Plan guardado correctamente.", 1500);
-                    try {
-                        Intent i = new Intent(UploadActivity.this, MainActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(i);
-                        finish();
-                    } catch (Exception ignored) {}
+                    // Show loading for 50 seconds to give backend time to generate progress
+                    showProcessing("Generando contenido del plan...\nEsto puede tardar hasta 1 minuto");
+                    
+                    new android.os.Handler().postDelayed(() -> {
+                        hideProcessing();
+                        showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
+                        try {
+                            Intent i = new Intent(UploadActivity.this, MainActivity.class);
+                            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(i);
+                            finish();
+                        } catch (Exception ignored) {}
+                    }, 30000); // 50 seconds delay
                 } else {
+                    hideProcessing();
                     androidx.work.Data out = workInfo.getOutputData();
                     String err = out != null ? out.getString("error") : null;
                     if (err == null || err.trim().isEmpty()) err = "No se pudo generar StudyPlan. Revise logs.";

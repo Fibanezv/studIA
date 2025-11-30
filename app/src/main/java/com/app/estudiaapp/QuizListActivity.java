@@ -52,30 +52,36 @@ public class QuizListActivity extends BaseActivity {
         this.planIdField = planId;
         quizzesList = new java.util.ArrayList<>();
 
-        adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, planId, quiz -> {
-            // Abrir QuizActivity con planId + quiz.id
-            QuizActivity.start(QuizListActivity.this, planId, quiz.id);
-        });
-
-        recyclerView.setAdapter(adapter);
-
-        // Load plan data: prefer Firestore if user is signed in, otherwise fallback to local storage
+        // Load plan data first to get full plan object
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        final String userId = uid;
+        
         if (uid != null) {
             new UserRepository(this).getPlan(uid, planId, plan -> {
                 if (plan != null && plan.quizzes != null) {
                     quizzesList.clear();
                     quizzesList.addAll(plan.quizzes);
-                    if (adapter != null) adapter.notifyDataSetChanged();
+                    
+                    adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, plan, userId, quiz -> {
+                        // Abrir QuizActivity con planId + quiz.id
+                        QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                    }, this::refreshData);
+                    
+                    recyclerView.setAdapter(adapter);
                 }
             }, e -> {
-                // fallback: load locally but do not finish if not present
+                // fallback: load locally
                 StudyPlan p = StorageHelper.cargarPlan(this, planId);
                 if (p != null && p.quizzes != null) {
                     quizzesList.clear();
                     quizzesList.addAll(p.quizzes);
-                    if (adapter != null) adapter.notifyDataSetChanged();
+                    
+                    adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
+                        QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                    }, this::refreshData);
+                    
+                    recyclerView.setAdapter(adapter);
                 }
             });
         } else {
@@ -83,7 +89,12 @@ public class QuizListActivity extends BaseActivity {
             if (p != null && p.quizzes != null) {
                 quizzesList.clear();
                 quizzesList.addAll(p.quizzes);
-                if (adapter != null) adapter.notifyDataSetChanged();
+                
+                adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
+                    QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                }, this::refreshData);
+                
+                recyclerView.setAdapter(adapter);
             }
         }
 
@@ -138,6 +149,33 @@ public class QuizListActivity extends BaseActivity {
             StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
             if (plan == null) return;
             // actualizar lista y notificar adapter
+            quizzesList.clear();
+            if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
+            if (adapter != null) adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void refreshData() {
+        if (this.planIdField == null) return;
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        if (uid != null) {
+            new UserRepository(this).getPlan(uid, this.planIdField, plan -> {
+                if (plan != null && plan.quizzes != null) {
+                    quizzesList.clear();
+                    quizzesList.addAll(plan.quizzes);
+                    if (adapter != null) adapter.notifyDataSetChanged();
+                }
+            }, e -> {
+                StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
+                if (plan == null) return;
+                quizzesList.clear();
+                if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
+                if (adapter != null) adapter.notifyDataSetChanged();
+            });
+        } else {
+            StudyPlan plan = StorageHelper.cargarPlan(this, this.planIdField);
+            if (plan == null) return;
             quizzesList.clear();
             if (plan.quizzes != null) quizzesList.addAll(plan.quizzes);
             if (adapter != null) adapter.notifyDataSetChanged();

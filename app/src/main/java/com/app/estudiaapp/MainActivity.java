@@ -22,6 +22,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import android.content.SharedPreferences;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
@@ -33,6 +37,10 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
     private PlansAdapter adapter;
     private ArrayList<StudyPlan> planList;
     // Drawer is handled by BaseActivity when present in the layout
+    
+    // NEW: Firestore listener for real-time plan updates
+    private ListenerRegistration plansListener;
+    private String currentUid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,25 +165,89 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
         } catch (Exception ignored) {}
 
         if (uid != null) {
-            new UserRepository(this).getPlans(uid, plans -> {
-                planList = (plans != null) ? new ArrayList<>(plans) : new ArrayList<>();
-                adapter = new PlansAdapter(planList, this);
-                recyclerView.setLayoutManager(new LinearLayoutManager(this));
-                recyclerView.setAdapter(adapter);
-            }, e -> {
-                // fallback to local
-                ArrayList<StudyPlan> lstPlanesPruebas = StorageHelper.listarPlanes(this);
-                if (lstPlanesPruebas != null) planList = lstPlanesPruebas;
-                adapter = new PlansAdapter(planList, this);
-                recyclerView.setLayoutManager(new LinearLayoutManager(this));
-                recyclerView.setAdapter(adapter);
-            });
+            currentUid = uid;
+            // Setup real-time Firestore listener for plan updates
+            setupPlansListener(uid);
         } else {
             ArrayList<StudyPlan> lstPlanesPruebas = StorageHelper.listarPlanes(this);
             if (lstPlanesPruebas != null) planList = lstPlanesPruebas;
             adapter = new PlansAdapter(planList, this);
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setAdapter(adapter);
+        }
+    }
+    
+    // NEW: Setup real-time Firestore listener for plan updates
+    private void setupPlansListener(String uid) {
+        // Remove previous listener if exists
+        if (plansListener != null) {
+            plansListener.remove();
+            plansListener = null;
+        }
+        
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Gson gson = new Gson();
+        
+        // Listen to all plans in real-time
+        plansListener = db.collection("users").document(uid).collection("plans")
+            .addSnapshotListener((querySnapshot, error) -> {
+                if (error != null) {
+                    android.util.Log.w("MainActivity", "Listen failed: " + error.getMessage());
+                    // Fallback to one-time fetch
+                    new UserRepository(this).getPlans(uid, plans -> {
+                        planList = (plans != null) ? new ArrayList<>(plans) : new ArrayList<>();
+                        updateAdapter();
+                    }, e -> {
+                        ArrayList<StudyPlan> lstPlanesPruebas = StorageHelper.listarPlanes(this);
+                        if (lstPlanesPruebas != null) planList = lstPlanesPruebas;
+                        updateAdapter();
+                    });
+                    return;
+                }
+                
+                if (querySnapshot != null) {
+                    planList.clear();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        try {
+                            String json = gson.toJson(doc.getData());
+                            StudyPlan plan = gson.fromJson(json, StudyPlan.class);
+                            if (plan != null) {
+                                planList.add(plan);
+                                
+                                // Log generation progress for debugging
+                                if (plan.isGenerating()) {
+                                    android.util.Log.d("MainActivity", "Plan " + plan.id + " is generating: " + 
+                                        plan.getGenerationPercentage() + "% complete");
+                                }
+                            }
+                        } catch (Exception ex) {
+                            android.util.Log.w("MainActivity", "Error parsing plan: " + doc.getId(), ex);
+                        }
+                    }
+                    
+                    updateAdapter();
+                }
+            });
+    }
+    
+    // Helper to update or create adapter
+    private void updateAdapter() {
+        if (adapter == null) {
+            adapter = new PlansAdapter(planList, this);
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Remove Firestore listener when activity is destroyed
+        if (plansListener != null) {
+            plansListener.remove();
+            plansListener = null;
         }
     }
 

@@ -28,6 +28,39 @@
     android:textColor="@color/black"
     android:alpha="0.84"
     android:layout_marginTop="4dp"/>
+    
+    <!-- NEW: Generation status (only visible when generating) -->
+    <LinearLayout
+        android:id="@+id/generation_status_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:padding="8dp"
+        android:background="#10000000"
+        android:visibility="gone">
+        
+        <ProgressBar
+            android:id="@+id/generation_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:max="100"
+            android:progress="0"
+            android:progressTint="@color/beige_300_theme" />
+        
+        <TextView
+            android:id="@+id/generation_status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Generando..."
+            android:textSize="12sp"
+            android:textColor="@color/beige_300_theme"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <!-- Progress grid: Flashcards | Hot topics | Quizzes (icon+count above, label below) -->
     <LinearLayout

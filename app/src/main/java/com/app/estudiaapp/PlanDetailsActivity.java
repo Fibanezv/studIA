@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
  
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -175,6 +176,8 @@ public class PlanDetailsActivity extends BaseActivity {
                     q.progreso.preguntasCorrectas = 0;
                     q.progreso.preguntasIncorrectas = 0;
                     q.progreso.currentIndex = 0;
+                    q.progreso.nota = -1;
+                    q.progreso.lastUpdatedMillis = System.currentTimeMillis();
                 }
             }
             if (plan.progreso != null) {
@@ -182,41 +185,41 @@ public class PlanDetailsActivity extends BaseActivity {
                 plan.progreso.preguntasCorrectas = 0;
                 plan.progreso.flashcardsEstudiadas = 0;
             }
-            // save to Firestore if possible
+            // save to Firestore
             String uid = null;
             try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
             if (uid != null) {
                 new UserRepository(this).savePlan(uid, plan, a -> {
-                    // refreshed UI
+                    Toast.makeText(this, "Plan reiniciado correctamente", Toast.LENGTH_SHORT).show();
                     refreshUI();
                 }, e -> {
-                    // fallback to local
-                    StorageHelper.guardarPlan(this, plan);
-                    refreshUI();
+                    Toast.makeText(this, "Error al reiniciar plan: " + e, Toast.LENGTH_SHORT).show();
                 });
             } else {
-                StorageHelper.guardarPlan(this, plan);
-                refreshUI();
+                Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
             }
-            // refresh UI
         });
 
         findViewById(R.id.user_delete_plan).setOnClickListener(view -> {
-            // delete from Firestore if possible
+            // delete from Firestore
             String uid = null;
             try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
             if (uid != null) {
                 com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("users").document(uid).collection("plans").document(plan.id)
                         .delete()
-                        .addOnSuccessListener(a -> finish())
-                        .addOnFailureListener(e -> {
-                            // fallback: delete local
-                            deleteFile(plan.id + ".json");
+                        .addOnSuccessListener(a -> {
+                            Toast.makeText(this, "Plan eliminado correctamente", Toast.LENGTH_SHORT).show();
+                            // Redirigir explícitamente al MainActivity
+                            android.content.Intent intent = new android.content.Intent(PlanDetailsActivity.this, MainActivity.class);
+                            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
                             finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Error al eliminar plan: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             } else {
-                this.deleteFile(plan.id + ".json");
-                finish();
+                Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -278,9 +281,11 @@ public class PlanDetailsActivity extends BaseActivity {
         } else {
             rvQuizzesToStart.setVisibility(View.VISIBLE);
             titleQuizzesToStart.setVisibility(View.VISIBLE);
-            QuizzesAdapter a = new QuizzesAdapter(quizzesToStart, plan.id, quiz -> {
+            String uid = null;
+            try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+            QuizzesAdapter a = new QuizzesAdapter(quizzesToStart, plan, uid, quiz -> {
                 QuizActivity.start(PlanDetailsActivity.this, plan.id, quiz.id);
-            });
+            }, this::refreshUI);
             rvQuizzesToStart.setAdapter(a);
         }
 
@@ -290,9 +295,11 @@ public class PlanDetailsActivity extends BaseActivity {
         } else {
             rvQuizzesInProgress.setVisibility(View.VISIBLE);
             titleQuizzesInProgress.setVisibility(View.VISIBLE);
-            QuizzesAdapter a2 = new QuizzesAdapter(quizzesInProgress, plan.id, quiz -> {
+            String uid = null;
+            try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+            QuizzesAdapter a2 = new QuizzesAdapter(quizzesInProgress, plan, uid, quiz -> {
                 QuizActivity.start(PlanDetailsActivity.this, plan.id, quiz.id);
-            });
+            }, this::refreshUI);
             rvQuizzesInProgress.setAdapter(a2);
         }
 

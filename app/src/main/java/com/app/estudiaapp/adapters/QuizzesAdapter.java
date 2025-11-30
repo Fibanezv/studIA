@@ -13,9 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.estudiaapp.R;
-import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.Quiz;
 import com.app.estudiaapp.models.StudyPlan;
+import com.app.estudiaapp.UserRepository;
 
 import java.util.ArrayList;
 
@@ -23,16 +23,24 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
 
     private ArrayList<Quiz> quizzes;
     private OnQuizClickListener listener;
-    private String planId;
+    private StudyPlan plan;
+    private String userId;
+    private OnPlanUpdatedListener planUpdateListener;
 
     public interface OnQuizClickListener {
         void onQuizClick(Quiz quiz);
     }
 
-    public QuizzesAdapter(ArrayList<Quiz> quizzes, String planId, OnQuizClickListener listener) {
+    public interface OnPlanUpdatedListener {
+        void onPlanUpdated();
+    }
+
+    public QuizzesAdapter(ArrayList<Quiz> quizzes, StudyPlan plan, String userId, OnQuizClickListener listener, OnPlanUpdatedListener planUpdateListener) {
         this.quizzes = quizzes;
         this.listener = listener;
-        this.planId = planId;
+        this.plan = plan;
+        this.userId = userId;
+        this.planUpdateListener = planUpdateListener;
     }
 
     @NonNull
@@ -93,31 +101,50 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
             holder.resetButton.setVisibility(isComplete ? View.VISIBLE : View.GONE);
             holder.resetButton.setOnClickListener(v -> {
                 Context ctx = holder.itemView.getContext();
-                StudyPlan plan = StorageHelper.cargarPlan(ctx, planId);
                 if (plan == null || plan.quizzes == null) {
                     Toast.makeText(ctx, "No se puede reiniciar: plan no encontrado", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // encontrar el quiz por id y resetear progreso
-                for (int i = 0; i < plan.quizzes.size(); i++) {
-                    Quiz pq = plan.quizzes.get(i);
+                if (userId == null || userId.isEmpty()) {
+                    Toast.makeText(ctx, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Encontrar el quiz por id y resetear progreso
+                boolean found = false;
+                for (Quiz pq : plan.quizzes) {
                     if (pq != null && pq.id != null && pq.id.equals(q.id)) {
                         if (pq.progreso == null) pq.progreso = new com.app.estudiaapp.models.QuizProgress();
                         pq.progreso.preguntasRespondidas = 0;
                         pq.progreso.preguntasCorrectas = 0;
                         pq.progreso.preguntasIncorrectas = 0;
                         pq.progreso.currentIndex = 0;
+                        pq.progreso.nota = -1;
                         pq.progreso.lastUpdatedMillis = System.currentTimeMillis();
-                        // guardar y refrescar
-                        StorageHelper.guardarPlan(ctx, plan);
-                        // actualizar la lista local y notificar cambio
-                        q.progreso = pq.progreso;
-                        notifyItemChanged(position);
-                        Toast.makeText(ctx, "Quiz reiniciado", Toast.LENGTH_SHORT).show();
-                        return;
+                        found = true;
+                        break;
                     }
                 }
-                Toast.makeText(ctx, "Quiz no encontrado en el plan", Toast.LENGTH_SHORT).show();
+                
+                if (!found) {
+                    Toast.makeText(ctx, "Quiz no encontrado en el plan", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Guardar en Firestore
+                new UserRepository(ctx).savePlan(userId, plan, success -> {
+                    // Actualizar la lista local y notificar cambio
+                    q.progreso.preguntasRespondidas = 0;
+                    q.progreso.preguntasCorrectas = 0;
+                    q.progreso.preguntasIncorrectas = 0;
+                    q.progreso.currentIndex = 0;
+                    q.progreso.nota = -1;
+                    notifyItemChanged(position);
+                    if (planUpdateListener != null) planUpdateListener.onPlanUpdated();
+                    Toast.makeText(ctx, "Quiz reiniciado", Toast.LENGTH_SHORT).show();
+                }, error -> {
+                    Toast.makeText(ctx, "Error al reiniciar: " + error, Toast.LENGTH_SHORT).show();
+                });
             });
         }
     }

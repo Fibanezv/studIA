@@ -4,6 +4,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,6 +41,35 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
     public void onBindViewHolder(@NonNull PlanViewHolder holder, int position) {
         StudyPlan plan = plans.get(position);
         holder.planName.setText(plan.nombre);  // Mostramos el nombre del plan
+        
+        // NEW: Show generation status if plan is generating
+        if (plan.isGenerating()) {
+            holder.generationStatusLayout.setVisibility(View.VISIBLE);
+            int percentage = plan.getGenerationPercentage();
+            holder.generationProgress.setProgress(percentage);
+            holder.generationStatusText.setText("Generando... " + percentage + "%");
+            
+            // Dim the content counts while generating
+            holder.flashcardCount.setAlpha(0.5f);
+            holder.quizCount.setAlpha(0.5f);
+            if (holder.hotTopicsCount != null) holder.hotTopicsCount.setAlpha(0.5f);
+            
+            // Block click while generating
+            holder.itemView.setOnClickListener(v -> {
+                android.widget.Toast.makeText(v.getContext(), 
+                    "Plan en generación (" + percentage + "%). Por favor espera.", 
+                    android.widget.Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            holder.generationStatusLayout.setVisibility(View.GONE);
+            holder.flashcardCount.setAlpha(1.0f);
+            holder.quizCount.setAlpha(1.0f);
+            if (holder.hotTopicsCount != null) holder.hotTopicsCount.setAlpha(1.0f);
+            
+            // Normal click behavior
+            holder.itemView.setOnClickListener(v -> listener.onPlanClick(plan));
+        }
+        
         // Mostrar counts si están disponibles
         try {
             int flashCount = (plan.flashcards == null) ? 0 : plan.flashcards.size();
@@ -52,7 +83,9 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
                     if (totalQ > 0 && answered >= totalQ) completed++;
                 }
             }
-            holder.planDocument.setText("id: " + plan.id);
+            holder.planDocument.setText(plan.description != null && !plan.description.isEmpty() 
+                ? plan.description 
+                : "Plan de estudio");
             // show flashcard progress as studied/total
             int studied = (plan.progreso == null) ? 0 : plan.progreso.flashcardsEstudiadas;
             holder.flashcardCount.setText(studied + "/" + flashCount);
@@ -62,7 +95,6 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
         } catch (Exception ex) {
             // safe fallback
         }
-        holder.itemView.setOnClickListener(v -> listener.onPlanClick(plan));
     }
 
     @Override
@@ -83,6 +115,11 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
         TextView flashcardCount;
         TextView quizCount;
         TextView hotTopicsCount;
+        
+        // NEW: Generation status views
+        LinearLayout generationStatusLayout;
+        ProgressBar generationProgress;
+        TextView generationStatusText;
 
         public PlanViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -91,6 +128,11 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
             flashcardCount = itemView.findViewById(R.id.flashcard_count);
             quizCount = itemView.findViewById(R.id.quiz_count);
             hotTopicsCount = itemView.findViewById(R.id.hot_topics_count);
+            
+            // NEW: Bind generation status views
+            generationStatusLayout = itemView.findViewById(R.id.generation_status_layout);
+            generationProgress = itemView.findViewById(R.id.generation_progress);
+            generationStatusText = itemView.findViewById(R.id.generation_status_text);
         }
     }
 }
