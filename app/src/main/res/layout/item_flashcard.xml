@@ -20,7 +20,7 @@
             android:id="@+id/item_flashcard_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/colorPrimary"
             android:layout_marginBottom="4dp" />

@@ -107,6 +107,40 @@ public class PlanDetailsActivity extends BaseActivity {
             prefs.edit().putString("last_plan_id", plan.id != null ? plan.id : "").apply();
         } catch (Exception ignored) {}
 
+        // Setup description card (collapsible)
+        androidx.cardview.widget.CardView descriptionCard = findViewById(R.id.description_card);
+        TextView tvDescription = findViewById(R.id.tv_plan_description);
+        android.widget.ImageView toggleIcon = findViewById(R.id.description_toggle_icon);
+        
+        if (plan.description != null && !plan.description.trim().isEmpty()) {
+            descriptionCard.setVisibility(View.VISIBLE);
+            tvDescription.setText(plan.description);
+            
+            // Load collapse state from preferences (default: expanded)
+            android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
+            boolean isCollapsed = prefs.getBoolean("description_collapsed_" + plan.id, false);
+            
+            tvDescription.setVisibility(isCollapsed ? View.GONE : View.VISIBLE);
+            toggleIcon.setImageResource(isCollapsed ? 
+                android.R.drawable.arrow_down_float : android.R.drawable.arrow_up_float);
+            
+            // Toggle on click
+            View.OnClickListener toggleListener = v -> {
+                boolean currentlyCollapsed = tvDescription.getVisibility() == View.GONE;
+                tvDescription.setVisibility(currentlyCollapsed ? View.VISIBLE : View.GONE);
+                toggleIcon.setImageResource(currentlyCollapsed ? 
+                    android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
+                
+                // Save state
+                prefs.edit().putBoolean("description_collapsed_" + plan.id, !currentlyCollapsed).apply();
+            };
+            
+            descriptionCard.setOnClickListener(toggleListener);
+            toggleIcon.setOnClickListener(toggleListener);
+        } else {
+            descriptionCard.setVisibility(View.GONE);
+        }
+
     int totalFlash = (plan.flashcards == null) ? 0 : plan.flashcards.size();
     int studiedFlash = (plan.progreso == null) ? 0 : plan.progreso.flashcardsEstudiadas;
     int flashPct = totalFlash > 0 ? (int) ((studiedFlash * 100.0f) / totalFlash) : 0;
@@ -166,6 +200,31 @@ public class PlanDetailsActivity extends BaseActivity {
                 badgesContainer.addView(v);
             }
         }
+        
+        // Setup badges collapse/expand functionality
+        android.widget.ImageView badgesToggleIcon = findViewById(R.id.badges_toggle_icon);
+        
+        // Load collapse state from preferences (default: expanded)
+        android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
+        boolean isBadgesCollapsed = prefs.getBoolean("badges_collapsed_" + plan.id, false);
+        
+        badgesContainer.setVisibility(isBadgesCollapsed ? View.GONE : View.VISIBLE);
+        badgesToggleIcon.setImageResource(isBadgesCollapsed ? 
+            android.R.drawable.arrow_down_float : android.R.drawable.arrow_up_float);
+        
+        // Toggle on click
+        View.OnClickListener badgesToggleListener = v -> {
+            boolean currentlyCollapsed = badgesContainer.getVisibility() == View.GONE;
+            badgesContainer.setVisibility(currentlyCollapsed ? View.VISIBLE : View.GONE);
+            badgesToggleIcon.setImageResource(currentlyCollapsed ? 
+                android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
+            
+            // Save state
+            prefs.edit().putBoolean("badges_collapsed_" + plan.id, !currentlyCollapsed).apply();
+        };
+        
+        userBadgesCard.setOnClickListener(badgesToggleListener);
+        badgesToggleIcon.setOnClickListener(badgesToggleListener);
 
         // Reset/Delete behavior
         findViewById(R.id.user_reset_plan).setOnClickListener(view -> {

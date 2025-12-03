@@ -43,7 +43,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -199,6 +200,63 @@
 
                 </androidx.cardview.widget.CardView>
 
+                <!-- Description card (collapsible) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/description_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="4dp"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:background="@color/colorPrimary">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Descripción"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:textColor="@color/beige_300_theme" />
+
+                            <ImageView
+                                android:id="@+id/description_toggle_icon"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/arrow_up_float"
+                                android:contentDescription="Toggle description"
+                                app:tint="@color/beige_300_theme" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_plan_description"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="13sp"
+                            android:textColor="@color/black"
+                            android:layout_marginTop="8dp"
+                            android:lineSpacingExtra="2dp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
                 <!-- Badges card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/user_badges_card"
@@ -213,19 +271,34 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp"
-                        android:background="@color/beige_300_theme">
+                        android:padding="12dp"
+                        android:background="@color/colorPrimary">
 
-                        <TextView
-                            android:id="@+id/badges_title"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Logros"
-                            android:textStyle="bold"
-                            android:textSize="18sp"
-                            android:textColor="?attr/navTextColor"
-                            android:textAlignment="center"
-                            android:layout_marginBottom="12dp" />
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/badges_title"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Logros"
+                                android:textStyle="bold"
+                                android:textSize="14sp"
+                                android:textColor="@color/beige_300_theme" />
+
+                            <ImageView
+                                android:id="@+id/badges_toggle_icon"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@android:drawable/arrow_up_float"
+                                android:contentDescription="Toggle badges"
+                                app:tint="@color/beige_300_theme" />
+
+                        </LinearLayout>
 
                         <GridLayout
                             android:id="@+id/badges_container"
@@ -235,7 +308,8 @@
                             android:orientation="horizontal"
                             android:useDefaultMargins="true"
                             android:alignmentMode="alignMargins"
-                            android:gravity="center" />
+                            android:gravity="center"
+                            android:layout_marginTop="8dp" />
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

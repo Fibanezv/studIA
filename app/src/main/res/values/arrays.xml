@@ -18,20 +18,19 @@
         <item>A, B, C</item>
         <item>True/False</item>
         <item>Palabras hueccas</item>
+        <item>Combinado</item>
     </string-array>
 
     <string-array name="question_limits">
         <item>5</item>
         <item>10</item>
         <item>15</item>
-        <item>20</item>
     </string-array>
 
     <string-array name="quiz_limits">
         <item>3</item>
         <item>5</item>
         <item>10</item>
-        <item>15</item>
     </string-array>
     
     <string-array name="flashcard_limits">

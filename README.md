@@ -8,7 +8,7 @@
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-**Última actualización:** 30 de noviembre de 2025  
+**Última actualización:** 3 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)
 
@@ -34,9 +34,17 @@
 
 ### Generación Inteligente de Contenido
 - **Creación automática de planes de estudio** a partir de documentos PDF subidos por el usuario
-- **Generación de quizzes** con preguntas de opción múltiple personalizadas
-- **Flashcards inteligentes** para repaso rápido y eficiente
-- **Hot Topics**: identificación de temas clave del material de estudio
+- **Generación de quizzes** con 5 tipologías diferentes:
+  - **A, B, C, D**: Opción múltiple con 4 opciones
+  - **A, B, C**: Opción múltiple con 3 opciones
+  - **True/False**: Verdadero o Falso
+  - **Palabras hueccas**: Completar espacios en blanco con 4 opciones de palabras
+  - **Combinado**: Mezcla aleatoria de todas las tipologías
+- **Flashcards inteligentes** para repaso rápido y eficiente con respuestas detalladas
+- **Hot Topics**: identificación de temas clave del material de estudio (50-75 caracteres)
+- **Títulos y descripciones generados con GPT-4o**: Contenido orgánico sin URLs ni metadatos
+- **Sistema de reintentos automático**: Hasta 2 intentos si no se genera el contenido completo
+- **Validación estricta**: Garantiza consistencia entre tipologías y formatos
 - **Personalización avanzada**: control sobre cantidad de quizzes, preguntas, flashcards y temas
 
 ### Gestión de Aprendizaje
@@ -55,6 +63,12 @@
 - **Autenticación Firebase** con soporte para email/password y Google Sign-In
 - **Almacenamiento offline** con sincronización en la nube
 - **Exportación de datos** para respaldo personal
+- **Cards plegables** en detalles del plan (Descripción y Logros con estado persistente)
+- **Formulario de creación mejorado**: 
+  - Spinners con texto alineado a la derecha
+  - Labels "Total de" en lugar de "Límite de"
+  - Botón para remover documento seleccionado (X)
+  - Vista previa del nombre del archivo
 
 ---
 
@@ -73,11 +87,20 @@
 - **Firebase Authentication** - Gestión de usuarios y autenticación
 - **Cloud Firestore** - Base de datos NoSQL en tiempo real
 - **Firebase Storage** - Almacenamiento de archivos (PDFs originales)
-- **Firebase Remote Config** - Configuración dinámica (API keys)
-- **WorkManager 2.8.1** - Procesamiento en background
+- **Firebase Cloud Functions** - Procesamiento serverless de generación de planes
+  - `generateStudyPlan`: Endpoint principal (respuesta inmediata con planId)
+  - `processStudyPlanGeneration`: Trigger de Firestore para generación en background
+  - Runtime: Node.js 20, Memory: 8GB, Timeout: 540s
+- **WorkManager 2.8.1** - Procesamiento en background (cliente Android)
 
 #### Inteligencia Artificial
-- **OpenAI API** - Generación de contenido educativo con GPT
+- **OpenAI GPT-4o** - Generación de títulos (40 tokens, temp 0.3, max 60 chars)
+- **OpenAI GPT-4o** - Generación de descripciones (250 tokens, temp 0.6, max 35 palabras)
+- **OpenAI GPT-4o-mini** - Generación de contenido educativo (6000 tokens, temp 0.7)
+  - Quizzes con múltiples tipologías
+  - Flashcards con respuestas detalladas (120-250 caracteres)
+  - Hot Topics con descripciones concisas (50-75 caracteres)
+- **Sistema de validación inteligente**: Rechaza contenido inválido y reintenta hasta 2 veces
 - **JSON Schema Validation** - Respuestas estructuradas y validadas
 
 #### Otras Dependencias Clave
@@ -90,36 +113,47 @@
 ### Arquitectura de Generación de Planes
 
 ```
-Usuario → UploadActivity → StudyPlanWorker (WorkManager)
+Usuario → UploadActivity → Cloud Function (generateStudyPlan)
                                   ↓
-                     [Procesamiento en background]
+                        [Respuesta inmediata con planId]
                                   ↓
-                    OpenAI API (JSON Schema Response)
+                     Firestore Trigger (onCreate)
                                   ↓
-              ┌──────────────────┴──────────────────┐
-              ↓                                      ↓
-    Firebase Storage                        Cloud Firestore
-  (PDF original en                      (Plan estructurado en
-   users/{uid}/plans/{planId}/)          users/{uid}/plans/{planId})
-              ↓                                      ↓
-                    ┌──────────────────┐
-                    │  MainActivity    │
-                    │  (Vista de      │
-                    │   planes)       │
-                    └──────────────────┘
+              processStudyPlanGeneration Function
+                                  ↓
+                    [Procesamiento en background]
+                                  ↓
+         ┌─────────────────┬──────────────────┬─────────────────┐
+         ↓                 ↓                  ↓                 ↓
+    GPT-4o           GPT-4o            GPT-4o-mini      Firebase Storage
+  (Título)       (Descripción)    (Quizzes/Flashcards)    (PDF original)
+         ↓                 ↓                  ↓                 ↓
+         └─────────────────┴──────────────────┴─────────────────┘
+                                  ↓
+                          Cloud Firestore
+                    (Plan completo actualizado)
+                                  ↓
+                          MainActivity
+                      (Lista de planes actualizada)
 ```
 
 **Flujo detallado:**
 
 1. Usuario selecciona un documento PDF en `UploadActivity`
-2. Se configura límites (quizzes, preguntas, flashcards, hot topics)
-3. Se encola un `StudyPlanWorker` con WorkManager
-4. El Worker procesa el documento y construye un prompt optimizado
-5. Llamada a OpenAI API con JSON Schema strict para respuesta estructurada
-6. Si es exitoso:
-   - Sube el PDF a Firebase Storage (`users/{uid}/plans/{planId}/source.pdf`)
-   - Guarda el plan en Firestore (`users/{uid}/plans/{planId}`)
-7. El usuario ve el plan en `MainActivity` y puede acceder a quizzes/flashcards
+2. Configura límites (quizzes, preguntas, flashcards, hot topics)
+3. Configurar tipología de quiz (A/B/C/D, A/B/C, True/False, Palabras hueccas, Combinado)
+4. Llamada a Cloud Function `generateStudyPlan` con metadata
+5. Función responde inmediatamente con planId y crea documento "placeholder" en Firestore
+6. Trigger de Firestore activa `processStudyPlanGeneration` en background
+7. Procesamiento en 3 fases paralelas:
+   - **Fase 1**: Generación de título (GPT-4o, ~2s)
+   - **Fase 2**: Generación de descripción (GPT-4o, ~3s)
+   - **Fase 3**: Generación de contenido en lotes (GPT-4o-mini, ~15-30s por lote)
+     - Validación estricta por tipología
+     - Sistema de reintentos (hasta 2 intentos si faltan items)
+     - Subida de PDF a Storage en paralelo
+8. Actualización progresiva en Firestore (generationProgress: 0-100%)
+9. Usuario ve el plan completado en `MainActivity` con acceso a todo el contenido
 
 ---
 
@@ -141,7 +175,7 @@ EstudiaApp/
 │   │   │   │   │   ├── QuizActivity.java          # Realización de quizzes
 │   │   │   │   │   ├── QuizListActivity.java      # Lista de quizzes de un plan
 │   │   │   │   │   ├── UserActivity.java          # Perfil y estadísticas de usuario
-│   │   │   │   │   ├── PlanDetailsActivity.java   # Detalles de un plan con badges
+│   │   │   │   │   ├── PlanDetailsActivity.java   # Detalles con cards plegables
 │   │   │   │   │   ├── HotTopicsActivity.java     # Vista de temas importantes
 │   │   │   │   │   ├── SignInActivity.java        # Inicio de sesión
 │   │   │   │   │   ├── SignUpActivity.java        # Registro de usuario
@@ -151,8 +185,8 @@ EstudiaApp/
 │   │   │   │   │   └── ...
 │   │   │   │   ├── models/                # Modelos de datos
 │   │   │   │   │   ├── StudyPlan.java            # Plan de estudio con quizzes/flashcards
-│   │   │   │   │   ├── Quiz.java                 # Quiz con preguntas
-│   │   │   │   │   ├── Question.java             # Pregunta individual
+│   │   │   │   │   ├── Quiz.java                 # Quiz con tipología
+│   │   │   │   │   ├── Question.java             # Pregunta con validación
 │   │   │   │   │   ├── Flashcard.java            # Tarjeta de estudio
 │   │   │   │   │   ├── HotTopic.java             # Tema importante
 │   │   │   │   │   ├── UserProgress.java         # Progreso del usuario
@@ -164,8 +198,8 @@ EstudiaApp/
 │   │   │   │   │   ├── QuizzesAdapter.java       # Adaptador de quizzes
 │   │   │   │   │   ├── FlashcardsAdapter.java    # Adaptador de flashcards
 │   │   │   │   │   └── HotTopicsAdapter.java     # Adaptador de hot topics
-│   │   │   │   ├── workers/               # Background workers
-│   │   │   │   │   └── StudyPlanWorker.java      # Generación de planes con OpenAI
+│   │   │   │   ├── workers/               # Background workers (deprecado)
+│   │   │   │   │   └── StudyPlanWorker.java      # Legacy - usar Cloud Functions
 │   │   │   │   ├── helper/                # Helpers y utilidades
 │   │   │   │   │   └── StorageHelper.java        # Persistencia local JSON
 │   │   │   │   ├── utils/                 # Utilidades generales
@@ -185,11 +219,14 @@ EstudiaApp/
 │   │   │   └── AndroidManifest.xml        # Manifest de la aplicación
 │   │   ├── test/                          # Tests unitarios
 │   │   └── androidTest/                   # Tests instrumentados
+├── functions/                              # Cloud Functions (Node.js 20)
+│   ├── index.js                            # Funciones principales (1289 líneas)
+│   ├── package.json                        # Dependencias Node.js
+│   └── ...
 ├── gradle/                                 # Configuración Gradle
 │   ├── libs.versions.toml                 # Catálogo de versiones
 │   └── wrapper/
 ├── server/                                 # Servidor de pruebas (legacy)
-├── functions/                              # Cloud Functions (deprecado)
 ├── build.gradle                            # Configuración Gradle raíz
 ├── settings.gradle                         # Configuración del proyecto
 ├── gradlew / gradlew.bat                   # Wrappers de Gradle
@@ -346,6 +383,7 @@ public class StudyPlan {
 public class Quiz {
     public String id;                    // ID del quiz
     public String titulo;                // Título del quiz
+    public String typology;              // Tipología: "A, B, C, D" | "A, B, C" | "True/False" | "Palabras hueccas" | "Combinado"
     public List<Question> questions;     // Lista de preguntas
     public QuizProgress progreso;        // Progreso en este quiz
 }
@@ -356,8 +394,15 @@ public class Quiz {
 ```java
 public class Question {
     public String question;              // Enunciado de la pregunta
-    public String[] options;             // Array de opciones [A, B, C, D]
-    public String answer;                // Respuesta correcta
+    public String[] options;             // Array de opciones
+                                         // - [A, B, C, D] para "A, B, C, D"
+                                         // - [A, B, C] para "A, B, C"
+                                         // - [Verdadero, Falso] para "True/False"
+                                         // - [palabra1, palabra2, palabra3, palabra4] para "Palabras hueccas"
+    public String answer;                // Respuesta correcta (debe estar en options)
+    public String difficulty;            // Nivel de dificultad
+    public boolean inferred;             // Si fue inferida o extraída del documento
+    public String evidence;              // Fragmento del PDF que soporta la pregunta
 }
 ```
 
@@ -365,9 +410,11 @@ public class Question {
 
 ```java
 public class Flashcard {
-    public String pregunta;              // Pregunta/concepto
-    public String respuesta;             // Respuesta/definición
+    public String pregunta;              // Pregunta/concepto (max 150 chars)
+    public String respuesta;             // Respuesta/definición detallada (120-250 chars)
     public boolean completada;           // Marcada como estudiada
+    public boolean inferred;             // Si fue inferida o extraída
+    public String evidence;              // Fragmento del PDF que soporta el concepto
 }
 ```
 
@@ -455,17 +502,20 @@ match /users/{userId}/plans/{planId} {
 ### ✅ Funcionalidades Completadas
 
 - [x] Sistema de autenticación (Firebase Auth)
-- [x] Generación de planes con OpenAI
-- [x] Quizzes interactivos con evaluación
-- [x] Flashcards con sistema de repaso
-- [x] Hot Topics identificados por IA
-- [x] Sistema de progreso y estadísticas
-- [x] Badges y gamificación básica
+- [x] Generación de planes con Cloud Functions (Node.js 20)
+- [x] Generación inteligente de títulos y descripciones con GPT-4o
+- [x] Quizzes interactivos con 5 tipologías diferentes
+- [x] Sistema de validación y reintentos automáticos (hasta 2 intentos)
+- [x] Flashcards con respuestas detalladas
+- [x] Hot Topics con descripciones concisas (50-75 chars)
+- [x] Sistema de progreso y estadísticas con generationProgress
+- [x] Badges y gamificación básica con card plegable
 - [x] Drawer navigation centralizado
 - [x] Modo oscuro/claro
 - [x] Almacenamiento offline (Firestore + local JSON)
 - [x] Exportación de datos personales
-- [x] WorkManager para procesamiento en background
+- [x] Cards plegables en PlanDetailsActivity (Descripción y Logros)
+- [x] Formulario de creación mejorado (spinners alineados, botón remover documento)
 - [x] Overlay de progreso para tareas largas
 
 ### 🔄 En Progreso
@@ -474,6 +524,8 @@ match /users/{userId}/plans/{planId} {
 - [ ] Mejoras en UI/UX de flashcards (navegación entre tarjetas)
 - [ ] Sistema de notificaciones inteligente
 - [ ] Soporte para más formatos de documento (DOCX, TXT)
+- [ ] Optimización de prompts para reducir tokens consumidos
+- [ ] Dashboard de estadísticas con gráficos
 
 ### ⚠️ Problemas Conocidos
 
@@ -482,6 +534,7 @@ match /users/{userId}/plans/{planId} {
 3. **Detección de MIME type**: actualmente asume PDF, necesita ContentResolver
 4. **Tests**: cobertura insuficiente (unitarios e instrumentados)
 5. **Historial**: solo se muestra cuando `lastUpdatedMillis > 0`
+6. **WorkManager deprecado**: Migración pendiente a Cloud Functions completa (cliente ya usa Cloud Functions, pero WorkManager aún existe en el código)
 
 ---
 

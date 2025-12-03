@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
@@ -22,8 +24,10 @@ public class UploadActivity extends BaseActivity {
     private static final int PICK_FILE = 100;
     private Button uploadFileBtn;
     private Button createPlanBtn;
+    private ImageButton removeFileBtn;
     private Uri selectedFileUri;
     private TextView selectedFileNameText;
+    private LinearLayout selectedFileContainer;
     private static final String TAG = "UploadActivity";
     private OverlayManager overlayManager;
 
@@ -35,6 +39,8 @@ public class UploadActivity extends BaseActivity {
         uploadFileBtn = findViewById(R.id.button_upload_file);
         createPlanBtn = findViewById(R.id.button_get_study_plan);
         selectedFileNameText = findViewById(R.id.selected_file_name);
+        selectedFileContainer = findViewById(R.id.selected_file_container);
+        removeFileBtn = findViewById(R.id.button_remove_file);
 
         // Initialize overlay manager with ids (use getIdentifier for cancel which may be absent in some layouts)
         int overlayId = getResources().getIdentifier("processing_overlay", "id", getPackageName());
@@ -43,6 +49,16 @@ public class UploadActivity extends BaseActivity {
         overlayManager = new OverlayManager(this, overlayId, msgId, cancelId);
 
         uploadFileBtn.setOnClickListener(v -> openFileChooser());
+        
+        removeFileBtn.setOnClickListener(v -> {
+            // Clear selected file
+            selectedFileUri = null;
+            selectedFileNameText.setText("");
+            selectedFileContainer.setVisibility(View.GONE);
+            uploadFileBtn.setVisibility(View.VISIBLE);
+            showTemporaryStatus("Documento eliminado", 1500);
+        });
+        
         createPlanBtn.setOnClickListener(v -> {
             if (selectedFileUri == null) {
                 showTemporaryStatus("Seleccione un documento primero", 2000);
@@ -210,7 +226,8 @@ public class UploadActivity extends BaseActivity {
                 String name = queryName(uri);
                 if (selectedFileNameText != null && name != null) {
                     selectedFileNameText.setText(name);
-                    selectedFileNameText.setVisibility(View.VISIBLE);
+                    selectedFileContainer.setVisibility(View.VISIBLE);
+                    uploadFileBtn.setVisibility(View.GONE);
                 }
             }
         }

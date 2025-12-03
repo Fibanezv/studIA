@@ -146,7 +146,7 @@ const STUDY_PLAN_SCHEMA = {
   }
 };
 
-const OPENAI_URL = 'https://api.openai.com/v1/responses';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 // ============================================================================
 // HELPER: Background generation with batching
@@ -179,102 +179,196 @@ async function generateInBackground(params) {
       extractedText = '';
     }
 
-    // Extract organic title from PDF content - improved
+    // Generate organic title using Claude for better quality
     let organicTitle = inputTitle;
-    if ((!organicTitle || organicTitle === 'Plan de Estudio' || organicTitle.length < 5) && extractedText) {
-      // Get first 1000 chars for better title extraction
-      const preview = extractedText.substring(0, 1000);
-      const lines = preview.split('\n')
-        .map(l => l.trim())
-        .filter(l => {
-          // Filter out junk: too short, all caps, numbers only, filenames, etc.
-          if (l.length < 15 || l.length > 120) return false;
-          if (/^[\d\s\.\-_]+$/.test(l)) return false; // Only numbers/punctuation
-          if (/\.pdf$/i.test(l)) return false; // Filename
-          if (/^[A-Z\s]{10,}$/.test(l)) return false; // ALL CAPS
-          if (/tema[-\s]?\d+/i.test(l)) return false; // "tema-29", "Tema 29"
-          return true;
-        });
-      
-      if (lines.length > 0) {
-        organicTitle = lines[0]
-          .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s:,.\-]/g, '') // Clean special chars
-          .replace(/\s+/g, ' ') // Normalize spaces
-          .trim();
-        
-        // Capitalize first letter
-        if (organicTitle.length > 0) {
-          organicTitle = organicTitle.charAt(0).toUpperCase() + organicTitle.slice(1).toLowerCase();
-        }
-        
-        if (organicTitle.length > 70) organicTitle = organicTitle.substring(0, 67) + '...';
-      }
-    }
-    
-    // Fallback to generic if still empty or invalid
-    if (!organicTitle || organicTitle.length < 5) {
-      organicTitle = 'Plan de Estudio';
-    }
-    
-    console.log(`[${planId}] Using title: "${organicTitle}"`);
-
-    // Generate organic description from PDF content (150 words max)
-    let organicDescription = '';
-    if (extractedText && extractedText.length > 100) {
+    if ((!organicTitle || organicTitle === 'Plan de Estudio' || organicTitle.length < 5) && extractedText && extractedText.length > 100) {
       try {
-        console.log(`[${planId}] Generating organic description...`);
-        const descriptionPrompt = `Based on the following document content, write a concise, engaging description (maximum 150 words) that summarizes what the document is about. Focus on the main topics, themes, and key concepts. Write in a natural, organic style as if describing the content to a student.
+        console.log(`[${planId}] Generating organic title with Claude...`);
+        const titlePrompt = `Read this document carefully and create a SHORT, specific title that captures the main topic.
+
+**CRITICAL RULES:**
+- Maximum 60 characters
+- NO URLs, NO website names (www.), NO "fecha actualización"
+- NO metadata like "TEMA 11", "Página X", copyright notices
+- NO generic phrases: avoid "Plan de", "Temario de", "Curso de" at the start
+- BE SPECIFIC: What is this document actually about?
+- Natural language: Write like a human, not a file name
+- In ${language === 'Inglés' ? 'English' : 'Spanish'}
+
+Examples of GOOD titles:
+- "Letrado de Administración de Justicia: Funciones"
+- "Programación Java: Fundamentos y Estructuras"
+- "Derecho Procesal: Recursos y Apelaciones"
 
 Document content:
-${extractedText.substring(0, 3000)}
+${extractedText.substring(0, 2500)}
 
-Generate ONLY the description text, nothing else:`;
+Generate ONLY the title (max 60 chars):`;
 
-        const descriptionResponse = await axios.post(
-          OPENAI_URL,
+        const titleResponse = await axios.post(
+          'https://api.openai.com/v1/chat/completions',
           {
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 300,
-            temperature: 0.7,
+            model: 'gpt-4o',
             messages: [
-              {
-                role: 'user',
-                content: descriptionPrompt
-              }
-            ]
+              { role: 'system', content: 'You are an expert at creating concise, descriptive titles. Output ONLY the title text, nothing else.' },
+              { role: 'user', content: titlePrompt }
+            ],
+            max_tokens: 40,
+            temperature: 0.3
           },
           {
             headers: {
               'Authorization': `Bearer ${openaiKey}`,
-              'Content-Type': 'application/json',
-              'anthropic-version': '2023-06-01'
+              'Content-Type': 'application/json'
+            },
+            timeout: 20000
+          }
+        );
+
+        if (titleResponse.data?.choices?.[0]?.message?.content) {
+          let generatedTitle = titleResponse.data.choices[0].message.content.trim();
+          
+          // Aggressive cleanup
+          generatedTitle = generatedTitle
+            .replace(/^["'«»]|["'«»]$/g, '') // Remove quotes
+            .replace(/^(Título|Title):\s*/i, '') // Remove prefix
+            .replace(/www\.[^\s]+/gi, '') // Remove URLs
+            .replace(/fecha actualización[^.!?]*/gi, '') // Remove dates
+            .replace(/página \d+/gi, '') // Remove page numbers
+            .replace(/TEMA \d+:?\s*/gi, '') // Remove "TEMA 11"
+            .replace(/^[\d\.\-\s]+/, '') // Remove leading numbers/punctuation
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim();
+          
+          // Strict validation
+          const isValid = 
+            generatedTitle.length >= 15 && 
+            generatedTitle.length <= 70 && 
+            !/^[A-Z\s]{15,}$/.test(generatedTitle) && // Not all caps
+            !/www\.|http/i.test(generatedTitle) && // No URLs
+            !/fecha|actualización/i.test(generatedTitle) && // No metadata
+            !/^(plan de|temario|curso)\s/i.test(generatedTitle) && // No generic start
+            /[a-záéíóúñA-ZÁÉÍÓÚÑ]{3,}/.test(generatedTitle); // Has real words
+          
+          if (isValid) {
+            organicTitle = generatedTitle;
+            console.log(`[${planId}] ✓ Generated title: "${organicTitle}"`);
+          } else {
+            console.warn(`[${planId}] ✗ Generated title rejected: "${generatedTitle}"`);
+          }
+        }
+      } catch (err) {
+        console.error(`[${planId}] Title generation failed:`, err.message);
+      }
+    }
+    
+    // Fallback to generic if still empty or invalid
+    if (!organicTitle || organicTitle.length < 10) {
+      organicTitle = 'Plan de Estudio';
+    }
+    
+    console.log(`[${planId}] Final title: "${organicTitle}"`);
+
+    // Generate organic description from PDF content (75 words max)
+    let organicDescription = '';
+    if (extractedText && extractedText.length > 100) {
+      try {
+        console.log(`[${planId}] Generating organic description...`);
+        
+        const descriptionPrompt = `Read this document and write a natural, engaging summary (MAXIMUM 35 words) about what it covers.
+
+**CRITICAL RULES:**
+- Write in ${language === 'Inglés' ? 'English' : 'Spanish'}
+- Focus ONLY on the CONTENT: what topics, concepts, and subjects are covered
+- Write like you're explaining to a student what they'll learn
+- Use natural, conversational language
+- NO configuration details (no mention of quizzes, flashcards, exercises, etc.)
+- NO metadata: NO URLs (www.), NO "fecha actualización", NO page numbers, NO copyright
+- NO document artifacts: NO "TEMA X", NO headers/footers
+- NO generic phrases like "Este plan incluye" or "Aprenderás sobre"
+- Maximum 35 words - be concise and impactful!
+
+Examples of GOOD descriptions:
+- "Explora las funciones del Letrado de la Administración de Justicia según la Ley Orgánica del Poder Judicial. Cubre competencias, ordenación del cuerpo jurídico, secretarios de gobierno y coordinadores provinciales. Incluye el régimen de sustituciones y habilitaciones."
+- "Fundamentos de programación Java desde cero. Cubre sintaxis básica, estructuras de control, programación orientada a objetos, herencia, polimorfismo, manejo de excepciones y colecciones. Ideal para principiantes que quieren dominar Java."
+
+Document content:
+${extractedText.substring(0, 4000)}
+
+Write ONLY the description (max 35 words), nothing else:`;
+
+        const descriptionResponse = await axios.post(
+          'https://api.openai.com/v1/chat/completions',
+          {
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: 'You are an expert at writing clear, engaging educational content. Output ONLY the description text, nothing else.' },
+              { role: 'user', content: descriptionPrompt }
+            ],
+            max_tokens: 250,
+            temperature: 0.6
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${openaiKey}`,
+              'Content-Type': 'application/json'
             },
             timeout: 30000
           }
         );
 
-        if (descriptionResponse.data?.content?.[0]?.text) {
-          organicDescription = descriptionResponse.data.content[0].text.trim();
+        if (descriptionResponse.data?.choices?.[0]?.message?.content) {
+          organicDescription = descriptionResponse.data.choices[0].message.content.trim();
           
-          // Ensure it's not too long (limit to ~150 words)
+          // Aggressive cleanup of artifacts
+          organicDescription = organicDescription
+            .replace(/^["'«»]|["'«»]$/g, '') // Remove quotes
+            .replace(/www\.[^\s]+/gi, '') // Remove URLs
+            .replace(/https?:\/\/[^\s]+/gi, '') // Remove URLs
+            .replace(/fecha actualización[^.!?]*/gi, '') // Remove dates
+            .replace(/copyright[^.!?]*/gi, '') // Remove copyright
+            .replace(/página \d+ de \d+/gi, '') // Remove page numbers
+            .replace(/\d+ de \w+ de \d{4}/gi, '') // Remove dates
+            .replace(/TEMA \d+[:\s]*/gi, '') // Remove "TEMA 11:"
+            .replace(/^(Descripción|Description):\s*/i, '') // Remove prefix
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim();
+          
+          // Limit to 35 words
           const words = organicDescription.split(/\s+/);
-          if (words.length > 150) {
-            organicDescription = words.slice(0, 150).join(' ') + '...';
+          if (words.length > 35) {
+            organicDescription = words.slice(0, 35).join(' ') + '...';
           }
           
-          console.log(`[${planId}] Generated description: ${organicDescription.length} chars`);
+          // Strict validation - must be real content
+          const isValidDescription = 
+            organicDescription.length >= 60 && // Minimum length
+            organicDescription.length <= 600 && // Maximum characters
+            !/^[A-Z\s]{30,}$/.test(organicDescription) && // Not all caps
+            !/www\.|http/i.test(organicDescription) && // No URLs
+            !/fecha|actualización|página|copyright/i.test(organicDescription) && // No metadata
+            !/TEMA \d+/i.test(organicDescription) && // No "TEMA 11"
+            !/incluye \d+ (quiz|flashcard|tema)/i.test(organicDescription) && // No config mentions
+            /[a-záéíóúñA-ZÁÉÍÓÚÑ]{4,}/.test(organicDescription) && // Has real words
+            /[.!?]\s*$/.test(organicDescription); // Ends with punctuation
+          
+          if (isValidDescription) {
+            console.log(`[${planId}] ✓ Generated description: ${words.length} words, ${organicDescription.length} chars`);
+          } else {
+            console.warn(`[${planId}] ✗ Generated description rejected as invalid`);
+            organicDescription = ''; // Force fallback
+          }
         }
       } catch (err) {
         console.error(`[${planId}] Description generation failed:`, err.message);
-        // Fallback to simple excerpt
-        organicDescription = extractedText.substring(0, 500).trim();
-        if (organicDescription.length >= 500) organicDescription += '...';
+        organicDescription = ''; // Force fallback
       }
     }
     
-    // Fallback if no description generated
-    if (!organicDescription || organicDescription.length < 20) {
-      organicDescription = `Plan de estudio sobre ${organicTitle}`;
+    // Simple fallback if generation failed
+    if (!organicDescription || organicDescription.length < 50) {
+      organicDescription = `Material de estudio sobre ${organicTitle}. Contenido para nivel ${difficulty || 'general'}.`;
+      console.log(`[${planId}] Using fallback description`);
     }
 
     // Build batches: max 3 quizzes per batch
@@ -311,7 +405,7 @@ Generate ONLY the description text, nothing else:`;
 
     // Execute batches in parallel with progress tracking
     const batchPromises = batches.map((batch, index) => 
-      generateSingleBatch(batch, extractedText, openaiKey, language, quizTypology, priorityPoints, difficulty, planId)
+      generateSingleBatch(batch, extractedText, openaiKey, language, quizTypology, priorityPoints, difficulty, planId, membership)
         .then(result => {
           // Update progress after each batch completes
           return db.collection('users').doc(uid).collection('plans').doc(planId).get()
@@ -423,11 +517,12 @@ Generate ONLY the description text, nothing else:`;
   }
 }
 
-async function generateSingleBatch(batch, extractedText, openaiKey, language, quizTypology, priorityPoints, difficulty, planId) {
-  const { type, batchIndex } = batch;
+// Helper function to build prompts for different item types
+function buildPromptForType(type, batch, extractedText, language, quizTypology, priorityPoints, difficulty, planId, isRetry) {
+  const { batchIndex } = batch; // Extract batchIndex from batch object
+  const retryEmphasis = isRetry ? '\n\n**THIS IS A RETRY - CRITICAL:** Generate EXACTLY the requested number of items. Previous attempt failed to meet quota.' : '';
   
-  // Build prompt using ORIGINAL quality rules
-  let prompt = `You are an expert educational content generator. Create high-quality study materials in ${language}.
+  let prompt = `You are an expert educational content generator. Create high-quality study materials in ${language}.${retryEmphasis}
 
 **CRITICAL QUALITY REQUIREMENTS:**
 1. Use ONLY the provided PDF text - extract real information
@@ -447,22 +542,78 @@ async function generateSingleBatch(batch, extractedText, openaiKey, language, qu
 
   if (type === 'quizzes') {
     const { quizLimit, questionsLimit } = batch;
-    const isTrueFalse = quizTypology === 'True/False' || quizTypology === 'Verdadero/Falso' || quizTypology === 'V/F';
-    const optionsCount = isTrueFalse ? 2 : 4;
-    const optionsExample = isTrueFalse ? '["True","False"]' : '["Answer","Distractor 1","Distractor 2","Distractor 3"]';
     
-    prompt += `Generate ${quizLimit} quizzes, each with ${questionsLimit} questions.
+    // For "Combinado" typology, generate instructions for mixed types
+    const isCombinado = quizTypology === 'Combinado';
+    
+    let typologyInstructions = '';
+    let optionsCount = 4; // Default
+    let optionsExample = '["Opción A","Opción B","Opción C","Opción D"]';
+    
+    if (isCombinado) {
+      typologyInstructions = `**COMBINADO MODE - CRITICAL:**
+- Generate quizzes with MIXED typologies (random distribution)
+- Each quiz must have ONE of these typologies: "A, B, C, D", "A, B, C", "True/False", "Palabras hueccas"
+- Distribute roughly equally among the ${quizLimit} quizzes
+- EACH quiz must specify its typology in the "typology" field
 
-**CRITICAL TYPOLOGY RULE**: 
-- ALL quizzes in this batch MUST use typology="${quizTypology}" (exact string, NO variations like "A", "B", "C", etc.)
+**TYPOLOGY FORMATS:**
+1. "A, B, C, D": Standard 4-option multiple choice
+2. "A, B, C": 3-option multiple choice
+3. "True/False": 2 options ["Verdadero","Falso"]
+4. "Palabras hueccas": Question is a sentence with a blank (use ____), 4 word options to complete it
+   Example: "La capital de España es ____." Options: ["Madrid","Barcelona","Valencia","Sevilla"]`;
+      
+    } else if (quizTypology === 'True/False' || quizTypology === 'Verdadero/Falso' || quizTypology === 'V/F' || quizTypology === 'Verdadero o Falso') {
+      optionsCount = 2;
+      optionsExample = '["Verdadero","Falso"]';
+      
+    } else if (quizTypology === 'A, B, C') {
+      optionsCount = 3;
+      optionsExample = '["Opción A","Opción B","Opción C"]';
+      
+    } else if (quizTypology === 'A, B, C, D') {
+      optionsCount = 4;
+      optionsExample = '["Opción A","Opción B","Opción C","Opción D"]';
+      
+    } else if (quizTypology === 'Palabras hueccas') {
+      optionsCount = 4;
+      optionsExample = '["Madrid","Barcelona","Valencia","Sevilla"]';
+      typologyInstructions = `**PALABRAS HUECCAS FORMAT - CRITICAL:**
+- EACH QUIZ MUST CONTAIN EXACTLY ${questionsLimit} QUESTIONS (NOT just 1 question!)
+- EVERY question MUST be a sentence with a BLANK represented by "____"
+- The blank replaces ONE missing word in the sentence
+- Example questions:
+  Q1: "La capital de España es ____."
+  Q2: "El ____ es el órgano que bombea sangre."
+  Q3: "La fotosíntesis ocurre en las ____."
+  [...continue until you have ${questionsLimit} questions total]
+- Each question has 4 word options that could fill the blank
+- Only ONE option correctly completes each sentence
+- Options are single words or short phrases (max 3 words)
+
+**CRITICAL REMINDER:** Generate ${questionsLimit} questions per quiz, NOT 1 question per quiz!`;
+      
+    } else {
+      // Default to 4 options for unknown typologies
+      optionsCount = 4;
+      optionsExample = '["Opción A","Opción B","Opción C","Opción D"]';
+    }
+    
+    prompt += `Generate EXACTLY ${quizLimit} quizzes, each with EXACTLY ${questionsLimit} questions.
+
+**CRITICAL:** You MUST generate exactly ${quizLimit} quizzes. Do not generate fewer.
+
+${typologyInstructions || `**CRITICAL TYPOLOGY RULE**: 
+- ALL quizzes in this batch MUST use typology="${quizTypology}" (exact string)
 - This is MANDATORY - any quiz with different typology will be rejected
 - EVERY SINGLE quiz must have "${quizTypology}" as its typology value
 
 **CRITICAL OPTIONS RULE**:
-- True/False quizzes: MUST have EXACTLY 2 options: ["True","False"] or ["Verdadero","Falso"]
-- Multiple choice quizzes: MUST have EXACTLY 4 options
-- NO extra distractor options like "Distractor 1", "Distractor 2" in True/False questions
-- Quizzes with wrong number of options will be REJECTED
+- True/False: EXACTLY 2 options ["Verdadero","Falso"]
+- A, B, C: EXACTLY 3 options
+- A, B, C, D: EXACTLY 4 options
+- Palabras hueccas: Question with ____ blank, EXACTLY 4 word options`}
 
 JSON FORMAT:
 [{
@@ -470,17 +621,21 @@ JSON FORMAT:
   "titulo":"Descriptive title from PDF content (NOT generic like 'Quiz 1')",
   "typology":"${quizTypology}",
   "progreso":{"preguntasRespondidas":0},
-  "questions":[{
-    "question":"Specific, clear question (max 220 chars)",
-    "options":${optionsExample},
-    "answer":"Answer",
-    "difficulty":"${difficulty}",
-    "inferred":false,
-    "evidence":"PDF snippet"
-  }]
+  "questions":[
+    {
+      "question":"Specific, clear question (max 220 chars)",
+      "options":${optionsExample},
+      "answer":"Answer",
+      "difficulty":"${difficulty}",
+      "inferred":false,
+      "evidence":"PDF snippet"
+    }
+    // ... repeat ${questionsLimit - 1} more question objects (total: ${questionsLimit} questions)
+  ]
 }]
 
 RULES:
+- Each quiz MUST have an array of EXACTLY ${questionsLimit} question objects
 - Questions: Direct, specific (e.g., "¿Qué función cumple X en Y?")
 - Options: EXACTLY ${optionsCount} options (${quizTypology}), max 140 chars each
 - Answer MUST be one of the options
@@ -490,7 +645,9 @@ RULES:
 
   } else if (type === 'flashcards') {
     const { flashcardLimit } = batch;
-    prompt += `Generate ${flashcardLimit} flashcards for active recall.
+    prompt += `Generate EXACTLY ${flashcardLimit} flashcards for active recall.
+
+**CRITICAL:** You MUST generate exactly ${flashcardLimit} flashcards. Do not generate fewer.
 
 JSON FORMAT:
 [{
@@ -509,12 +666,14 @@ RULES:
 
   } else if (type === 'hotTopics') {
     const { hotTopicsLimit } = batch;
-    prompt += `Generate ${hotTopicsLimit} hot topics - key concepts from the PDF.
+    prompt += `Generate EXACTLY ${hotTopicsLimit} hot topics - key concepts from the PDF.
+
+**CRITICAL:** You MUST generate exactly ${hotTopicsLimit} topics. Do not generate fewer.
 
 JSON FORMAT:
 [{
   "title":"Concept name (max 100 chars)",
-  "description":"Why it matters, what it covers (minimum 100 chars, ideally 120-200)",
+  "description":"Why it matters, what it covers (minimum 50 chars, ideally 60-75)",
   "inferred":false,
   "evidence":"PDF snippet"
 }]
@@ -526,6 +685,18 @@ RULES:
   }
 
   prompt += `\n\n**PDF CONTENT:**\n${extractedText}\n\n**OUTPUT JSON ARRAY:**`;
+  return prompt;
+}
+
+async function generateSingleBatch(batch, extractedText, openaiKey, language, quizTypology, priorityPoints, difficulty, planId, membership) {
+  const { type, batchIndex } = batch;
+  
+  // Enable retry logic for premium users or if explicitly requested
+  const enableRetry = membership === 'premium' || membership === 'pro' || true; // true = enable for all users
+  const maxRetries = enableRetry ? 2 : 0; // Max 2 retry attempts
+  
+  // Build prompt using ORIGINAL quality rules
+  const prompt = buildPromptForType(type, batch, extractedText, language, quizTypology, priorityPoints, difficulty, planId, false);
 
   try {
     const response = await axios.post(
@@ -552,18 +723,83 @@ RULES:
     if (!Array.isArray(items)) throw new Error('Response not an array');
 
     // STRICT POST-GENERATION VALIDATION
-    const validatedItems = validateBatchItems(items, type, batch, quizTypology, planId, batchIndex);
+    let validatedItems = validateBatchItems(items, type, batch, quizTypology, planId, batchIndex);
     
     if (validatedItems.length === 0) {
       console.error(`[${planId}] ❌ ALL ITEMS REJECTED: All ${items.length} items in batch ${batchIndex} failed validation`);
       throw new Error(`All ${items.length} items failed validation - batch rejected`);
     }
     
+    // Check if we generated the expected number of items
+    const expectedCount = type === 'quizzes' ? batch.quizLimit : 
+                         type === 'flashcards' ? batch.flashcardLimit : 
+                         type === 'hotTopics' ? batch.hotTopicsLimit : 0;
+    
+    // RETRY LOGIC: If we're missing items and retries are enabled, try to generate the missing ones
+    if (validatedItems.length < expectedCount && enableRetry) {
+      const missingCount = expectedCount - validatedItems.length;
+      console.warn(`[${planId}] ⚠️ INSUFFICIENT ITEMS: Expected ${expectedCount} but got ${validatedItems.length}. Will retry to generate ${missingCount} missing items...`);
+      
+      for (let retryAttempt = 1; retryAttempt <= maxRetries && validatedItems.length < expectedCount; retryAttempt++) {
+        const stillMissing = expectedCount - validatedItems.length;
+        console.log(`[${planId}] 🔄 Retry attempt ${retryAttempt}/${maxRetries}: Generating ${stillMissing} missing ${type}...`);
+        
+        try {
+          // Create a mini-batch for just the missing items
+          const retryBatch = { ...batch, batchIndex: `${batchIndex}_retry${retryAttempt}` };
+          if (type === 'quizzes') retryBatch.quizLimit = stillMissing;
+          else if (type === 'flashcards') retryBatch.flashcardLimit = stillMissing;
+          else if (type === 'hotTopics') retryBatch.hotTopicsLimit = stillMissing;
+          
+          // Build retry prompt with emphasis on generating EXACTLY the missing count
+          const retryPrompt = buildPromptForType(type, retryBatch, extractedText, language, quizTypology, priorityPoints, difficulty, planId, true);
+          
+          const retryResponse = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are an expert educational content creator. Output ONLY valid JSON arrays. Generate EXACTLY the requested number of items.' },
+                { role: 'user', content: retryPrompt }
+              ],
+              temperature: 0.7,
+              max_tokens: 6000
+            },
+            {
+              headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+              timeout: 120000
+            }
+          );
+          
+          let retryContent = retryResponse.data.choices[0].message.content.trim();
+          retryContent = retryContent.replace(/^```json\n?/i, '').replace(/\n?```$/, '').trim();
+          const retryItems = JSON.parse(retryContent);
+          
+          if (Array.isArray(retryItems) && retryItems.length > 0) {
+            const retryValidated = validateBatchItems(retryItems, type, retryBatch, quizTypology, planId, `${batchIndex}_retry${retryAttempt}`);
+            const addedCount = Math.min(retryValidated.length, stillMissing);
+            validatedItems.push(...retryValidated.slice(0, addedCount));
+            console.log(`[${planId}] ✅ Retry ${retryAttempt}: Added ${addedCount} more items. Total now: ${validatedItems.length}/${expectedCount}`);
+          }
+        } catch (retryErr) {
+          console.error(`[${planId}] ❌ Retry ${retryAttempt} failed:`, retryErr.message);
+        }
+      }
+      
+      if (validatedItems.length < expectedCount) {
+        console.warn(`[${planId}] ⚠️ After ${maxRetries} retries, still missing ${expectedCount - validatedItems.length} items. Final count: ${validatedItems.length}/${expectedCount}`);
+      } else {
+        console.log(`[${planId}] ✅ Successfully completed all ${expectedCount} items after retries!`);
+      }
+    } else if (validatedItems.length < expectedCount) {
+      console.warn(`[${planId}] ⚠️ INSUFFICIENT ITEMS: Expected ${expectedCount} but got ${validatedItems.length} valid items (retries disabled)`);
+    }
+    
     if (validatedItems.length < items.length) {
       console.error(`[${planId}] ⚠️ PARTIAL REJECTION: Batch ${batchIndex} (${type}): ${items.length - validatedItems.length}/${items.length} items rejected by validation`);
     }
 
-    console.log(`[${planId}] ✅ Batch ${batchIndex} (${type}) generated ${validatedItems.length}/${items.length} valid items`);
+    console.log(`[${planId}] ✅ Batch ${batchIndex} (${type}) generated ${validatedItems.length}/${expectedCount} valid items`);
     return { type, items: validatedItems };
 
   } catch (err) {
@@ -577,9 +813,6 @@ function validateBatchItems(items, type, batch, quizTypology, planId, batchIndex
   const validated = [];
   
   if (type === 'quizzes') {
-    const isTrueFalse = quizTypology === 'True/False' || quizTypology === 'Verdadero/Falso' || quizTypology === 'V/F';
-    const expectedOptionsCount = isTrueFalse ? 2 : 4;
-    
     for (const quiz of items) {
       if (!quiz || typeof quiz !== 'object') continue;
       
@@ -589,13 +822,58 @@ function validateBatchItems(items, type, batch, quizTypology, planId, batchIndex
         continue;
       }
       
+      // Get the quiz's actual typology (what was generated)
+      const quizActualTypology = quiz.typology || quizTypology;
+      
+      // Determine expected options count based on the quiz's actual typology
+      let expectedOptionsCount;
+      if (quizActualTypology === 'True/False' || 
+          quizActualTypology === 'Verdadero/Falso' || 
+          quizActualTypology === 'V/F' ||
+          quizActualTypology === 'Verdadero o Falso') {
+        expectedOptionsCount = 2;
+      } else if (quizActualTypology === 'A, B, C') {
+        expectedOptionsCount = 3;
+      } else if (quizActualTypology === 'A, B, C, D') {
+        expectedOptionsCount = 4;
+      } else if (quizActualTypology === 'Palabras hueccas') {
+        expectedOptionsCount = 4;
+      } else if (quizActualTypology === 'Combinado') {
+        // For Combinado, each quiz should have its own typology set
+        // We'll validate based on the actual typology of each quiz, not "Combinado"
+        expectedOptionsCount = null; // Will be determined per question
+      } else {
+        // Default to 4 options for unknown typologies
+        expectedOptionsCount = 4;
+      }
+      
+      // Special validation for "Palabras hueccas": check for blank in question
+      if (quizActualTypology === 'Palabras hueccas') {
+        const hasBlank = quiz.questions.some(q => 
+          q.question && (q.question.includes('____') || q.question.includes('___') || q.question.includes('__'))
+        );
+        if (!hasBlank) {
+          console.warn(`[${planId}] Quiz "${quiz.titulo}" marked as "Palabras hueccas" but questions don't contain blanks (____) - keeping anyway`);
+        }
+      }
+      
       // Validate each question's options count
       const validQuestions = quiz.questions.filter(q => {
         if (!q || !Array.isArray(q.options)) return false;
         
-        // CRITICAL: Check options count matches typology
-        if (q.options.length !== expectedOptionsCount) {
-          console.error(`[${planId}] ❌ VALIDATION FAILED: Question "${q.question}" has ${q.options.length} options, expected ${expectedOptionsCount} for ${quizTypology} - REJECTED`);
+        // For Combinado, determine expected count from the quiz's specific typology
+        let questionExpectedCount = expectedOptionsCount;
+        if (quizActualTypology === 'Combinado') {
+          // The quiz should have been assigned a specific typology by the AI
+          if (q.options.length === 2) questionExpectedCount = 2;
+          else if (q.options.length === 3) questionExpectedCount = 3;
+          else if (q.options.length === 4) questionExpectedCount = 4;
+          else questionExpectedCount = 4; // default
+        }
+        
+        // CRITICAL: Check options count matches the quiz's typology
+        if (questionExpectedCount !== null && q.options.length !== questionExpectedCount) {
+          console.error(`[${planId}] ❌ VALIDATION FAILED: Question "${q.question}" has ${q.options.length} options, expected ${questionExpectedCount} for quiz typology "${quizActualTypology}" - REJECTED`);
           return false;
         }
         
@@ -613,8 +891,9 @@ function validateBatchItems(items, type, batch, quizTypology, planId, batchIndex
         continue;
       }
       
-      // Update quiz with only valid questions
+      // Update quiz with only valid questions and ensure typology is set
       quiz.questions = validQuestions;
+      quiz.typology = quizActualTypology; // Preserve the actual typology
       validated.push(quiz);
     }
     
@@ -647,9 +926,9 @@ function validateBatchItems(items, type, batch, quizTypology, planId, batchIndex
         continue;
       }
       
-      // CRITICAL: Validate description minimum length (100 chars)
-      if (topic.description.length < 100) {
-        console.warn(`[${planId}] HotTopic "${topic.title}" description too short (${topic.description.length} < 100 chars) - REJECTED`);
+      // CRITICAL: Validate description minimum length (50 chars)
+      if (topic.description.length < 50) {
+        console.warn(`[${planId}] HotTopic "${topic.title}" description too short (${topic.description.length} < 50 chars) - REJECTED`);
         continue;
       }
       

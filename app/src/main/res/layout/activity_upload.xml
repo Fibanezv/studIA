@@ -106,6 +106,8 @@
                                     android:layout_height="wrap_content"
                                     android:entries="@array/languages"
                                     android:spinnerMode="dropdown"
+                                    android:textAlignment="textEnd"
+                                    android:gravity="end"
                                     android:popupBackground="@color/colorPrimary" />
 
                             </LinearLayout>
@@ -136,6 +138,8 @@
                                     android:layout_height="wrap_content"
                                     android:entries="@array/levels"
                                     android:spinnerMode="dropdown"
+                                    android:textAlignment="textEnd"
+                                    android:gravity="end"
                                     android:popupBackground="@color/colorPrimary" />
 
                             </LinearLayout>
@@ -179,6 +183,7 @@
                                 android:entries="@array/quiz_types"
                                 android:spinnerMode="dropdown"
                                 android:textAlignment="textEnd"
+                                android:gravity="end"
                                 android:popupBackground="@color/colorPrimary" />
 
                         </LinearLayout>
@@ -194,7 +199,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Límite de Quizzes"
+                                android:text="Total de Quizzes"
                                 android:textColor="@color/beige_300_theme"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -220,7 +225,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Límite de preguntas"
+                                android:text="Total de preguntas"
                                 android:textColor="@color/beige_300_theme"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -257,7 +262,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Límite de Flashcards"
+                            android:text="Total de Flashcards"
                             android:textColor="@color/beige_300_theme"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -292,7 +297,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Límite de Hot Topics"
+                            android:text="Total de Hot Topics"
                             android:textColor="@color/beige_300_theme"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -347,16 +352,41 @@
                         android:textColor="@color/beige_300_theme"
                         android:textSize="16sp"/>
 
-                    <!-- Selected file name (hidden until a file is chosen) -->
-                    <TextView
-                        android:id="@+id/selected_file_name"
+                    <!-- Selected file name with delete button (hidden until a file is chosen) -->
+                    <LinearLayout
+                        android:id="@+id/selected_file_container"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text=""
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
                         android:visibility="gone"
-                        android:textColor="@color/black"
-                        android:layout_marginBottom="8dp"
-                        android:textSize="14sp" />
+                        android:padding="8dp"
+                        android:background="@android:color/white"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:id="@+id/selected_file_name"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text=""
+                            android:textColor="@color/black"
+                            android:textSize="14sp"
+                            android:ellipsize="middle"
+                            android:singleLine="true" />
+
+                        <ImageButton
+                            android:id="@+id/button_remove_file"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="8dp"
+                            android:src="@android:drawable/ic_menu_close_clear_cancel"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Eliminar documento"
+                            android:scaleType="fitCenter"
+                            android:tint="@color/red" />
+
+                    </LinearLayout>
 
                     <Button
                         android:id="@+id/button_upload_file"
