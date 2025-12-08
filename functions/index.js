@@ -718,7 +718,32 @@ async function generateSingleBatch(batch, extractedText, openaiKey, language, qu
 
     let content = response.data.choices[0].message.content.trim();
     content = content.replace(/^```json\n?/i, '').replace(/\n?```$/, '').trim();
-    const items = JSON.parse(content);
+    
+    // Try to parse JSON, with fallback for malformed responses
+    let items;
+    try {
+      items = JSON.parse(content);
+    } catch (parseError) {
+      console.error(`[${planId}] ❌ JSON Parse Error at position ${parseError.message.match(/\d+/)?.[0] || 'unknown'}`);
+      console.error(`[${planId}] Raw content preview: ${content.substring(0, 1000)}...`);
+      
+      // Try to extract valid JSON array by finding the first [ and last ]
+      const firstBracket = content.indexOf('[');
+      const lastBracket = content.lastIndexOf(']');
+      
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        const extractedJson = content.substring(firstBracket, lastBracket + 1);
+        try {
+          items = JSON.parse(extractedJson);
+          console.log(`[${planId}] ✅ Recovered JSON after extraction`);
+        } catch (retryParseError) {
+          console.error(`[${planId}] ❌ Failed to recover JSON after extraction`);
+          throw new Error(`JSON parsing failed: ${parseError.message}`);
+        }
+      } else {
+        throw new Error(`JSON parsing failed: ${parseError.message}`);
+      }
+    }
 
     if (!Array.isArray(items)) throw new Error('Response not an array');
 
@@ -773,7 +798,32 @@ async function generateSingleBatch(batch, extractedText, openaiKey, language, qu
           
           let retryContent = retryResponse.data.choices[0].message.content.trim();
           retryContent = retryContent.replace(/^```json\n?/i, '').replace(/\n?```$/, '').trim();
-          const retryItems = JSON.parse(retryContent);
+          
+          // Try to parse JSON, with fallback for malformed responses
+          let retryItems;
+          try {
+            retryItems = JSON.parse(retryContent);
+          } catch (retryParseError) {
+            console.error(`[${planId}] ❌ Retry JSON Parse Error: ${retryParseError.message}`);
+            
+            // Try to extract valid JSON array
+            const firstBracket = retryContent.indexOf('[');
+            const lastBracket = retryContent.lastIndexOf(']');
+            
+            if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+              const extractedJson = retryContent.substring(firstBracket, lastBracket + 1);
+              try {
+                retryItems = JSON.parse(extractedJson);
+                console.log(`[${planId}] ✅ Recovered retry JSON after extraction`);
+              } catch (secondParseError) {
+                console.error(`[${planId}] ❌ Failed to recover retry JSON`);
+                continue; // Skip this retry attempt
+              }
+            } else {
+              console.error(`[${planId}] ❌ Could not find valid JSON array in retry response`);
+              continue; // Skip this retry attempt
+            }
+          }
           
           if (Array.isArray(retryItems) && retryItems.length > 0) {
             const retryValidated = validateBatchItems(retryItems, type, retryBatch, quizTypology, planId, `${batchIndex}_retry${retryAttempt}`);

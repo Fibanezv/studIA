@@ -49,356 +49,505 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp"
-                        android:weightSum="3"
-                        android:background="@color/colorPrimary">
-
-                        <!-- Flashcards: percent on top with icon, label below -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_marginEnd="6dp"
-                                    android:src="@drawable/ic_flashcard_24"
-                                    android:contentDescription="Flashcards"
-                                    app:tint="@color/beige_300_theme" />
-
-                                <TextView
-                                    android:id="@+id/tv_flashcards_pct"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0%"
-                                    android:textStyle="bold"
-                                    android:textSize="18sp"
-                                    android:textColor="@color/beige_300_theme" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Flashcards"
-                                android:textStyle="bold"
-                                android:textColor="@color/beige_300_theme"
-                                android:layout_marginTop="6dp" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="2dp"
-                            android:layout_height="48dp"
-                            android:background="@color/beige_300_theme"
-                            android:layout_marginTop="4dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:src="@drawable/ic_hot_topics_24"
-                                    android:contentDescription="Hot topics"
-                                    app:tint="@color/beige_300_theme" />
-
-                                <TextView
-                                    android:id="@+id/tv_hot_topics_count"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0"
-                                    android:textStyle="bold"
-                                    android:textSize="18sp"
-                                    android:textColor="@color/beige_300_theme"
-                                    android:layout_marginStart="6dp" />
-
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Hot topics"
-                                android:textStyle="bold"
-                                android:textColor="@color/beige_300_theme"
-                                android:layout_marginTop="6dp" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="2dp"
-                            android:layout_height="48dp"
-                            android:background="@color/beige_300_theme"
-                            android:layout_marginTop="4dp" />
-
-                        <!-- Quizzes: percent on top with icon, label below -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_marginEnd="6dp"
-                                    android:src="@drawable/ic_quizz_24"
-                                    android:contentDescription="Quizzes"
-                                    app:tint="@color/beige_300_theme" />
-
-                                <TextView
-                                    android:id="@+id/tv_quizzes_pct"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="0%"
-                                    android:textStyle="bold"
-                                    android:textSize="18sp"
-                                    android:textColor="@color/beige_300_theme" />
-
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Quizzes"
-                                android:textStyle="bold"
-                                android:textColor="@color/beige_300_theme"
-                                android:layout_marginTop="6dp" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Description card (collapsible) -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/description_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="4dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp"
-                    android:visibility="gone">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="12dp"
                         android:background="@color/colorPrimary">
 
+                        <!-- Overview Grid -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:padding="16dp"
+                            android:gravity="center">
 
-                            <TextView
+                            <!-- Flashcards Overview -->
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Total"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginBottom="4dp" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="28dp"
+                                        android:layout_height="28dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:src="@drawable/ic_flashcard_24"
+                                        android:contentDescription="Flashcards"
+                                        app:tint="@color/beige_300_theme" />
+
+                                    <TextView
+                                        android:id="@+id/tv_overview_flashcards_total"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="0"
+                                        android:textStyle="bold"
+                                        android:textSize="18sp"
+                                        android:textColor="@color/black" />
+
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Flashcards"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <!-- Separator -->
+                            <View
+                                android:layout_width="2dp"
+                                android:layout_height="match_parent"
+                                android:background="@color/beige_300_theme"
+                                android:layout_marginHorizontal="8dp" />
+
+                            <!-- Hot Topics Overview -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Total"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginBottom="4dp" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="28dp"
+                                        android:layout_height="28dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:src="@drawable/ic_hot_topics_24"
+                                        android:contentDescription="Hot Topics"
+                                        app:tint="@color/beige_300_theme" />
+
+                                    <TextView
+                                        android:id="@+id/tv_overview_hot_topics_total"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="0"
+                                        android:textStyle="bold"
+                                        android:textSize="18sp"
+                                        android:textColor="@color/black" />
+
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Hot Topics"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                            <!-- Separator -->
+                            <View
+                                android:layout_width="2dp"
+                                android:layout_height="match_parent"
+                                android:background="@color/beige_300_theme"
+                                android:layout_marginHorizontal="8dp" />
+
+                            <!-- Quizzes Overview -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Total"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginBottom="4dp" />
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="28dp"
+                                        android:layout_height="28dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:src="@drawable/ic_quizz_24"
+                                        android:contentDescription="Quizzes"
+                                        app:tint="@color/beige_300_theme" />
+
+                                    <TextView
+                                        android:id="@+id/tv_overview_quizzes_total"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="0"
+                                        android:textStyle="bold"
+                                        android:textSize="18sp"
+                                        android:textColor="@color/black" />
+
+                                </LinearLayout>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Quizzes"
+                                    android:textStyle="bold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/beige_300_theme"
+                                    android:layout_marginTop="4dp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- Separator -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/beige_300_theme"
+                            android:layout_marginHorizontal="12dp" />
+
+                        <!-- Stats Grid Section -->
+                        <LinearLayout
+                            android:id="@+id/progress_section"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Progreso"
+                                android:textStyle="bold"
+                                android:textSize="16sp"
+                                android:textColor="@color/beige_300_theme"
+                                android:textAlignment="center"/>
+
+                            <!-- Progress Bars Container -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:paddingVertical="12dp"
+                                android:paddingHorizontal="16dp">
+
+                                <!-- Flashcards Progress -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:layout_marginBottom="12dp">
+
+                                    <!-- Label -->
+                                    <TextView
+                                        android:id="@+id/tv_flashcards_label"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Flashcards progreso (0/0)"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:textColor="@color/black"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <!-- Progress Bar -->
+                                    <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="32dp"
+                                        android:background="@android:color/transparent">
+
+                                        <ProgressBar
+                                            android:id="@+id/progress_flashcards"
+                                            style="?android:attr/progressBarStyleHorizontal"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:minHeight="24dp"
+                                            android:scaleY="3"
+                                            android:max="100"
+                                            android:progress="0"
+                                            android:progressDrawable="@drawable/progress_bar_rounded" />
+
+                                        <TextView
+                                            android:id="@+id/tv_flashcards_pct"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:text="0%"
+                                            android:textStyle="bold"
+                                            android:textSize="13sp"
+                                            android:textColor="@color/black" />
+
+                                    </FrameLayout>
+
+                                </LinearLayout>
+
+                                <!-- Quizzes Completados -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:layout_marginBottom="12dp">
+
+                                    <TextView
+                                        android:id="@+id/tv_quizzes_completed_label"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Quizzes completados (0/0)"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:textColor="@color/black"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="32dp"
+                                        android:background="@android:color/transparent">
+
+                                        <ProgressBar
+                                            android:id="@+id/progress_quizzes_completed"
+                                            style="?android:attr/progressBarStyleHorizontal"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:minHeight="24dp"
+                                            android:scaleY="3"
+                                            android:max="100"
+                                            android:progress="0"
+                                            android:progressDrawable="@drawable/progress_bar_rounded" />
+
+                                        <TextView
+                                            android:id="@+id/tv_quizzes_completed_pct"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:text="0%"
+                                            android:textStyle="bold"
+                                            android:textSize="13sp"
+                                            android:textColor="@color/black" />
+
+                                    </FrameLayout>
+
+                                </LinearLayout>
+
+                                <!-- Preguntas Respondidas -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:layout_marginBottom="12dp">
+
+                                    <TextView
+                                        android:id="@+id/tv_questions_answered_label"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Preguntas respondidas (0/0)"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:textColor="@color/black"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="32dp"
+                                        android:background="@android:color/transparent">
+
+                                        <ProgressBar
+                                            android:id="@+id/progress_questions_answered"
+                                            style="?android:attr/progressBarStyleHorizontal"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:minHeight="26dp"
+                                            android:scaleY="3"
+                                            android:max="100"
+                                            android:progress="0"
+                                            android:progressDrawable="@drawable/progress_bar_rounded" />
+
+                                        <TextView
+                                            android:id="@+id/tv_questions_answered_pct"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:text="0%"
+                                            android:textStyle="bold"
+                                            android:textSize="13sp"
+                                            android:textColor="@color/black" />
+
+                                    </FrameLayout>
+
+                                </LinearLayout>
+
+                                <!-- Preguntas Acertadas -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:id="@+id/tv_questions_correct_label"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Preguntas acertadas (0/0)"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:textColor="@color/black"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <FrameLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="32dp"
+                                        android:background="@android:color/transparent">
+
+                                        <ProgressBar
+                                            android:id="@+id/progress_questions_correct"
+                                            style="?android:attr/progressBarStyleHorizontal"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="match_parent"
+                                            android:minHeight="28dp"
+                                            android:scaleY="3"
+                                            android:max="100"
+                                            android:progress="0"
+                                            android:progressDrawable="@drawable/progress_bar_rounded" />
+
+                                        <TextView
+                                            android:id="@+id/tv_questions_correct_pct"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:text="0%"
+                                            android:textStyle="bold"
+                                            android:textSize="13sp"
+                                            android:textColor="@color/black" />
+
+                                    </FrameLayout>
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- Separator for Description -->
+                        <View
+                            android:id="@+id/separator_description"
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/beige_300_theme"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginLeft="12dp"
+                            android:layout_marginRight="12dp"
+                            android:visibility="gone" />
+
+                        <!-- Description Section -->
+                        <LinearLayout
+                            android:id="@+id/description_section"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
                                 android:text="Descripción"
                                 android:textStyle="bold"
-                                android:textSize="14sp"
-                                android:textColor="@color/beige_300_theme" />
-
-                            <ImageView
-                                android:id="@+id/description_toggle_icon"
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@android:drawable/arrow_up_float"
-                                android:contentDescription="Toggle description"
-                                app:tint="@color/beige_300_theme" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tv_plan_description"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text=""
-                            android:textSize="13sp"
-                            android:textColor="@color/black"
-                            android:layout_marginTop="8dp"
-                            android:lineSpacingExtra="2dp" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Badges card -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/user_badges_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="10dp"
-                    app:cardElevation="6dp"
-                    app:cardCornerRadius="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="12dp"
-                        android:background="@color/colorPrimary">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                                android:textSize="16sp"
+                                android:textColor="@color/beige_300_theme"
+                                android:textAlignment="center"
+                                android:layout_marginBottom="8dp" />
 
                             <TextView
-                                android:id="@+id/badges_title"
-                                android:layout_width="0dp"
+                                android:id="@+id/tv_plan_description"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Logros"
-                                android:textStyle="bold"
-                                android:textSize="14sp"
-                                android:textColor="@color/beige_300_theme" />
-
-                            <ImageView
-                                android:id="@+id/badges_toggle_icon"
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:src="@android:drawable/arrow_up_float"
-                                android:contentDescription="Toggle badges"
-                                app:tint="@color/beige_300_theme" />
+                                android:text=""
+                                android:textSize="13sp"
+                                android:textColor="@color/black"
+                                android:lineSpacingExtra="2dp" />
 
                         </LinearLayout>
 
-                        <GridLayout
-                            android:id="@+id/badges_container"
+                        <!-- Separator for Badges -->
+                        <View
+                            android:id="@+id/separator_badges"
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/beige_300_theme"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginLeft="12dp"
+                            android:layout_marginRight="12dp"
+                            android:visibility="gone" />
+
+                        <!-- Badges Section -->
+                        <LinearLayout
+                            android:id="@+id/badges_section"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:columnCount="4"
-                            android:orientation="horizontal"
-                            android:useDefaultMargins="true"
-                            android:alignmentMode="alignMargins"
-                            android:gravity="center"
-                            android:layout_marginTop="8dp" />
+                            android:orientation="vertical"
+                            android:padding="12dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Logros"
+                                android:textStyle="bold"
+                                android:textSize="16sp"
+                                android:textColor="@color/beige_300_theme"
+                                android:textAlignment="center"
+                                android:layout_marginBottom="8dp" />
+
+                            <GridLayout
+                                android:id="@+id/badges_container"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:columnCount="4"
+                                android:orientation="horizontal"
+                                android:useDefaultMargins="true"
+                                android:alignmentMode="alignMargins"
+                                android:gravity="center" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
+
                 </androidx.cardview.widget.CardView>
                 
-                <!-- New sections: quizzes to start, quizzes in progress, flashcards, relevant topics -->
-                <!-- Quizzes por empezar -->
-                <TextView
-                    android:id="@+id/section_quizzes_to_start_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Quizzes por empezar"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textAlignment="center"
-                    android:textColor="?attr/navTextColor"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="6dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_quizzes_to_start"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:overScrollMode="never"
-                    android:clipToPadding="false" />
-
-                <!-- Quizzes en progreso -->
-                <TextView
-                    android:id="@+id/section_quizzes_in_progress_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Quizzes en progreso"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textAlignment="center"
-                    android:textColor="?attr/navTextColor"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="6dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_quizzes_in_progress"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:overScrollMode="never"
-                    android:clipToPadding="false" />
-
-                <!-- Flashcards pendientes -->
-                <TextView
-                    android:id="@+id/section_flashcards_pending_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Flashcards pendientes"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textAlignment="center"
-                    android:textColor="?attr/navTextColor"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="6dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_flashcards_pending"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:overScrollMode="never"
-                    android:clipToPadding="false" />
-
-                <!-- Topics relevantes -->
-                <TextView
-                    android:id="@+id/section_topics_relevant_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Topics relevantes"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textAlignment="center"
-                    android:textColor="?attr/navTextColor"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="6dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_topics_relevant"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:overScrollMode="never"
-                    android:clipToPadding="false" />
-
+                <!-- Action Buttons -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

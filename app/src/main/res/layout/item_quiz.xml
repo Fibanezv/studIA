@@ -93,21 +93,22 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Botón Reiniciar: solo visible cuando el quiz está al 100% -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_reset_quiz"
-            style="?attr/materialButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Reiniciar"
-            android:textAllCaps="false"
-            android:visibility="gone"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            app:backgroundTint="@color/colorPrimaryVariant"
-            android:textColor="@color/beige_300_theme"
-            android:layout_marginStart="5dp" />
-
     </LinearLayout>
+
+    <!-- Botón Reiniciar debajo: solo visible cuando el quiz está al 100% -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_reset_quiz"
+        style="?attr/materialButtonStyle"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:text="Reiniciar"
+        android:textAllCaps="false"
+        android:visibility="gone"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        app:backgroundTint="@color/colorPrimaryVariant"
+        android:textColor="@color/beige_300_theme"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="start" />
 
 </LinearLayout>

@@ -8,7 +8,7 @@
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-**Última actualización:** 3 de diciembre de 2025  
+**Última actualización:** 8 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)
 
@@ -63,7 +63,19 @@
 - **Autenticación Firebase** con soporte para email/password y Google Sign-In
 - **Almacenamiento offline** con sincronización en la nube
 - **Exportación de datos** para respaldo personal
-- **Cards plegables** en detalles del plan (Descripción y Logros con estado persistente)
+- **PlanDetailsActivity mejorado**:
+  - Overview Grid con totales de Flashcards, Hot Topics y Quizzes
+  - Sección de Progreso con 4 barras (Flashcards, Quizzes Completados, Preguntas Respondidas, Preguntas Acertadas)
+  - Progreso oculto automáticamente si todos los valores están al 0%
+  - Progress bars con bordes redondeados y porcentaje visible
+  - Descripción y Logros como secciones fijas (sin colapsar)
+- **QuizActivity mejorado**:
+  - Título "Pregunta X" centrado sobre cada pregunta
+  - Imagen decorativa (ic_profile_1) entre respuestas y botón
+  - Barra de progreso visual con animación
+- **Quiz items rediseñados**:
+  - Botón "Reiniciar" debajo de progreso/nota (120dp, alineado a la izquierda)
+  - Visible solo cuando el quiz está completado al 100%
 - **Formulario de creación mejorado**: 
   - Spinners con texto alineado a la derecha
   - Labels "Total de" en lugar de "Límite de"
@@ -101,6 +113,7 @@
   - Flashcards con respuestas detalladas (120-250 caracteres)
   - Hot Topics con descripciones concisas (50-75 caracteres)
 - **Sistema de validación inteligente**: Rechaza contenido inválido y reintenta hasta 2 veces
+- **Recuperación de JSON robusta**: Extrae JSON válido de respuestas malformadas
 - **JSON Schema Validation** - Respuestas estructuradas y validadas
 
 #### Otras Dependencias Clave

@@ -159,6 +159,13 @@ public class QuizActivity extends BaseActivity {
     refreshProgressUI();
 
         Question q = questionList.get(current);
+        
+        // Update question number
+        TextView questionNumber = findViewById(R.id.question_number);
+        if (questionNumber != null) {
+            questionNumber.setText("Pregunta " + (current + 1));
+        }
+        
         ((TextView) findViewById(R.id.question_text)).setText(q.question);
         RadioGroup group = findViewById(R.id.options_group);
         group.removeAllViews();

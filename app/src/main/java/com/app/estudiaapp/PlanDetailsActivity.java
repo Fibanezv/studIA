@@ -4,26 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
- 
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.app.estudiaapp.adapters.QuizzesAdapter;
-import com.app.estudiaapp.adapters.HotTopicsAdapter;
-import com.app.estudiaapp.adapters.FlashcardsAdapter;
 import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.models.Quiz;
-import com.app.estudiaapp.models.Flashcard;
-import com.app.estudiaapp.models.HotTopic;
 import com.app.estudiaapp.utils.Constants;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
 
 public class PlanDetailsActivity extends BaseActivity {
     private String planIdField;
@@ -107,45 +95,24 @@ public class PlanDetailsActivity extends BaseActivity {
             prefs.edit().putString("last_plan_id", plan.id != null ? plan.id : "").apply();
         } catch (Exception ignored) {}
 
-        // Setup description card (collapsible)
-        androidx.cardview.widget.CardView descriptionCard = findViewById(R.id.description_card);
+        // Setup description section (fixed, no toggle)
+        LinearLayout descriptionSection = findViewById(R.id.description_section);
         TextView tvDescription = findViewById(R.id.tv_plan_description);
-        android.widget.ImageView toggleIcon = findViewById(R.id.description_toggle_icon);
+        View separatorDescription = findViewById(R.id.separator_description);
         
         if (plan.description != null && !plan.description.trim().isEmpty()) {
-            descriptionCard.setVisibility(View.VISIBLE);
+            descriptionSection.setVisibility(View.VISIBLE);
+            separatorDescription.setVisibility(View.VISIBLE);
             tvDescription.setText(plan.description);
-            
-            // Load collapse state from preferences (default: expanded)
-            android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
-            boolean isCollapsed = prefs.getBoolean("description_collapsed_" + plan.id, false);
-            
-            tvDescription.setVisibility(isCollapsed ? View.GONE : View.VISIBLE);
-            toggleIcon.setImageResource(isCollapsed ? 
-                android.R.drawable.arrow_down_float : android.R.drawable.arrow_up_float);
-            
-            // Toggle on click
-            View.OnClickListener toggleListener = v -> {
-                boolean currentlyCollapsed = tvDescription.getVisibility() == View.GONE;
-                tvDescription.setVisibility(currentlyCollapsed ? View.VISIBLE : View.GONE);
-                toggleIcon.setImageResource(currentlyCollapsed ? 
-                    android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
-                
-                // Save state
-                prefs.edit().putBoolean("description_collapsed_" + plan.id, !currentlyCollapsed).apply();
-            };
-            
-            descriptionCard.setOnClickListener(toggleListener);
-            toggleIcon.setOnClickListener(toggleListener);
         } else {
-            descriptionCard.setVisibility(View.GONE);
+            descriptionSection.setVisibility(View.GONE);
+            separatorDescription.setVisibility(View.GONE);
         }
 
-    int totalFlash = (plan.flashcards == null) ? 0 : plan.flashcards.size();
-    int studiedFlash = (plan.progreso == null) ? 0 : plan.progreso.flashcardsEstudiadas;
-    int flashPct = totalFlash > 0 ? (int) ((studiedFlash * 100.0f) / totalFlash) : 0;
-    TextView tvFlashPct = findViewById(R.id.tv_flashcards_pct);
-    if (tvFlashPct != null) tvFlashPct.setText(flashPct + "%");
+        // Calculate all stats
+        int totalFlash = (plan.flashcards == null) ? 0 : plan.flashcards.size();
+        int studiedFlash = (plan.progreso == null) ? 0 : plan.progreso.flashcardsEstudiadas;
+        int flashPct = totalFlash > 0 ? (int) ((studiedFlash * 100.0f) / totalFlash) : 0;
 
         int totalQuizzes = (plan.quizzes == null) ? 0 : plan.quizzes.size();
         int completedQuizzes = 0;
@@ -166,18 +133,60 @@ public class PlanDetailsActivity extends BaseActivity {
             }
         }
 
-    int quizPct = totalQuestions > 0 ? (int) ((totalAnswered * 100.0f) / totalQuestions) : 0;
-    TextView tvQuizPct = findViewById(R.id.tv_quizzes_pct);
-    if (tvQuizPct != null) tvQuizPct.setText(quizPct + "%");
+        int quizPct = totalQuestions > 0 ? (int) ((totalAnswered * 100.0f) / totalQuestions) : 0;
+        int correctPct = totalAnswered > 0 ? (int) ((totalCorrect * 100.0f) / totalAnswered) : 0;
+        int quizCompletedPct = totalQuizzes > 0 ? (int) ((completedQuizzes * 100.0f) / totalQuizzes) : 0;
+        int totalHotTopics = (plan.hotTopics == null) ? 0 : plan.hotTopics.size();
 
-    // Hot topics count - show total number on the stats row
-    int totalHotTopics = (plan.hotTopics == null) ? 0 : plan.hotTopics.size();
-    TextView hotCountTv = findViewById(R.id.tv_hot_topics_count);
-    if (hotCountTv != null) hotCountTv.setText(String.valueOf(totalHotTopics));
+        // Populate Overview Grid
+        TextView tvOverviewFlashcardsTotal = findViewById(R.id.tv_overview_flashcards_total);
+        TextView tvOverviewHotTopicsTotal = findViewById(R.id.tv_overview_hot_topics_total);
+        TextView tvOverviewQuizzesTotal = findViewById(R.id.tv_overview_quizzes_total);
+        if (tvOverviewFlashcardsTotal != null) tvOverviewFlashcardsTotal.setText(String.valueOf(totalFlash));
+        if (tvOverviewHotTopicsTotal != null) tvOverviewHotTopicsTotal.setText(String.valueOf(totalHotTopics));
+        if (tvOverviewQuizzesTotal != null) tvOverviewQuizzesTotal.setText(String.valueOf(totalQuizzes));
 
-        // Badges
-        androidx.cardview.widget.CardView userBadgesCard = findViewById(R.id.user_badges_card);
+        // Populate Flashcards progress
+        android.widget.ProgressBar progressFlashcards = findViewById(R.id.progress_flashcards);
+        TextView tvFlashPct = findViewById(R.id.tv_flashcards_pct);
+        TextView tvFlashLabel = findViewById(R.id.tv_flashcards_label);
+        if (progressFlashcards != null) progressFlashcards.setProgress(flashPct);
+        if (tvFlashPct != null) tvFlashPct.setText(flashPct + "%");
+        if (tvFlashLabel != null) tvFlashLabel.setText("Flashcards progreso (" + studiedFlash + "/" + totalFlash + ")");
+
+        // Populate Quizzes progress
+        android.widget.ProgressBar progressQuizzesCompleted = findViewById(R.id.progress_quizzes_completed);
+        TextView tvQuizzesCompletedPct = findViewById(R.id.tv_quizzes_completed_pct);
+        TextView tvQuizzesCompletedLabel = findViewById(R.id.tv_quizzes_completed_label);
+        if (progressQuizzesCompleted != null) progressQuizzesCompleted.setProgress(quizCompletedPct);
+        if (tvQuizzesCompletedPct != null) tvQuizzesCompletedPct.setText(quizCompletedPct + "%");
+        if (tvQuizzesCompletedLabel != null) tvQuizzesCompletedLabel.setText("Quizzes completados (" + completedQuizzes + "/" + totalQuizzes + ")");
+
+        android.widget.ProgressBar progressQuestionsAnswered = findViewById(R.id.progress_questions_answered);
+        TextView tvQuestionsAnsweredPct = findViewById(R.id.tv_questions_answered_pct);
+        TextView tvQuestionsAnsweredLabel = findViewById(R.id.tv_questions_answered_label);
+        if (progressQuestionsAnswered != null) progressQuestionsAnswered.setProgress(quizPct);
+        if (tvQuestionsAnsweredPct != null) tvQuestionsAnsweredPct.setText(quizPct + "%");
+        if (tvQuestionsAnsweredLabel != null) tvQuestionsAnsweredLabel.setText("Preguntas respondidas (" + totalAnswered + "/" + totalQuestions + ")");
+
+        android.widget.ProgressBar progressQuestionsCorrect = findViewById(R.id.progress_questions_correct);
+        TextView tvQuestionsCorrectPct = findViewById(R.id.tv_questions_correct_pct);
+        TextView tvQuestionsCorrectLabel = findViewById(R.id.tv_questions_correct_label);
+        if (progressQuestionsCorrect != null) progressQuestionsCorrect.setProgress(correctPct);
+        if (tvQuestionsCorrectPct != null) tvQuestionsCorrectPct.setText(correctPct + "%");
+        if (tvQuestionsCorrectLabel != null) tvQuestionsCorrectLabel.setText("Preguntas acertadas (" + totalCorrect + "/" + totalAnswered + ")");
+
+        // Hide progress section if all progress is 0%
+        LinearLayout progressSection = findViewById(R.id.progress_section);
+        boolean hasProgress = flashPct > 0 || quizCompletedPct > 0 || quizPct > 0 || correctPct > 0;
+        if (progressSection != null) {
+            progressSection.setVisibility(hasProgress ? View.VISIBLE : View.GONE);
+        }
+
+        // Badges section (fixed, no toggle)
+        LinearLayout badgesSection = findViewById(R.id.badges_section);
         android.widget.GridLayout badgesContainer = findViewById(R.id.badges_container);
+        View separatorBadges = findViewById(R.id.separator_badges);
         badgesContainer.removeAllViews();
         java.util.List<com.app.estudiaapp.models.Badge> badges = com.app.estudiaapp.models.BadgesRepository.getBadgesForPlan(plan);
         int achievedCount = 0;
@@ -187,9 +196,11 @@ public class PlanDetailsActivity extends BaseActivity {
             }
         }
         if (achievedCount <= 0) {
-            if (userBadgesCard != null) userBadgesCard.setVisibility(View.GONE);
+            badgesSection.setVisibility(View.GONE);
+            separatorBadges.setVisibility(View.GONE);
         } else {
-            if (userBadgesCard != null) userBadgesCard.setVisibility(View.VISIBLE);
+            badgesSection.setVisibility(View.VISIBLE);
+            separatorBadges.setVisibility(View.VISIBLE);
             for (com.app.estudiaapp.models.Badge b : badges) {
                 if (b == null || !b.achieved) continue;
                 android.view.View v = getLayoutInflater().inflate(R.layout.item_badge_plan, badgesContainer, false);
@@ -200,31 +211,6 @@ public class PlanDetailsActivity extends BaseActivity {
                 badgesContainer.addView(v);
             }
         }
-        
-        // Setup badges collapse/expand functionality
-        android.widget.ImageView badgesToggleIcon = findViewById(R.id.badges_toggle_icon);
-        
-        // Load collapse state from preferences (default: expanded)
-        android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
-        boolean isBadgesCollapsed = prefs.getBoolean("badges_collapsed_" + plan.id, false);
-        
-        badgesContainer.setVisibility(isBadgesCollapsed ? View.GONE : View.VISIBLE);
-        badgesToggleIcon.setImageResource(isBadgesCollapsed ? 
-            android.R.drawable.arrow_down_float : android.R.drawable.arrow_up_float);
-        
-        // Toggle on click
-        View.OnClickListener badgesToggleListener = v -> {
-            boolean currentlyCollapsed = badgesContainer.getVisibility() == View.GONE;
-            badgesContainer.setVisibility(currentlyCollapsed ? View.VISIBLE : View.GONE);
-            badgesToggleIcon.setImageResource(currentlyCollapsed ? 
-                android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
-            
-            // Save state
-            prefs.edit().putBoolean("badges_collapsed_" + plan.id, !currentlyCollapsed).apply();
-        };
-        
-        userBadgesCard.setOnClickListener(badgesToggleListener);
-        badgesToggleIcon.setOnClickListener(badgesToggleListener);
 
         // Reset/Delete behavior
         findViewById(R.id.user_reset_plan).setOnClickListener(view -> {
@@ -281,106 +267,6 @@ public class PlanDetailsActivity extends BaseActivity {
                 Toast.makeText(this, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
             }
         });
-
-        // RecyclerViews
-        androidx.recyclerview.widget.RecyclerView rvQuizzesToStart = findViewById(R.id.rv_quizzes_to_start);
-        androidx.recyclerview.widget.RecyclerView rvQuizzesInProgress = findViewById(R.id.rv_quizzes_in_progress);
-        androidx.recyclerview.widget.RecyclerView rvFlashcardsPending = findViewById(R.id.rv_flashcards_pending);
-        androidx.recyclerview.widget.RecyclerView rvTopicsRelevant = findViewById(R.id.rv_topics_relevant);
-
-        TextView titleQuizzesToStart = findViewById(R.id.section_quizzes_to_start_title);
-        TextView titleQuizzesInProgress = findViewById(R.id.section_quizzes_in_progress_title);
-        TextView titleFlashcardsPending = findViewById(R.id.section_flashcards_pending_title);
-        TextView titleTopicsRelevant = findViewById(R.id.section_topics_relevant_title);
-
-        rvQuizzesToStart.setLayoutManager(new LinearLayoutManager(this));
-        rvQuizzesInProgress.setLayoutManager(new LinearLayoutManager(this));
-        rvFlashcardsPending.setLayoutManager(new LinearLayoutManager(this));
-        rvTopicsRelevant.setLayoutManager(new LinearLayoutManager(this));
-
-        // Prepare filtered lists
-        ArrayList<Quiz> quizzesToStart = new ArrayList<>();
-        ArrayList<Quiz> quizzesInProgress = new ArrayList<>();
-        if (plan.quizzes != null) {
-            for (Quiz q : plan.quizzes) {
-                if (q == null) continue;
-                int total = (q.questions == null) ? 0 : q.questions.size();
-                int answered = (q.progreso == null) ? 0 : q.progreso.preguntasRespondidas;
-                if (answered <= 0) {
-                    if (quizzesToStart.size() < 5) quizzesToStart.add(q);
-                } else if (total > 0 && answered > 0 && answered < total) {
-                    if (quizzesInProgress.size() < 5) quizzesInProgress.add(q);
-                }
-                if (quizzesToStart.size() >= 5 && quizzesInProgress.size() >= 5) break;
-            }
-        }
-
-        ArrayList<Flashcard> flashcardsPending = new ArrayList<>();
-        ArrayList<Integer> flashcardIndices = new ArrayList<>();
-        if (plan.flashcards != null) {
-            for (int i = 0; i < plan.flashcards.size() && flashcardsPending.size() < 5; i++) {
-                Flashcard f = plan.flashcards.get(i);
-                if (f == null) continue;
-                if (f.completada) continue;
-                flashcardsPending.add(f);
-                flashcardIndices.add(i);
-            }
-        }
-
-        ArrayList<HotTopic> topicsRelevant = new ArrayList<>();
-        if (plan.hotTopics != null && !plan.hotTopics.isEmpty()) {
-            java.util.List<HotTopic> temp = new ArrayList<>(plan.hotTopics);
-            Collections.shuffle(temp, new Random(System.currentTimeMillis()));
-            for (int i = 0; i < Math.min(5, temp.size()); i++) topicsRelevant.add(temp.get(i));
-        }
-
-        if (quizzesToStart.isEmpty()) {
-            rvQuizzesToStart.setVisibility(View.GONE);
-            titleQuizzesToStart.setVisibility(View.GONE);
-        } else {
-            rvQuizzesToStart.setVisibility(View.VISIBLE);
-            titleQuizzesToStart.setVisibility(View.VISIBLE);
-            String uid = null;
-            try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
-            QuizzesAdapter a = new QuizzesAdapter(quizzesToStart, plan, uid, quiz -> {
-                QuizActivity.start(PlanDetailsActivity.this, plan.id, quiz.id);
-            }, this::refreshUI);
-            rvQuizzesToStart.setAdapter(a);
-        }
-
-        if (quizzesInProgress.isEmpty()) {
-            rvQuizzesInProgress.setVisibility(View.GONE);
-            titleQuizzesInProgress.setVisibility(View.GONE);
-        } else {
-            rvQuizzesInProgress.setVisibility(View.VISIBLE);
-            titleQuizzesInProgress.setVisibility(View.VISIBLE);
-            String uid = null;
-            try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
-            QuizzesAdapter a2 = new QuizzesAdapter(quizzesInProgress, plan, uid, quiz -> {
-                QuizActivity.start(PlanDetailsActivity.this, plan.id, quiz.id);
-            }, this::refreshUI);
-            rvQuizzesInProgress.setAdapter(a2);
-        }
-
-        if (flashcardsPending.isEmpty()) {
-            rvFlashcardsPending.setVisibility(View.GONE);
-            titleFlashcardsPending.setVisibility(View.GONE);
-        } else {
-            rvFlashcardsPending.setVisibility(View.VISIBLE);
-            titleFlashcardsPending.setVisibility(View.VISIBLE);
-            FlashcardsAdapter fa = new FlashcardsAdapter(flashcardsPending, plan.id, flashcardIndices);
-            rvFlashcardsPending.setAdapter(fa);
-        }
-
-        if (topicsRelevant.isEmpty()) {
-            rvTopicsRelevant.setVisibility(View.GONE);
-            titleTopicsRelevant.setVisibility(View.GONE);
-        } else {
-            rvTopicsRelevant.setVisibility(View.VISIBLE);
-            titleTopicsRelevant.setVisibility(View.VISIBLE);
-            HotTopicsAdapter ht = new HotTopicsAdapter(topicsRelevant);
-            rvTopicsRelevant.setAdapter(ht);
-        }
 
     }
 
