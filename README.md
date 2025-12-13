@@ -605,6 +605,14 @@ match /users/{userId}/plans/{planId} {
 - [ ] **Tests de reglas de seguridad**: validar Firestore rules con `@firebase/rules-unit-testing` (owner access, esquema nested)
 - [ ] **Benchmarks de rendimiento**: parsing JSON, operaciones de caché, stress de `updateQuizProgress` concurrente
 
+### Monetización y Negocio 💰
+
+- [ ] **A/B Testing de Precios**: Experimentar con pricing ($6.99 vs $7.99 vs $9.99 mensual), descuentos anuales (15-20%), monitorear conversion rates y revenue impact
+- [ ] **Estrategia de Ads (AdMob)**: Implementar interstitials en eventos (crear plan, reiniciar quiz/plan, eliminar plan), banners persistentes (MainActivity, PlanDetails, QuizActivity, Flashcards), rewarded ads opcionales; target CPM $2-3
+- [ ] **Plan de Marketing y Crecimiento**: ASO (App Store Optimization), campaña de lanzamiento, estrategia de influencers educativos, comunidades de estudiantes (Reddit, Discord); métricas: CAC, DAU/MAU, retention day 7
+- [ ] **Integración Google Play Billing**: Implementar suscripción PRO (monthly + annual), manejo de renovaciones automáticas, cancelaciones, refunds
+- [ ] **Analytics y Monetización Tracking**: Firebase Analytics eventos para conversion funnel (onboarding → paywall → subscription), cohort analysis, LTV tracking
+
 ### Prioridad Baja 🟢
 
 - [ ] **Localización**: soporte multi-idioma (inglés, francés)

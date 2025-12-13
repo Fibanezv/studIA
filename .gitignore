@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Analysis and strategy documents (internal only)
+ANALISIS_ESCALABILIDAD.md
+ANALISIS_RENTABILIDAD.md
