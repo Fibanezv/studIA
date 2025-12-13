@@ -10,7 +10,8 @@
 
 **Última actualización:** 13 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
-**Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)
+**Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)  
+**Última actualización de animaciones:** 13 de diciembre de 2025
 
 ---
 
@@ -83,6 +84,13 @@
   - Labels "Total de" en lugar de "Límite de"
   - Botón para remover documento seleccionado (X)
   - Vista previa del nombre del archivo
+- **Transiciones Material Motion**:
+  - FadeThrough para autenticación (Splash→SignIn, SignIn→Main) y navegación drawer
+  - SharedAxis X para flujos de lista→detalle (QuizList→Quiz)
+  - MaterialContainerTransform con shared elements para cards→detalles (Main→PlanDetails)
+  - Respeto de preferencias de accesibilidad (reduce motion)
+  - Helpers centralizados en `BaseActivity` para consistencia
+  - Recursos de animación personalizados (fade_in/out, slide_in/out)
 
 ---
 
@@ -616,6 +624,14 @@ match /users/{userId}/plans/{planId} {
   - Eliminación de race conditions: 30+ usuarios concurrentes = garantía ACID
   - Latencia: +100ms (aceptable trade-off para consistencia)
   - Documentación en [docs/TRANSACTIONAL_QUIZ_PROGRESS_ANALYSIS.md](docs/TRANSACTIONAL_QUIZ_PROGRESS_ANALYSIS.md)
+- [x] **Transiciones Material Motion entre pantallas**:
+  - FadeThrough: autenticación (Splash→SignIn/Main), navegación drawer, cambio de secciones
+  - SharedAxis X: navegación lista→detalle (QuizList→Quiz) con slide forward
+  - MaterialContainerTransform: card→detalles (Main→PlanDetails) con shared elements (`plan_card`, `plan_title`)
+  - Helpers centralizados: `startActivityFadeThrough()`, `startActivitySharedAxisX()`, `startActivityWithContainerTransform()`
+  - Animaciones XML de fallback: fade_in/out, slide_in_right/out_left
+  - Detección de accesibilidad: respeta `reduce motion` deshabilitando animaciones
+  - Window transitions habilitadas en tema con MaterialFadeThrough por defecto
 
 ### 🔄 En Progreso
 
@@ -675,7 +691,6 @@ match /users/{userId}/plans/{planId} {
 
 - [ ] **Localización**: soporte multi-idioma (inglés, francés)
 - [ ] **Accesibilidad**: contentDescription completo, TalkBack testing
-- [ ] **Animaciones**: transiciones suaves entre pantallas
 - [ ] **Widget de home screen**: acceso rápido a planes recientes
 - [ ] **Limpieza de `server/`**: documentar o eliminar artefactos legacy (logs de emulador/WorkManager) para evitar confusión
 
