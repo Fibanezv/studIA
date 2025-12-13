@@ -711,7 +711,10 @@ Este proyecto es privado y no tiene licencia pública en este momento.
 
 - **GitHub Issues**: [Reportar bug o sugerir feature](https://github.com/Fibanezv/studIA/issues)
 - **Email**: contacto@estudiaapp.com (placeholder)
-- **Documentación adicional**: Ver `README_BBDD.md` para detalles de base de datos
+- **Documentación de BD**: Ver [docs/README_BBDD.md](docs/README_BBDD.md) para detalles de base de datos
+- **Política de Caché**: Ver [docs/CACHE_POLICY.md](docs/CACHE_POLICY.md) para arquitectura y debugging
+- **Resumen de Implementación**: Ver [docs/CACHE_IMPLEMENTATION_SUMMARY.md](docs/CACHE_IMPLEMENTATION_SUMMARY.md) para impacto de escalabilidad
+- **Checklist Completo**: Ver [docs/IMPLEMENTATION_COMPLETE.txt](docs/IMPLEMENTATION_COMPLETE.txt) para overview visual
 
 ---
 
