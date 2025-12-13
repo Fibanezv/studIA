@@ -104,49 +104,50 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
             holder.resetButton.setVisibility(isComplete ? View.VISIBLE : View.GONE);
             holder.resetButton.setOnClickListener(v -> {
                 Context ctx = holder.itemView.getContext();
-                if (plan == null || plan.quizzes == null) {
-                    Toast.makeText(ctx, "No se puede reiniciar: plan no encontrado", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                
                 if (userId == null || userId.isEmpty()) {
                     Toast.makeText(ctx, "Usuario no autenticado", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
-                // Encontrar el quiz por id y resetear progreso
-                boolean found = false;
-                for (Quiz pq : plan.quizzes) {
-                    if (pq != null && pq.id != null && pq.id.equals(q.id)) {
-                        if (pq.progreso == null) pq.progreso = new com.app.estudiaapp.models.QuizProgress();
-                        pq.progreso.preguntasRespondidas = 0;
-                        pq.progreso.preguntasCorrectas = 0;
-                        pq.progreso.preguntasIncorrectas = 0;
-                        pq.progreso.currentIndex = 0;
-                        pq.progreso.nota = -1;
-                        pq.progreso.lastUpdatedMillis = System.currentTimeMillis();
-                        found = true;
-                        break;
-                    }
-                }
-                
-                if (!found) {
-                    Toast.makeText(ctx, "Quiz no encontrado en el plan", Toast.LENGTH_SHORT).show();
+                if (plan == null || plan.id == null || plan.id.isEmpty()) {
+                    Toast.makeText(ctx, "No se puede reiniciar: plan no encontrado", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 
-                // Guardar en Firestore
-                new UserRepository(ctx).savePlan(userId, plan, success -> {
-                    // Actualizar la lista local y notificar cambio
-                    q.progreso.preguntasRespondidas = 0;
-                    q.progreso.preguntasCorrectas = 0;
-                    q.progreso.preguntasIncorrectas = 0;
-                    q.progreso.currentIndex = 0;
-                    q.progreso.nota = -1;
-                    notifyItemChanged(position);
-                    Toast.makeText(ctx, "Quiz reiniciado", Toast.LENGTH_SHORT).show();
-                }, error -> {
-                    Toast.makeText(ctx, "Error al reiniciar: " + error, Toast.LENGTH_SHORT).show();
-                });
+                if (q == null || q.id == null || q.id.isEmpty()) {
+                    Toast.makeText(ctx, "Quiz no válido", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Mostrar diálogo de confirmación
+                new android.app.AlertDialog.Builder(ctx)
+                    .setTitle("Reiniciar Quiz")
+                    .setMessage("¿Estás seguro de que deseas reiniciar este quiz? Se perderá el progreso actual.")
+                    .setPositiveButton("Reiniciar", (dialog, which) -> {
+                        // Llamar al método transaccional para resetear
+                        new UserRepository(ctx).resetQuizProgress(userId, plan.id, q.id,
+                            success -> {
+                                // Actualizar el objeto local y notificar cambio
+                                if (q.progreso == null) {
+                                    q.progreso = new com.app.estudiaapp.models.QuizProgress();
+                                }
+                                q.progreso.preguntasRespondidas = 0;
+                                q.progreso.preguntasCorrectas = 0;
+                                q.progreso.preguntasIncorrectas = 0;
+                                q.progreso.currentIndex = 0;
+                                q.progreso.nota = -1;
+                                notifyItemChanged(position);
+                                Toast.makeText(ctx, "Quiz reiniciado correctamente", Toast.LENGTH_SHORT).show();
+                            },
+                            error -> {
+                                Toast.makeText(ctx, "Error al reiniciar el quiz", Toast.LENGTH_SHORT).show();
+                                android.util.Log.e("QuizzesAdapter", "resetQuizProgress error", error);
+                            }
+                        );
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
             });
         }
     }

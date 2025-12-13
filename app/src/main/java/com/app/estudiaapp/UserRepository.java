@@ -493,6 +493,87 @@ public class UserRepository {
         // Delegate to transactional version for consistency
         markFlashcardCompletedWithTransaction(uid, planId, index, onSuccess, onFailure);
     }
+
+    /**
+     * TRANSACTIONAL VERSION: Reinicia el progreso de un quiz de forma atómica.
+     * 
+     * Resetea todos los campos de progreso (preguntasRespondidas, preguntasCorrectas, 
+     * preguntasIncorrectas, currentIndex, nota, lastUpdatedMillis) usando db.runTransaction()
+     * para garantizar atomicidad. Invalida caché y recomputa stats agregadas.
+     * 
+     * Casos de uso:
+     * - Usuario quiere reintentar un quiz completado
+     * - Reiniciar intentos previos y empezar de cero
+     * 
+     * @param uid Usuario ID
+     * @param planId Plan ID
+     * @param quizId Quiz ID a resetear
+     * @param onSuccess Callback de éxito (recibe null)
+     * @param onFailure Callback de error
+     */
+    public void resetQuizProgress(@NonNull String uid, @NonNull String planId, @NonNull String quizId,
+                                   OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        db.runTransaction(transaction -> {
+            DocumentReference planRef = db.collection("users").document(uid).collection("plans").document(planId);
+            DocumentSnapshot planDoc = transaction.get(planRef);
+
+            if (!planDoc.exists()) {
+                throw new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            try {
+                Gson gson = new Gson();
+                StudyPlan plan = gson.fromJson(gson.toJson(planDoc.getData()), StudyPlan.class);
+
+                if (plan == null || plan.quizzes == null) {
+                    throw new FirebaseFirestoreException("Plan not found or has no quizzes", FirebaseFirestoreException.Code.INVALID_ARGUMENT);
+                }
+
+                // Find the quiz to reset
+                boolean found = false;
+                for (int i = 0; i < plan.quizzes.size(); i++) {
+                    if (plan.quizzes.get(i) != null && quizId.equals(plan.quizzes.get(i).id)) {
+                        // Reset all progress fields to default state
+                        com.app.estudiaapp.models.QuizProgress resetProgress = new com.app.estudiaapp.models.QuizProgress();
+                        resetProgress.preguntasRespondidas = 0;
+                        resetProgress.preguntasCorrectas = 0;
+                        resetProgress.preguntasIncorrectas = 0;
+                        resetProgress.currentIndex = 0;
+                        resetProgress.nota = -1;
+                        resetProgress.lastUpdatedMillis = System.currentTimeMillis();
+
+                        plan.quizzes.get(i).progreso = resetProgress;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw new FirebaseFirestoreException("Quiz not found in plan", FirebaseFirestoreException.Code.NOT_FOUND);
+                }
+
+                // Convert plan back to map and update in transaction
+                Map<String, Object> planMap = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
+                transaction.set(planRef, planMap, SetOptions.merge());
+
+                // Invalidate cache for this plan
+                PLAN_CACHE.remove(uid + "::" + planId);
+                Log.d(TAG, "resetQuizProgress: cache invalidated for " + uid + "/" + planId + "/" + quizId);
+
+                return null;
+            } catch (Exception ex) {
+                Log.e(TAG, "resetQuizProgress: error resetting quiz", ex);
+                throw new RuntimeException(ex);
+            }
+        }).addOnSuccessListener(result -> {
+            // After transaction succeeds, recompute aggregate stats
+            Log.d(TAG, "resetQuizProgress: success, recomputing user stats");
+            recomputeAndUpdateUserStats(uid, () -> onSuccess.onSuccess(null), onFailure);
+        }).addOnFailureListener(exception -> {
+            Log.e(TAG, "resetQuizProgress: transaction failed", exception);
+            onFailure.onFailure(exception);
+        });
+    }
     
     // ==================== Cache Management Methods ====================
     

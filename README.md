@@ -604,6 +604,7 @@ match /users/{userId}/plans/{planId} {
 - [x] **Transacciones atómicas en progreso de quiz y flashcards**:
   - `updateQuizProgressWithTransaction()`: Lectura-modificación-escritura atómica con `db.runTransaction()`
   - `markFlashcardCompletedWithTransaction()`: Marca completitud + counters atómicos
+  - `resetQuizProgress()`: Reinicio atómico de quizzes (QuizzesAdapter con confirmación, invalidación de caché, recompute de stats)
   - Métodos existentes refactorizados para delegar a versiones transaccionales
   - Cache invalidation automática post-transacción
   - Retry automático en conflictos (Firestore conflict resolution)
@@ -640,21 +641,9 @@ match /users/{userId}/plans/{planId} {
 
 ### Alta Prioridad 🔴
 
-- [x] **Robustecer UploadActivity**: detección MIME real (PDF/TXT), validación de tamaño (max 50MB), manejo de errores clasificado con tipos user-friendly y retriable logic, logging estructurado
-- [x] **Armonizar uso de extras**: centralizar todas las constantes Intent en Constants.java (EXTRA_PLAN_ID, EXTRA_QUIZ_ID, EXTRA_FLASHCARD_INDEX, EXTRA_CORRECT/INCORRECT/PERCENT)
-- [x] **Implementar tests unitarios básicos**: modelos, serialización (StudyPlanTest, QuizTest creados)
-- [x] **Mejorar manejo de errores**: feedback claro al usuario en fallos de red/API (ErrorHandler + ErrorDialogHelper + 11 error types, refactorizadas 7 Activities con retry logic y logging estructurado)
-- [x] **Política de refresco de caché**: TTL simple (5 min) para `PLAN_CACHE` con `CachedPlan` wrapper, snapshot listeners para `users/{uid}/plans/{planId}` en PlanDetailsActivity, refresh condicional en `onResume()` con fallback stale cache
 - [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgressWithTransaction()`, fallback local
 - [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, validación de transacciones concurrentes, tests de estrés (30+ usuarios simultáneos)
 - [ ] **Tests de transacciones**: Unit tests para `updateQuizProgressWithTransaction()` y `markFlashcardCompletedWithTransaction()` con emulador Firestore
-- [x] **Transacciones en progreso**: migrar `updateQuizProgress()` a `runTransaction` (Firestore) - ✅ IMPLEMENTADO
-  - `updateQuizProgressWithTransaction()`: Actualización atómica con retry automático
-  - `markFlashcardCompletedWithTransaction()`: Marca flashcard + progreso atómicos
-  - Métodos antiguos delegados a versiones transaccionales
-  - Cache invalidation integrada
-  - Garantiza ACID consistency bajo 30+ usuarios concurrentes
-- [ ] **Repositorio de acciones de quiz**: añadir `resetQuizProgress(uid, planId, quizId)` y usarlo desde UI en lugar de mutar el plan completo.
 - [ ] **Unificar fallback local**: encapsular lecturas/escrituras locales en `UserRepository` y evitar escrituras directas desde Activities.
 - [ ] **Reglas de seguridad**: validar tipos/longitudes y estructura de `quizzes`, `questions`, `progreso` en Firestore Rules.
 - [ ] **Tests de integración Firebase**: configurar emuladores Auth/Firestore/Storage y validar transacción `nextPlanNumber`, lectura de planes, Cloud Functions contract
@@ -666,7 +655,6 @@ match /users/{userId}/plans/{planId} {
 - [ ] **Mejorar ProgressActivity**: visualizaciones gráficas (charts)
 - [ ] **Sistema de recomendaciones**: sugerir planes similares
 - [ ] **Compartir planes**: export/import entre usuarios
-- [x] **CI/CD básico**: GitHub Actions para unit tests automáticos (`.github/workflows/unit-tests.yml`)
 - [ ] **Expandir CI/CD**: añadir job de instrumented tests con emulador Android, emuladores Firebase, lint, reportes de cobertura JaCoCo
 - [ ] **Telemetría**: integrar Firebase Analytics y Crashlytics básicos
 - [ ] **Tests de reglas de seguridad**: validar Firestore rules con `@firebase/rules-unit-testing` (owner access, esquema nested)
