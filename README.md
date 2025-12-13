@@ -580,7 +580,7 @@ match /users/{userId}/plans/{planId} {
 ### Alta Prioridad 🔴
 
 - [x] **Robustecer UploadActivity**: detección MIME real (PDF/TXT), validación de tamaño (max 50MB), manejo de errores clasificado con tipos user-friendly y retriable logic, logging estructurado
-- [ ] **Armonizar uso de extras**: migrar a `Constants` en todo el código
+- [x] **Armonizar uso de extras**: centralizar todas las constantes Intent en Constants.java (EXTRA_PLAN_ID, EXTRA_QUIZ_ID, EXTRA_FLASHCARD_INDEX, EXTRA_CORRECT/INCORRECT/PERCENT)
 - [x] **Implementar tests unitarios básicos**: modelos, serialización (StudyPlanTest, QuizTest creados)
 - [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgress`, fallback local
 - [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, visibilidad de botón "Reiniciar", adaptadores
