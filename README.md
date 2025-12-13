@@ -60,6 +60,7 @@
 ### Experiencia de Usuario
 - **Interfaz moderna** con Material Design 3
 - **Modo oscuro/claro** con transición suave
+ - **Aplicación inmediata de tema** (oscuro/claro) al inicio y al cambiar desde perfil, usando Splash para evitar flicker
 - **Drawer navigation** centralizado para navegación consistente
 - **Autenticación Firebase** con soporte para email/password y Google Sign-In
 - **Almacenamiento offline** con sincronización en la nube
@@ -567,6 +568,9 @@ match /users/{userId}/plans/{planId} {
 - [x] Formulario de creación mejorado (spinners alineados, botón remover documento)
 - [x] Overlay de progreso para tareas largas
 - [x] Orquestación directa de generación sin WorkManager (UploadActivity → Cloud Function)
+ - [x] Aplicación temprana del tema: `App` y `SplashActivity` aplican modo oscuro/claro al inicio para evitar flicker
+ - [x] Flujo de cambio de tema: al alternar en `UserActivity` se lanza `SplashActivity` para precargar preferencias y re-aplicar recursos sin parpadeos
+ - [x] Corrección de toast en ajustes: eliminado el mensaje genérico de error en éxito al actualizar notificaciones
 - [x] **UploadActivity robusto**: 
   - Validación MIME real con `ContentResolver` (whitelist: PDF, TXT)
   - Validación de tamaño de archivo (máximo 50MB) con formato legible
@@ -628,7 +632,7 @@ match /users/{userId}/plans/{planId} {
 2. **Divergencia local vs nube**: fallback con `StorageHelper.cargarPlan(...)` puede desalinear datos si se escriben localmente y no se sincronizan adecuadamente.
 3. **Validación de esquema en reglas**: las reglas de Firestore no validan estructura anidada (`quizzes`, `questions`, `progreso`); riesgo de datos malformados.
 4. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
-5. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
+5. **Cobertura de tests mejorada**: `UserRepositoryTest` con mocks de Firestore cubre actualización transaccional, reinicio de progreso y fallback de caché; pendiente ampliar casos borde y pruebas con emuladores.
 6. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
 7. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
 8. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
@@ -641,7 +645,6 @@ match /users/{userId}/plans/{planId} {
 
 ### Alta Prioridad 🔴
 
-- [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgressWithTransaction()`, fallback local
 - [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, validación de transacciones concurrentes, tests de estrés (30+ usuarios simultáneos)
 - [ ] **Tests de transacciones**: Unit tests para `updateQuizProgressWithTransaction()` y `markFlashcardCompletedWithTransaction()` con emulador Firestore
 - [ ] **Unificar fallback local**: encapsular lecturas/escrituras locales en `UserRepository` y evitar escrituras directas desde Activities.
