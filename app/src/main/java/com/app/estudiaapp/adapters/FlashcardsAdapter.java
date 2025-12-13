@@ -71,7 +71,7 @@ public class FlashcardsAdapter extends RecyclerView.Adapter<FlashcardsAdapter.Vi
             Intent intent = new Intent(ctx, FlashcardDetailActivity.class);
             intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
             int globalIndex = (originalIndices != null && originalIndices.size() > position) ? originalIndices.get(position) : position;
-            intent.putExtra("flashcard_index", globalIndex);
+            intent.putExtra(Constants.EXTRA_FLASHCARD_INDEX, globalIndex);
             ctx.startActivity(intent);
             // remove transition animation if context is an Activity
             try {

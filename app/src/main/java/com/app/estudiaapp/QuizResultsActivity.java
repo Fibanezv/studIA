@@ -8,13 +8,10 @@ import android.view.View;
 import android.animation.ValueAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.ViewGroup;
+import com.app.estudiaapp.utils.Constants;
 
  
 public class QuizResultsActivity extends BaseActivity {
-
-    public static final String EXTRA_CORRECT = "extra_correct";
-    public static final String EXTRA_INCORRECT = "extra_incorrect";
-    public static final String EXTRA_PERCENT = "extra_percent";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +28,9 @@ public class QuizResultsActivity extends BaseActivity {
         final View progressFill = findViewById(R.id.quiz_progress_fill);
 
         Intent i = getIntent();
-        int correct = i.getIntExtra(EXTRA_CORRECT, 0);
-        int incorrect = i.getIntExtra(EXTRA_INCORRECT, 0);
-        int percent = i.getIntExtra(EXTRA_PERCENT, 0);
+        int correct = i.getIntExtra(Constants.EXTRA_CORRECT, 0);
+        int incorrect = i.getIntExtra(Constants.EXTRA_INCORRECT, 0);
+        int percent = i.getIntExtra(Constants.EXTRA_PERCENT, 0);
     summaryCorrect.setText("✔\uFE0F Aciertos: " + correct);
     summaryIncorrect.setText("\u200B❌\u200B Fallos: " + incorrect);
     summaryPercent.setText("\uD83C\uDF93\u200B Nota: " + percent + "%");

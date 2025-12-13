@@ -38,7 +38,7 @@ public class FlashcardDetailActivity extends BaseActivity {
         setContentView(R.layout.activity_flashcard_detail);
 
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
-        index = getIntent().getIntExtra("flashcard_index", 0);
+        index = getIntent().getIntExtra(Constants.EXTRA_FLASHCARD_INDEX, 0);
 
         if (planId == null) {
             finish();

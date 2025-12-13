@@ -42,7 +42,7 @@ public class QuizActivity extends BaseActivity {
     public static void start(Context context, String planId, String quizId) {
         Intent intent = new Intent(context, QuizActivity.class);
         intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
-        intent.putExtra("quiz_id", quizId);
+        intent.putExtra(Constants.EXTRA_QUIZ_ID, quizId);
         context.startActivity(intent);
     }
 
@@ -52,7 +52,7 @@ public class QuizActivity extends BaseActivity {
         setContentView(R.layout.activity_quiz);
 
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
-        quizId = getIntent().getStringExtra("quiz_id");
+        quizId = getIntent().getStringExtra(Constants.EXTRA_QUIZ_ID);
         if (planId == null) {
             try {
                 android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
@@ -285,9 +285,9 @@ public class QuizActivity extends BaseActivity {
 
         // Launch a dedicated results activity instead of a dialog to improve UX
         android.content.Intent intent = new android.content.Intent(this, QuizResultsActivity.class);
-        intent.putExtra(QuizResultsActivity.EXTRA_CORRECT, correct);
-        intent.putExtra(QuizResultsActivity.EXTRA_INCORRECT, incorrect);
-        intent.putExtra(QuizResultsActivity.EXTRA_PERCENT, percent);
+        intent.putExtra(Constants.EXTRA_CORRECT, correct);
+        intent.putExtra(Constants.EXTRA_INCORRECT, incorrect);
+        intent.putExtra(Constants.EXTRA_PERCENT, percent);
         startActivity(intent);
         // remove transition animation when opening results
         try {
