@@ -95,6 +95,7 @@
 - **SDK objetivo:** Android 14 (API 34)
 - **Build system:** Gradle 8.3.1
 - **UI:** Material Design Components 1.12.0
+ - **Estado de datos (quizzes):** Fuente única a través de `UserRepository` con caché in-memory ligero para `StudyPlan` y acceso directo a `Quiz` (`getQuiz`)
 
 #### Backend y Servicios
 - **Firebase Authentication** - Gestión de usuarios y autenticación
@@ -532,6 +533,7 @@ match /users/{userId}/plans/{planId} {
 - [x] Formulario de creación mejorado (spinners alineados, botón remover documento)
 - [x] Overlay de progreso para tareas largas
 - [x] Orquestación directa de generación sin WorkManager (UploadActivity → Cloud Function)
+- [x] Unificación de acceso a quizzes: `QuizListActivity` carga el plan; `QuizActivity` usa `UserRepository.getQuiz(...)` sin reconsultar el plan; `QuizzesAdapter` desacoplado del refresh
 
 ### 🔄 En Progreso
 
@@ -544,7 +546,7 @@ match /users/{userId}/plans/{planId} {
 
 ### ⚠️ Problemas Conocidos
 
-1. **Duplicación de lógica** entre `QuizActivity` y `QuizListActivity`
+1. (Resuelto) **Duplicación de lógica** entre `QuizActivity` y `QuizListActivity`: ahora centralizado en `UserRepository`
 2. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`
 3. **Detección de MIME type**: actualmente asume PDF, necesita ContentResolver
 4. **Tests**: cobertura insuficiente (unitarios e instrumentados)
