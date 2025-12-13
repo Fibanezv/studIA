@@ -356,68 +356,142 @@ public class UserRepository {
      * Nota: para alta concurrencia usar transacciones o Cloud Functions.
      */
     public void updateQuizProgress(@NonNull String uid, @NonNull String planId, @NonNull String quizId, com.app.estudiaapp.models.QuizProgress newProgress, OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
-        DocumentReference ref = db.collection("users").document(uid).collection("plans").document(planId);
-        ref.get().addOnSuccessListener(doc -> {
-            if (doc != null && doc.exists()) {
-                try {
-                    Gson gson = new Gson();
-                    StudyPlan plan = gson.fromJson(gson.toJson(doc.getData()), StudyPlan.class);
-                    if (plan != null && plan.quizzes != null) {
-                        for (int i = 0; i < plan.quizzes.size(); i++) {
-                            if (plan.quizzes.get(i) != null && quizId.equals(plan.quizzes.get(i).id)) {
-                                plan.quizzes.get(i).progreso = newProgress;
-                                break;
-                            }
-                        }
-                        // write back
-                        Map<String, Object> map = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
-                        ref.set(map, SetOptions.merge()).addOnSuccessListener(a -> {
-                            // After updating a quiz, recompute aggregate user stats
-                            recomputeAndUpdateUserStats(uid, () -> onSuccess.onSuccess(null), onFailure);
-                        }).addOnFailureListener(onFailure);
-                    } else {
-                        onFailure.onFailure(new FirebaseFirestoreException("Plan not found or has no quizzes", FirebaseFirestoreException.Code.NOT_FOUND));
-                    }
-                } catch (Exception ex) {
-                    onFailure.onFailure(ex);
-                }
-            } else {
-                onFailure.onFailure(new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND));
+        // Delegate to transactional version for consistency
+        updateQuizProgressWithTransaction(uid, planId, quizId, newProgress, onSuccess, onFailure);
+    }
+
+    /**
+     * TRANSACTIONAL VERSION: Actualiza el progreso de un quiz de forma atómica.
+     * 
+     * Usa db.runTransaction() para garantizar consistencia bajo concurrencia.
+     * Automáticamente reintenta en caso de conflictos (Firestore).
+     * 
+     * @param uid Usuario ID
+     * @param planId Plan ID
+     * @param quizId Quiz ID a actualizar
+     * @param newProgress Nuevo QuizProgress
+     * @param onSuccess Callback de éxito
+     * @param onFailure Callback de error
+     */
+    public void updateQuizProgressWithTransaction(@NonNull String uid, @NonNull String planId, @NonNull String quizId, 
+                                                   com.app.estudiaapp.models.QuizProgress newProgress, 
+                                                   OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        db.runTransaction(transaction -> {
+            DocumentReference planRef = db.collection("users").document(uid).collection("plans").document(planId);
+            DocumentSnapshot planDoc = transaction.get(planRef);
+
+            if (!planDoc.exists()) {
+                throw new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND);
             }
+
+            try {
+                Gson gson = new Gson();
+                StudyPlan plan = gson.fromJson(gson.toJson(planDoc.getData()), StudyPlan.class);
+
+                if (plan == null || plan.quizzes == null) {
+                    throw new FirebaseFirestoreException("Plan not found or has no quizzes", FirebaseFirestoreException.Code.INVALID_ARGUMENT);
+                }
+
+                // Find and update quiz progress
+                boolean found = false;
+                for (int i = 0; i < plan.quizzes.size(); i++) {
+                    if (plan.quizzes.get(i) != null && quizId.equals(plan.quizzes.get(i).id)) {
+                        plan.quizzes.get(i).progreso = newProgress;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw new FirebaseFirestoreException("Quiz not found in plan", FirebaseFirestoreException.Code.NOT_FOUND);
+                }
+
+                // Convert plan back to map and update in transaction
+                Map<String, Object> planMap = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
+                transaction.set(planRef, planMap, SetOptions.merge());
+
+                // Invalidate cache for this plan
+                PLAN_CACHE.remove(uid + "#" + planId);
+                Log.d(TAG, "updateQuizProgressWithTransaction: cache invalidated for " + uid + "/" + planId);
+
+                return null;
+            } catch (Exception ex) {
+                Log.e(TAG, "updateQuizProgressWithTransaction: error parsing plan", ex);
+                throw new RuntimeException(ex);
+            }
+        }).addOnSuccessListener(result -> {
+            // After transaction succeeds, recompute aggregate stats
+            recomputeAndUpdateUserStats(uid, () -> onSuccess.onSuccess(null), onFailure);
+        }).addOnFailureListener(onFailure);
+    }
+
+    /**
+     * TRANSACTIONAL VERSION: Marca una flashcard como completada de forma atómica.
+     * 
+     * Usa db.runTransaction() para garantizar que la marca de completitud
+     * y los contadores de progreso se actualizan conjuntamente.
+     * 
+     * @param uid Usuario ID
+     * @param planId Plan ID
+     * @param index Índice de la flashcard
+     * @param onSuccess Callback de éxito
+     * @param onFailure Callback de error
+     */
+    public void markFlashcardCompletedWithTransaction(@NonNull String uid, @NonNull String planId, int index, 
+                                                       OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        db.runTransaction(transaction -> {
+            DocumentReference planRef = db.collection("users").document(uid).collection("plans").document(planId);
+            DocumentSnapshot planDoc = transaction.get(planRef);
+
+            if (!planDoc.exists()) {
+                throw new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            try {
+                Gson gson = new Gson();
+                StudyPlan plan = gson.fromJson(gson.toJson(planDoc.getData()), StudyPlan.class);
+
+                if (plan == null || plan.flashcards == null || index < 0 || index >= plan.flashcards.size()) {
+                    throw new FirebaseFirestoreException("Flashcard index out of bounds or plan missing", 
+                            FirebaseFirestoreException.Code.INVALID_ARGUMENT);
+                }
+
+                // Mark flashcard as completed
+                plan.flashcards.get(index).completada = true;
+
+                // Update progress counters
+                if (plan.progreso == null) {
+                    plan.progreso = new com.app.estudiaapp.models.UserProgress();
+                }
+                int total = plan.flashcards.size();
+                plan.progreso.registrarFlashcardEstudiada(total);
+
+                // Convert and update in transaction
+                Map<String, Object> planMap = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
+                transaction.set(planRef, planMap, SetOptions.merge());
+
+                // Invalidate cache for this plan
+                PLAN_CACHE.remove(uid + "#" + planId);
+                Log.d(TAG, "markFlashcardCompletedWithTransaction: cache invalidated for " + uid + "/" + planId);
+
+                return null;
+            } catch (Exception ex) {
+                Log.e(TAG, "markFlashcardCompletedWithTransaction: error parsing plan", ex);
+                throw new RuntimeException(ex);
+            }
+        }).addOnSuccessListener(result -> {
+            // After transaction succeeds, recompute aggregate stats
+            recomputeAndUpdateUserStats(uid, () -> onSuccess.onSuccess(null), onFailure);
         }).addOnFailureListener(onFailure);
     }
 
     /**
      * Marca una flashcard como completada dentro de un plan: lee, marca, guarda.
+     * DEPRECATED: Now delegates to transactional version for consistency.
      */
     public void markFlashcardCompleted(@NonNull String uid, @NonNull String planId, int index, OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
-        DocumentReference ref = db.collection("users").document(uid).collection("plans").document(planId);
-        ref.get().addOnSuccessListener(doc -> {
-            if (doc != null && doc.exists()) {
-                try {
-                    Gson gson = new Gson();
-                    StudyPlan plan = gson.fromJson(gson.toJson(doc.getData()), StudyPlan.class);
-                    if (plan != null && plan.flashcards != null && index >= 0 && index < plan.flashcards.size()) {
-                        plan.flashcards.get(index).completada = true;
-                        // update progreso counters if present
-                        if (plan.progreso == null) plan.progreso = new com.app.estudiaapp.models.UserProgress();
-                        int total = plan.flashcards.size();
-                        plan.progreso.registrarFlashcardEstudiada(total);
-                        Map<String, Object> map = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
-                        ref.set(map, SetOptions.merge()).addOnSuccessListener(a -> {
-                            // After marking a flashcard, recompute aggregate user stats
-                            recomputeAndUpdateUserStats(uid, () -> onSuccess.onSuccess(null), onFailure);
-                        }).addOnFailureListener(onFailure);
-                    } else {
-                        onFailure.onFailure(new FirebaseFirestoreException("Flashcard index out of bounds or plan missing", FirebaseFirestoreException.Code.INVALID_ARGUMENT));
-                    }
-                } catch (Exception ex) {
-                    onFailure.onFailure(ex);
-                }
-            } else {
-                onFailure.onFailure(new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND));
-            }
-        }).addOnFailureListener(onFailure);
+        // Delegate to transactional version for consistency
+        markFlashcardCompletedWithTransaction(uid, planId, index, onSuccess, onFailure);
     }
     
     // ==================== Cache Management Methods ====================
