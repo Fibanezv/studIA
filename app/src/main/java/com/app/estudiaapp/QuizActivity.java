@@ -73,8 +73,10 @@ public class QuizActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh quiz data when returning (e.g., from flashcards) to reflect progress updates
-        loadQuizData();
+        // Only refresh progress if quiz is already initialized (coming back from flashcards, etc)
+        if (currentQuiz != null) {
+            refreshProgressUI();
+        }
     }
     
     /**
