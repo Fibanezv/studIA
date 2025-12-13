@@ -35,7 +35,8 @@
                     android:textSize="18sp"
                     android:textColor="?attr/navTextColor"
                     android:layout_marginBottom="10dp"
-                    android:textAlignment="center"/>
+                    android:textAlignment="center"
+                    android:transitionName="plan_title"/>
 
                 <!-- Stats (highlighted) - card style like User Activity, adapted for single plan -->
                 <androidx.cardview.widget.CardView

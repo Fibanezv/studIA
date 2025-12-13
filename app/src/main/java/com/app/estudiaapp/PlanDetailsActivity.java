@@ -29,6 +29,20 @@ public class PlanDetailsActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Configure shared element container transform for enter/return
+        try {
+            com.google.android.material.transition.platform.MaterialContainerTransform enter =
+                new com.google.android.material.transition.platform.MaterialContainerTransform();
+            enter.setDuration(280);
+            enter.setScrimColor(0x00000000);
+            getWindow().setSharedElementEnterTransition(enter);
+
+            com.google.android.material.transition.platform.MaterialContainerTransform returnT =
+                new com.google.android.material.transition.platform.MaterialContainerTransform();
+            returnT.setDuration(240);
+            returnT.setScrimColor(0x00000000);
+            getWindow().setSharedElementReturnTransition(returnT);
+        } catch (Exception ignore) {}
         setContentView(R.layout.activity_plan_details);
         String planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         this.planIdField = planId;
@@ -329,8 +343,8 @@ public class PlanDetailsActivity extends BaseActivity {
 
             if (intent != null) {
                 intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_PLAN_ID, this.planIdField);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
+                // Fade-through between sections to minimize content jank
+                startActivityFadeThrough(intent);
                 return true;
             }
             return false;

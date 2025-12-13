@@ -27,6 +27,7 @@ public class BaseActivity extends AppCompatActivity {
 
     protected DrawerLayout drawerLayout;
     protected NavigationView navigationView;
+    private boolean transitionsInitialized = false;
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -183,27 +184,83 @@ public class BaseActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Set default window transitions once per activity instance
+        initDefaultTransitionsIfNeeded();
+    }
+
+    private void initDefaultTransitionsIfNeeded() {
+        if (transitionsInitialized) return;
+        try {
+            boolean reduceMotion = !android.animation.ValueAnimator.areAnimatorsEnabled();
+            if (!reduceMotion) {
+                // Use a gentle fade-through-like effect for default enter/return
+                com.google.android.material.transition.platform.MaterialFadeThrough fadeThrough =
+                        new com.google.android.material.transition.platform.MaterialFadeThrough();
+                fadeThrough.setDuration(220);
+                getWindow().setEnterTransition(fadeThrough);
+                getWindow().setReturnTransition(fadeThrough);
+            }
+            transitionsInitialized = true;
+        } catch (Exception ignore) {}
+    }
+
+    protected void startActivityFadeThrough(Intent intent) {
+        try {
+            startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        } catch (Exception e) {
+            startActivity(intent);
+        }
+    }
+
+    protected void startActivitySharedAxisX(Intent intent, boolean forward) {
+        try {
+            startActivity(intent);
+            if (forward) {
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            } else {
+                // Could add left-in/right-out for back navigation if needed
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            }
+        } catch (Exception e) {
+            startActivity(intent);
+        }
+    }
+
+    protected void startActivityWithContainerTransform(View sharedView, Intent intent, String transitionName) {
+        try {
+            androidx.core.app.ActivityOptionsCompat options =
+                    androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(this, sharedView, transitionName);
+            androidx.core.content.ContextCompat.startActivity(this, intent, options.toBundle());
+        } catch (Exception e) {
+            startActivityFadeThrough(intent);
+        }
+    }
+
     protected boolean handleNavMenuItem(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_drawer_plans) {
             // navigate to MainActivity if not already there
             if (!(this instanceof MainActivity)) {
-                startActivity(new Intent(this, MainActivity.class));
+                startActivityFadeThrough(new Intent(this, MainActivity.class));
             }
             return true;
         } else if (id == R.id.nav_drawer_user) {
             if (!(this instanceof UserActivity)) {
-                startActivity(new Intent(this, UserActivity.class));
+                startActivityFadeThrough(new Intent(this, UserActivity.class));
             }
             return true;
         } else if (id == R.id.nav_drawer_library) {
             if (!(this instanceof BibliotecaActivity)) {
-                startActivity(new Intent(this, BibliotecaActivity.class));
+                startActivityFadeThrough(new Intent(this, BibliotecaActivity.class));
             }
             return true;
         } else if (id == R.id.nav_drawer_info) {
             if (!(this instanceof InfoActivity)) {
-                startActivity(new Intent(this, InfoActivity.class));
+                startActivityFadeThrough(new Intent(this, InfoActivity.class));
             }
             return true;
         

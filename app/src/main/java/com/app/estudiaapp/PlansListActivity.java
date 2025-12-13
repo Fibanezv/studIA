@@ -36,19 +36,19 @@ public class PlansListActivity extends AppCompatActivity {
         if (uid != null) {
             new UserRepository(this).getPlans(uid, plans -> {
                 plansList = (plans != null) ? new ArrayList<>(plans) : new ArrayList<>();
-                adapter = new PlansAdapter(plansList, plan -> PlanDetailsActivity.start(this, plan.id));
+                adapter = new PlansAdapter(plansList, (plan, itemView) -> PlanDetailsActivity.start(this, plan.id));
                 recyclerView.setAdapter(adapter);
             }, e -> {
                 // fallback to local
                 plansList = StorageHelper.listarPlanes(this);
                 if (plansList == null) plansList = new ArrayList<>();
-                adapter = new PlansAdapter(plansList, plan -> PlanDetailsActivity.start(this, plan.id));
+                adapter = new PlansAdapter(plansList, (plan, itemView) -> PlanDetailsActivity.start(this, plan.id));
                 recyclerView.setAdapter(adapter);
             });
         } else {
             plansList = StorageHelper.listarPlanes(this);
             if (plansList == null) plansList = new ArrayList<>();
-            adapter = new PlansAdapter(plansList, plan -> PlanDetailsActivity.start(this, plan.id));
+            adapter = new PlansAdapter(plansList, (plan, itemView) -> PlanDetailsActivity.start(this, plan.id));
             recyclerView.setAdapter(adapter);
         }
     }

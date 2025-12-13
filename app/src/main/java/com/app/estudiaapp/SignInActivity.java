@@ -111,6 +111,7 @@ public class SignInActivity extends AppCompatActivity {
                             }
                         }
                         startActivity(new Intent(this, MainActivity.class));
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
                     } else {
                         Exception exception = task.getException();
@@ -164,6 +165,7 @@ public class SignInActivity extends AppCompatActivity {
                                 }
                             }
                         startActivity(new Intent(this, MainActivity.class));
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         finish();
                     } else {
                         Exception exception = task1.getException();

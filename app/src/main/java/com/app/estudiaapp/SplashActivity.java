@@ -38,7 +38,10 @@ public class SplashActivity extends AppCompatActivity {
 
         if (uid == null && !themeChange) {
             // Not signed in → go to SignIn
-            try { startActivity(new Intent(this, SignInActivity.class)); } catch (Exception ignore) {}
+            try { 
+                startActivity(new Intent(this, SignInActivity.class));
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            } catch (Exception ignore) {}
             finish();
             return;
         }
@@ -46,11 +49,29 @@ public class SplashActivity extends AppCompatActivity {
         // Preload user preferences (dark mode, notify) from Firestore with a short timeout
         AtomicBoolean finished = new AtomicBoolean(false);
         Handler h = new Handler(Looper.getMainLooper());
+
+        // Animate 'Cargando' text with trailing dots: , .., ...
+        final android.widget.TextView titleView = findViewById(R.id.splash_title);
+        final String baseText = "Cargando";
+        final int[] dotCount = new int[]{0};
+        final Runnable dotsAnim = new Runnable() {
+            @Override public void run() {
+                if (finished.get()) return;
+                dotCount[0] = (dotCount[0] + 1) % 4; // 0..3
+                String dots = dotCount[0] == 0 ? "" : (dotCount[0] == 1 ? "." : (dotCount[0] == 2 ? ".." : "..."));
+                try { if (titleView != null) titleView.setText(baseText + dots); } catch (Exception ignore) {}
+                h.postDelayed(this, 400);
+            }
+        };
+        h.postDelayed(dotsAnim, 400);
         Runnable timeout = () -> {
             if (finished.get()) return;
             finished.set(true);
             // Proceed to MainActivity even if remote load didn't finish
-            try { startActivity(new Intent(SplashActivity.this, MainActivity.class)); } catch (Exception ignore) {}
+            try { 
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            } catch (Exception ignore) {}
             finish();
         };
         h.postDelayed(timeout, 1800); // max splash wait 1.8s to reduce premature exit
@@ -80,21 +101,33 @@ public class SplashActivity extends AppCompatActivity {
                 finally {
                     finished.set(true);
                     h.removeCallbacks(timeout);
-                    try { startActivity(new Intent(SplashActivity.this, MainActivity.class)); } catch (Exception ignore) {}
+                    h.removeCallbacks(dotsAnim);
+                    try { 
+                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                    } catch (Exception ignore) {}
                     finish();
                 }
             }, e -> {
                 // On error, proceed; local prefs are already applied
                 finished.set(true);
                 h.removeCallbacks(timeout);
-                try { startActivity(new Intent(SplashActivity.this, MainActivity.class)); } catch (Exception ignore) {}
+                h.removeCallbacks(dotsAnim);
+                try { 
+                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                } catch (Exception ignore) {}
                 finish();
             });
         } catch (Exception ex) {
             // Fallback
             finished.set(true);
             h.removeCallbacks(timeout);
-            try { startActivity(new Intent(SplashActivity.this, MainActivity.class)); } catch (Exception ignore) {}
+            h.removeCallbacks(dotsAnim);
+            try { 
+                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            } catch (Exception ignore) {}
             finish();
         }
     }

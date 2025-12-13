@@ -22,7 +22,7 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
     private OnPlanClickListener listener;
 
     public interface OnPlanClickListener {
-        void onPlanClick(StudyPlan plan);
+        void onPlanClick(StudyPlan plan, View itemView);
     }
 
     public PlansAdapter(ArrayList<StudyPlan> plans, OnPlanClickListener listener) {
@@ -67,7 +67,7 @@ public class PlansAdapter extends RecyclerView.Adapter<PlansAdapter.PlanViewHold
             if (holder.hotTopicsCount != null) holder.hotTopicsCount.setAlpha(1.0f);
             
             // Normal click behavior
-            holder.itemView.setOnClickListener(v -> listener.onPlanClick(plan));
+            holder.itemView.setOnClickListener(v -> listener.onPlanClick(plan, holder.itemView));
         }
         
         // Mostrar counts si están disponibles

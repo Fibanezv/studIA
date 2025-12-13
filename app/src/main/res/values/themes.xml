@@ -27,6 +27,12 @@
         <!-- Default window background should be plain white as requested -->
         <item name="android:windowBackground">@color/white</item>
 
+        <!-- Enable activity/window transitions -->
+        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowAllowEnterTransitionOverlap">true</item>
+        <item name="android:windowAllowReturnTransitionOverlap">true</item>
+        <item name="android:windowSharedElementsUseOverlay">true</item>
+
         <!-- Header / navigation colors (themeable) -->
         <item name="headerIconColor">@color/black</item>
         <item name="navBackgroundColor">@color/white</item>

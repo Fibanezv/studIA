@@ -6,7 +6,8 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:layout_marginTop="5dp"
-    android:layout_marginBottom="5dp">
+    android:layout_marginBottom="5dp"
+    android:transitionName="plan_card">
 
     <!-- Título del plan -->
     <TextView
@@ -16,7 +17,8 @@
     android:text="Plan de Historia"
     android:textSize="20sp"
     android:textStyle="bold"
-    android:textColor="@color/beige_300_theme" />
+    android:textColor="@color/beige_300_theme"
+    android:transitionName="plan_title" />
 
     <!-- Documento origen -->
     <TextView

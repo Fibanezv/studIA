@@ -59,7 +59,7 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
         // Acción al pulsar la tarjeta "Crear Plan de Estudio" (incluida)
         View createPlanCard = findViewById(R.id.create_plan_card);
         if (createPlanCard != null) {
-            createPlanCard.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, UploadActivity.class)));
+            createPlanCard.setOnClickListener(v -> startActivityFadeThrough(new Intent(MainActivity.this, UploadActivity.class)));
         }
 
         // Header menu button: abrir drawer si existe
@@ -265,8 +265,10 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
 
     // Cuando se hace clic en un plan
     @Override
-    public void onPlanClick(StudyPlan plan) {
-        // Abrir lista de quizzes del plan
-    PlanDetailsActivity.start(this, plan.id);
+    public void onPlanClick(StudyPlan plan, View itemView) {
+        // Abrir detalles del plan con shared element container transform
+        Intent intent = new Intent(this, PlanDetailsActivity.class);
+        intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_PLAN_ID, plan.id);
+        startActivityWithContainerTransform(itemView, intent, "plan_card");
     }
 }

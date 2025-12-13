@@ -64,8 +64,11 @@ public class QuizListActivity extends BaseActivity {
                     quizzesList.addAll(plan.quizzes);
                     
                     adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, plan, userId, quiz -> {
-                        // Abrir QuizActivity con planId + quiz.id
-                        QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                        // Abrir QuizActivity con Shared Axis X style (slide forward)
+                        Intent intent = new Intent(QuizListActivity.this, QuizActivity.class);
+                        intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                        intent.putExtra(Constants.EXTRA_QUIZ_ID, quiz.id);
+                        startActivitySharedAxisX(intent, true);
                     });
                     
                     recyclerView.setAdapter(adapter);
@@ -78,7 +81,10 @@ public class QuizListActivity extends BaseActivity {
                     quizzesList.addAll(p.quizzes);
                     
                     adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
-                        QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                        Intent intent = new Intent(QuizListActivity.this, QuizActivity.class);
+                        intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                        intent.putExtra(Constants.EXTRA_QUIZ_ID, quiz.id);
+                        startActivitySharedAxisX(intent, true);
                     });
                     
                     recyclerView.setAdapter(adapter);
@@ -91,7 +97,10 @@ public class QuizListActivity extends BaseActivity {
                 quizzesList.addAll(p.quizzes);
                 
                 adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
-                    QuizActivity.start(QuizListActivity.this, planId, quiz.id);
+                    Intent intent = new Intent(QuizListActivity.this, QuizActivity.class);
+                    intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                    intent.putExtra(Constants.EXTRA_QUIZ_ID, quiz.id);
+                    startActivitySharedAxisX(intent, true);
                 });
                 
                 recyclerView.setAdapter(adapter);
@@ -117,8 +126,8 @@ public class QuizListActivity extends BaseActivity {
 
                 if (intent != null) {
                     intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_PLAN_ID, planId);
-                    startActivity(intent);
-                    overridePendingTransition(0,0);
+                    // Use fade-through for section switches from bottom nav
+                    startActivityFadeThrough(intent);
                     return true;
                 }
                 return false;
