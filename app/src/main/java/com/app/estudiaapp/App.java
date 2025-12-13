@@ -27,6 +27,15 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // Apply persisted theme as early as possible to avoid flicker
+        try {
+            SharedPreferences earlyPrefs = getSharedPreferences("auth", MODE_PRIVATE);
+            boolean darkPref = earlyPrefs.getBoolean("dark_mode", false);
+            int target = darkPref ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                    : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(target);
+        } catch (Exception ignored) {}
+
         try {
             androidx.multidex.MultiDex.install(this);
             Log.i(TAG, "MultiDex.install called to ensure secondary dexes are loaded");
@@ -187,15 +196,7 @@ public class App extends Application {
                                     Object prefsObj = doc.get("preferences");
                                     if (prefsObj instanceof java.util.Map) {
                                         java.util.Map map = (java.util.Map) prefsObj;
-                            // Apply persisted dark mode at application start so all Activities use correct window background
-                            SharedPreferences authPrefs = getSharedPreferences("auth", MODE_PRIVATE);
-                            boolean darkMode = authPrefs.getBoolean("dark_mode", false);
-                            int mode = darkMode ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
-                                    : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
-                            try {
-                                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(mode);
-                            } catch (Exception ignored) {
-                            }
+                                        // Cache additional preferences if present (dark mode handled at startup)
                                         Object notify = map.get("notificationsEnabled");
                                         if (notify instanceof Boolean) prefs2.edit().putBoolean("notify_enabled", (Boolean) notify).apply();
                                     }

@@ -293,8 +293,7 @@ public class UserActivity extends BaseActivity {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("users").document(uid)
                             .update(prefUpdate)
                             .addOnSuccessListener(a -> {
-                                ErrorDialogHelper.showErrorToast(UserActivity.this, 
-                                    com.app.estudiaapp.utils.GeneralErrorType.UNKNOWN);
+                                // No toast on success; keep silent to avoid confusion
                             })
                             .addOnFailureListener(e -> {
                                 ErrorHandler.logError(e, "UserActivity.notificationsSwitch");
@@ -324,6 +323,13 @@ public class UserActivity extends BaseActivity {
                     // mark that a theme transition is about to happen so activities can animate on recreate
                     authPrefs.edit().putBoolean("theme_just_changed", true).apply();
                     androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(targetMode);
+                    // Show a lightweight splash while the theme and resources reload to avoid visible flicker
+                    try {
+                        android.content.Intent i = new android.content.Intent(UserActivity.this, SplashActivity.class);
+                        i.putExtra("themeChange", true);
+                        i.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(i);
+                    } catch (Exception ignored) {}
                 } catch (Exception ignore) {
                     // fallback: still persist pref locally
                 }
