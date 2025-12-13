@@ -3,6 +3,7 @@ package com.app.estudiaapp;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -20,6 +21,9 @@ import com.app.estudiaapp.ui.OverlayManager;
 import androidx.appcompat.app.AlertDialog;
 import android.widget.EditText;
 import com.app.estudiaapp.utils.OpenAiKeyStore;
+import com.app.estudiaapp.utils.FileValidator;
+import com.app.estudiaapp.utils.UploadErrorType;
+import com.app.estudiaapp.utils.UploadErrorHandler;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.SetOptions;
 
@@ -97,9 +101,12 @@ public class UploadActivity extends BaseActivity {
     }
 
     private void createPlanInApp(Uri uri) {
+        Log.i(TAG, "=== Starting plan creation process ===");
+        Log.i(TAG, "Phase: validation - URI: " + uri);
         showProcessing("Procesando documento...");
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.w(TAG, "User not authenticated, starting anonymous sign-in");
             runOnUiThread(() -> showTemporaryStatus("Iniciando sesión anónima...", 1000));
             FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) createPlanInApp(uri);
@@ -114,10 +121,20 @@ public class UploadActivity extends BaseActivity {
         int questionsLimit = 0;
         int flashcardLimit = 0;
         int hotTopicsLimit = 0;
-        try { android.widget.Spinner sp = findViewById(R.id.spinner_quiz_limit); if (sp != null) quizLimit = Integer.parseInt(String.valueOf(sp.getSelectedItem())); } catch (Exception ignored) {}
-        try { android.widget.Spinner spq = findViewById(R.id.spinner_questions_limit); if (spq != null) questionsLimit = Integer.parseInt(String.valueOf(spq.getSelectedItem())); } catch (Exception ignored) {}
-        try { android.widget.Spinner sfl = findViewById(R.id.spinner_flashcard_limit); if (sfl != null) flashcardLimit = Integer.parseInt(String.valueOf(sfl.getSelectedItem())); } catch (Exception ignored) {}
-        try { android.widget.Spinner sht = findViewById(R.id.spinner_hot_topics_limit); if (sht != null) hotTopicsLimit = Integer.parseInt(String.valueOf(sht.getSelectedItem())); } catch (Exception ignored) {}
+        try { android.widget.Spinner sp = findViewById(R.id.spinner_quiz_limit); if (sp != null) quizLimit = Integer.parseInt(String.valueOf(sp.getSelectedItem())); } catch (Exception e) {
+            Log.w(TAG, "Failed to parse quizLimit, using default 0", e);
+        }
+        try { android.widget.Spinner spq = findViewById(R.id.spinner_questions_limit); if (spq != null) questionsLimit = Integer.parseInt(String.valueOf(spq.getSelectedItem())); } catch (Exception e) {
+            Log.w(TAG, "Failed to parse questionsLimit, using default 0", e);
+        }
+        try { android.widget.Spinner sfl = findViewById(R.id.spinner_flashcard_limit); if (sfl != null) flashcardLimit = Integer.parseInt(String.valueOf(sfl.getSelectedItem())); } catch (Exception e) {
+            Log.w(TAG, "Failed to parse flashcardLimit, using default 0", e);
+        }
+        try { android.widget.Spinner sht = findViewById(R.id.spinner_hot_topics_limit); if (sht != null) hotTopicsLimit = Integer.parseInt(String.valueOf(sht.getSelectedItem())); } catch (Exception e) {
+            Log.w(TAG, "Failed to parse hotTopicsLimit, using default 0", e);
+        }
+
+        Log.i(TAG, "Form inputs: quizLimit=" + quizLimit + ", questionsLimit=" + questionsLimit + ", flashcardLimit=" + flashcardLimit + ", hotTopicsLimit=" + hotTopicsLimit);
 
         // Read selected language and quiz typology
         String language = "es"; // default Spanish
@@ -178,6 +195,7 @@ public class UploadActivity extends BaseActivity {
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         String uploadId = java.util.UUID.randomUUID().toString();
+        Log.i(TAG, "Phase: storage_init - uploadId: " + uploadId + ", uid: " + uid);
         com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/uploads/" + uploadId + "/source.pdf");
         com.google.firebase.storage.UploadTask uploadTask = ref.putFile(uri);
 
@@ -185,13 +203,22 @@ public class UploadActivity extends BaseActivity {
 
         com.google.android.gms.tasks.Task<String> urlTask = uploadTask
                 .continueWithTask(task -> {
-                    if (!task.isSuccessful()) throw task.getException();
+                    if (!task.isSuccessful()) {
+                        Log.e(TAG, "Storage upload failed", task.getException());
+                        throw task.getException();
+                    }
+                    Log.i(TAG, "Storage upload successful, getting download URL");
                     return ref.getDownloadUrl();
                 })
                 .continueWith(task -> {
-                    if (!task.isSuccessful()) throw task.getException();
+                    if (!task.isSuccessful()) {
+                        Log.e(TAG, "Failed to get download URL", task.getException());
+                        throw task.getException();
+                    }
                     android.net.Uri download = task.getResult();
-                    return download != null ? download.toString() : null;
+                    String downloadUrl = download != null ? download.toString() : null;
+                    Log.i(TAG, "Download URL obtained: " + (downloadUrl != null ? downloadUrl.substring(0, Math.min(50, downloadUrl.length())) + "..." : "null"));
+                    return downloadUrl;
                 });
 
         com.google.android.gms.tasks.Task<String> planIdTask = allocateCanonicalPlanId(uid);
@@ -200,18 +227,24 @@ public class UploadActivity extends BaseActivity {
                 .addOnSuccessListener(results -> {
                     String pdfUrl = (String) results.get(0);
                     String clientPlanId = results.size() > 1 ? (String) results.get(1) : null;
-                    if (pdfUrl == null || pdfUrl.trim().isEmpty()) throw new IllegalStateException("No se obtuvo URL del archivo");
+                    Log.i(TAG, "Phase: pre_function_call - pdfUrl obtained, clientPlanId: " + clientPlanId);
+                    if (pdfUrl == null || pdfUrl.trim().isEmpty()) {
+                        Log.e(TAG, "No PDF URL obtained from storage");
+                        throw new IllegalStateException("No se obtuvo URL del archivo");
+                    }
                     payload.put("pdfUrl", pdfUrl);
                     if (clientPlanId != null && !clientPlanId.isEmpty()) payload.put("clientPlanId", clientPlanId);
 
                     try { overlayManager.show("Generando plan en la nube...", null); } catch (Exception ignored) {}
 
+                    Log.i(TAG, "Phase: function_call - calling generateStudyPlan with " + payload.size() + " parameters");
                     FirebaseFunctions.getInstance()
                             .getHttpsCallable("generateStudyPlan")
                             .call(payload)
                             .addOnSuccessListener(result -> {
                                 hideProcessing();
                                 showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
+                                Log.i(TAG, "=== Plan creation successful - returning to MainActivity ===");
                                 try {
                                     Intent i = new Intent(UploadActivity.this, MainActivity.class);
                                     i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -221,44 +254,114 @@ public class UploadActivity extends BaseActivity {
                             })
                             .addOnFailureListener(e -> {
                                 hideProcessing();
-                                new AlertDialog.Builder(UploadActivity.this)
-                                        .setTitle("Error al generar plan")
-                                        .setMessage(e != null && e.getMessage() != null ? e.getMessage() : "No se pudo generar StudyPlan")
-                                        .setPositiveButton("Reintentar", (dialog, which) -> {
-                                            if (selectedFileUri != null) createPlanInApp(selectedFileUri);
-                                        })
-                                        .setNegativeButton("Cerrar", (d, w) -> { /* no-op */ })
-                                        .show();
+                                Log.e(TAG, "Phase: function_call_failed - Cloud Function call failed", e);
+                                handleUploadError(e, "Error al llamar Cloud Function");
                             });
 
                 })
                 .addOnFailureListener(e -> {
                     hideProcessing();
-                    new AlertDialog.Builder(UploadActivity.this)
-                            .setTitle("Error al generar plan")
-                            .setMessage(e != null && e.getMessage() != null ? e.getMessage() : "No se pudo subir o procesar el archivo")
-                            .setPositiveButton("Reintentar", (dialog, which) -> {
-                                if (selectedFileUri != null) createPlanInApp(selectedFileUri);
-                            })
-                            .setNegativeButton("Cerrar", (d, w) -> { /* no-op */ })
-                            .show();
+                    Log.e(TAG, "Phase: upload_or_id_allocation_failed", e);
+                    handleUploadError(e, "Error durante la subida y asignación de ID");
                 });
     }
+
+    /**
+     * Muestra un diálogo de error cuando falla la validación del archivo
+     */
+    private void showValidationError(String message) {
+        new AlertDialog.Builder(this)
+                .setTitle("Archivo no válido")
+                .setMessage(message != null ? message : "El archivo seleccionado no es válido")
+                .setPositiveButton("Seleccionar otro", (dialog, which) -> openFileChooser())
+                .setNegativeButton("Cerrar", null)
+                .show();
+        
+        Log.w(TAG, "File validation failed: " + message);
+    }
+
+    /**
+     * Maneja errores del proceso de upload con clasificación inteligente
+     */
+    private void handleUploadError(Exception exception, String context) {
+        UploadErrorType errorType = UploadErrorHandler.classify(exception);
+        String userMessage = errorType.getUserMessage();
+        String dialogTitle = errorType.getDialogTitle();
+        boolean isRetriable = errorType.isRetriable();
+
+        // Logging estructurado
+        if (UploadErrorHandler.isCritical(errorType)) {
+            Log.e(TAG, context + " - " + errorType.name() + ": " + userMessage, exception);
+        } else {
+            Log.w(TAG, context + " - " + errorType.name() + ": " + userMessage);
+        }
+
+        // Construir diálogo
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(dialogTitle)
+                .setMessage(userMessage);
+
+        // Botón "Reintentar" solo si es retriable
+        if (isRetriable) {
+            builder.setPositiveButton("Reintentar", (dialog, which) -> {
+                if (selectedFileUri != null) {
+                    createPlanInApp(selectedFileUri);
+                }
+            });
+            builder.setNegativeButton("Cerrar", null);
+        } else {
+            builder.setPositiveButton("Entendido", null);
+        }
+
+        // Botón "Ver detalles" en modo debug
+        if (isAppDebug()) {
+            builder.setNeutralButton("Ver detalles", (dialog, which) -> {
+                String details = UploadErrorHandler.getDetailedMessage(exception, true);
+                new AlertDialog.Builder(this)
+                        .setTitle("Detalles técnicos")
+                        .setMessage(details)
+                        .setPositiveButton("Cerrar", null)
+                        .show();
+            });
+        }
+
+        builder.show();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_FILE && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null) {
+                // Validar archivo antes de aceptarlo
+                FileValidator.ValidationResult validation = FileValidator.validate(this, uri);
+                
+                if (!validation.isValid) {
+                    // Mostrar error de validación al usuario
+                    showValidationError(validation.errorMessage);
+                    return;
+                }
+                
+                // Archivo válido: tomar permisos persistentes y actualizar UI
                 try {
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (Exception ignored) {}
+                    Log.i(TAG, "Persistable URI permission granted for: " + uri);
+                } catch (Exception e) {
+                    Log.w(TAG, "Could not take persistable URI permission (may not be needed)", e);
+                }
+                
                 selectedFileUri = uri;
                 String name = queryName(uri);
                 if (selectedFileNameText != null && name != null) {
                     selectedFileNameText.setText(name);
                     selectedFileContainer.setVisibility(View.VISIBLE);
                     uploadFileBtn.setVisibility(View.GONE);
+                    
+                    // Mostrar info del archivo validado
+                    String sizeInfo = FileValidator.formatFileSize(validation.fileSizeBytes);
+                    showTemporaryStatus("Archivo seleccionado: " + sizeInfo, 2000);
+                    Log.i(TAG, "File selected: name=" + name + ", mimeType=" + validation.mimeType + ", size=" + sizeInfo);
                 }
             }
         }

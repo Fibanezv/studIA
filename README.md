@@ -218,7 +218,10 @@ EstudiaApp/
 │   │   │   │   │   └── StorageHelper.java        # Persistencia local JSON
 │   │   │   │   ├── utils/                 # Utilidades generales
 │   │   │   │   │   ├── OpenAiKeyStore.java       # Gestión segura de API key
-│   │   │   │   │   └── DocumentExtractor.java    # Stub: extracción removida, lanza excepción
+│   │   │   │   │   ├── DocumentExtractor.java    # Stub: extracción removida, lanza excepción
+│   │   │   │   │   ├── FileValidator.java        # Validación MIME, tamaño y legibilidad de archivos
+│   │   │   │   │   ├── UploadErrorType.java      # Enum de tipos de error con mensajes user-friendly
+│   │   │   │   │   └── UploadErrorHandler.java   # Clasificador de errores Firebase a mensajes UX
 │   │   │   │   ├── ui/                    # Componentes UI personalizados
 │   │   │   │   │   └── OverlayManager.java       # Gestión de overlays de progreso
 │   │   │   │   ├── api/                   # Clientes API
@@ -533,6 +536,15 @@ match /users/{userId}/plans/{planId} {
 - [x] Formulario de creación mejorado (spinners alineados, botón remover documento)
 - [x] Overlay de progreso para tareas largas
 - [x] Orquestación directa de generación sin WorkManager (UploadActivity → Cloud Function)
+- [x] **UploadActivity robusto**: 
+  - Validación MIME real con `ContentResolver` (whitelist: PDF, TXT)
+  - Validación de tamaño de archivo (máximo 50MB) con formato legible
+  - Verificación de legibilidad con prueba de InputStream
+  - Manejo de errores clasificado con 15 tipos (`UploadErrorType`)
+  - Mensajes user-friendly diferenciados por categoría (red, auth, storage, functions, validación)
+  - Lógica retriable vs no-retriable con botón "Reintentar" condicional
+  - Dialogs con "Ver detalles" en modo debug (BuildConfig.DEBUG)
+  - Logging estructurado por fases (validation, storage, function_call) con contexto
 - [x] Unificación de acceso a quizzes: `QuizListActivity` carga el plan; `QuizActivity` usa `UserRepository.getQuiz(...)` sin reconsultar el plan; `QuizzesAdapter` desacoplado del refresh
 - [x] Tests unitarios básicos: `StudyPlanTest`, `QuizTest` (modelos y serialización Gson)
 - [x] Tests instrumentados básicos: `SignInFlowTest`, `QuizActivityUiTest`, `StorageHelperInstrumentedTest`
@@ -554,13 +566,12 @@ match /users/{userId}/plans/{planId} {
 2. **Concurrencia en progreso de quizzes**: `updateQuizProgress()` usa lectura-modificación-escritura sin transacción; riesgo de sobrescrituras concurrentes.
 3. **Divergencia local vs nube**: fallback con `StorageHelper.cargarPlan(...)` puede desalinear datos si se escriben localmente y no se sincronizan adecuadamente.
 4. **Validación de esquema en reglas**: las reglas de Firestore no validan estructura anidada (`quizzes`, `questions`, `progreso`); riesgo de datos malformados.
-5. **Detección de MIME type**: actualmente asume PDF; falta uso de `ContentResolver` para detectar MIME real.
-6. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
-7. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
-8. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
-9. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
-10. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
-11. **Accesibilidad**: pendiente revisión completa de `contentDescription` y flujo con TalkBack.
+5. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
+6. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
+7. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
+8. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
+9. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
+10. **Accesibilidad**: pendiente revisión completa de `contentDescription` y flujo con TalkBack.
 
 ---
 
@@ -568,7 +579,7 @@ match /users/{userId}/plans/{planId} {
 
 ### Alta Prioridad 🔴
 
-- [ ] **Robustecer UploadActivity**: detección MIME real, manejo de errores mejorado
+- [x] **Robustecer UploadActivity**: detección MIME real (PDF/TXT), validación de tamaño (max 50MB), manejo de errores clasificado con tipos user-friendly y retriable logic, logging estructurado
 - [ ] **Armonizar uso de extras**: migrar a `Constants` en todo el código
 - [x] **Implementar tests unitarios básicos**: modelos, serialización (StudyPlanTest, QuizTest creados)
 - [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgress`, fallback local
