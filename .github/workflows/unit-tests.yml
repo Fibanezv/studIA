@@ -1,0 +1,33 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: ["beta/0.0.1", "feature/**"]
+  pull_request:
+    branches: ["beta/0.0.1"]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run unit tests
+        run: ./gradlew test jacocoTestReport --stacktrace
+
+      - name: Publish coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+            name: jacoco-report
+            path: app/build/reports/jacoco/jacocoTestReport/html

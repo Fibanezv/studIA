@@ -534,6 +534,10 @@ match /users/{userId}/plans/{planId} {
 - [x] Overlay de progreso para tareas largas
 - [x] Orquestación directa de generación sin WorkManager (UploadActivity → Cloud Function)
 - [x] Unificación de acceso a quizzes: `QuizListActivity` carga el plan; `QuizActivity` usa `UserRepository.getQuiz(...)` sin reconsultar el plan; `QuizzesAdapter` desacoplado del refresh
+- [x] Tests unitarios básicos: `StudyPlanTest`, `QuizTest` (modelos y serialización Gson)
+- [x] Tests instrumentados básicos: `SignInFlowTest`, `QuizActivityUiTest`, `StorageHelperInstrumentedTest`
+- [x] Configuración JaCoCo para cobertura de tests unitarios
+- [x] CI/CD inicial: GitHub Actions workflow para unit tests automáticos en PRs y pushs
 
 ### 🔄 En Progreso
 
@@ -546,11 +550,17 @@ match /users/{userId}/plans/{planId} {
 
 ### ⚠️ Problemas Conocidos
 
-1. (Resuelto) **Duplicación de lógica** entre `QuizActivity` y `QuizListActivity`: ahora centralizado en `UserRepository`
-2. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`
-3. **Detección de MIME type**: actualmente asume PDF, necesita ContentResolver
-4. **Tests**: cobertura insuficiente (unitarios e instrumentados)
-5. **Historial**: solo se muestra cuando `lastUpdatedMillis > 0`
+1. **Cache inválida potencial**: la caché in-memory de `UserRepository` (PLAN_CACHE) puede quedar obsoleta si hay cambios en Firestore desde otro dispositivo; falta política de refresco/TTL o listeners.
+2. **Concurrencia en progreso de quizzes**: `updateQuizProgress()` usa lectura-modificación-escritura sin transacción; riesgo de sobrescrituras concurrentes.
+3. **Divergencia local vs nube**: fallback con `StorageHelper.cargarPlan(...)` puede desalinear datos si se escriben localmente y no se sincronizan adecuadamente.
+4. **Validación de esquema en reglas**: las reglas de Firestore no validan estructura anidada (`quizzes`, `questions`, `progreso`); riesgo de datos malformados.
+5. **Detección de MIME type**: actualmente asume PDF; falta uso de `ContentResolver` para detectar MIME real.
+6. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
+7. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
+8. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
+9. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
+10. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
+11. **Accesibilidad**: pendiente revisión completa de `contentDescription` y flujo con TalkBack.
 
 ---
 
@@ -558,11 +568,18 @@ match /users/{userId}/plans/{planId} {
 
 ### Alta Prioridad 🔴
 
-- [ ] **Unificar lógica de quizzes**: eliminar duplicación entre Activities
 - [ ] **Robustecer UploadActivity**: detección MIME real, manejo de errores mejorado
 - [ ] **Armonizar uso de extras**: migrar a `Constants` en todo el código
-- [ ] **Implementar tests unitarios**: StorageHelper, modelos, serialización
+- [x] **Implementar tests unitarios básicos**: modelos, serialización (StudyPlanTest, QuizTest creados)
+- [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgress`, fallback local
+- [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, visibilidad de botón "Reiniciar", adaptadores
 - [ ] **Mejorar manejo de errores**: feedback claro al usuario en fallos de red/API
+- [ ] **Política de refresco de caché**: TTL simple para `PLAN_CACHE` y/o snapshot listeners para `users/{uid}/plans/{planId}`; refrescar en `onResume`.
+- [ ] **Transacciones en progreso**: migrar `updateQuizProgress()` a `runTransaction` (Firestore) o usar contadores atómicos por campo.
+- [ ] **Repositorio de acciones de quiz**: añadir `resetQuizProgress(uid, planId, quizId)` y usarlo desde UI en lugar de mutar el plan completo.
+- [ ] **Unificar fallback local**: encapsular lecturas/escrituras locales en `UserRepository` y evitar escrituras directas desde Activities.
+- [ ] **Reglas de seguridad**: validar tipos/longitudes y estructura de `quizzes`, `questions`, `progreso` en Firestore Rules.
+- [ ] **Tests de integración Firebase**: configurar emuladores Auth/Firestore/Storage y validar transacción `nextPlanNumber`, lectura de planes, Cloud Functions contract
 
 ### Prioridad Media 🟡
 
@@ -571,15 +588,19 @@ match /users/{userId}/plans/{planId} {
 - [ ] **Mejorar ProgressActivity**: visualizaciones gráficas (charts)
 - [ ] **Sistema de recomendaciones**: sugerir planes similares
 - [ ] **Compartir planes**: export/import entre usuarios
+- [x] **CI/CD básico**: GitHub Actions para unit tests automáticos (`.github/workflows/unit-tests.yml`)
+- [ ] **Expandir CI/CD**: añadir job de instrumented tests con emulador Android, emuladores Firebase, lint, reportes de cobertura JaCoCo
+- [ ] **Telemetría**: integrar Firebase Analytics y Crashlytics básicos
+- [ ] **Tests de reglas de seguridad**: validar Firestore rules con `@firebase/rules-unit-testing` (owner access, esquema nested)
+- [ ] **Benchmarks de rendimiento**: parsing JSON, operaciones de caché, stress de `updateQuizProgress` concurrente
 
 ### Prioridad Baja 🟢
 
-- [ ] **CI/CD**: GitHub Actions para build y tests automáticos
 - [ ] **Localización**: soporte multi-idioma (inglés, francés)
 - [ ] **Accesibilidad**: contentDescription completo, TalkBack testing
-- [ ] **Telemetría**: Firebase Analytics para métricas de uso
 - [ ] **Animaciones**: transiciones suaves entre pantallas
 - [ ] **Widget de home screen**: acceso rápido a planes recientes
+- [ ] **Limpieza de `server/`**: documentar o eliminar artefactos legacy (logs de emulador/WorkManager) para evitar confusión
 
 ### Mejoras Técnicas 🔧
 
