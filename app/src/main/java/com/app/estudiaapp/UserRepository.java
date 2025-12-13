@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -79,8 +80,19 @@ public class UserRepository {
     }
 
     public UserRepository(@NonNull Context context) {
-        this.db = FirebaseFirestore.getInstance();
+        this(context, FirebaseFirestore.getInstance());
+    }
+
+    // VisibleForTesting: allows injecting a mocked FirebaseFirestore
+    public UserRepository(@NonNull Context context, @NonNull FirebaseFirestore firestore) {
+        this.db = firestore;
         this.ctx = context.getApplicationContext();
+    }
+
+    // Only for tests: allow injecting a cached entry without using Firestore
+    @VisibleForTesting
+    void putCachedPlanForTest(@NonNull String uid, @NonNull String planId, @NonNull StudyPlan plan, long cachedAtMillis) {
+        PLAN_CACHE.put(uid + "::" + planId, new CachedPlan(plan, cachedAtMillis));
     }
 
     /**
