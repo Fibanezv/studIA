@@ -477,10 +477,41 @@ users/
 
 ### Gestión de API Keys
 
-1. **Nunca hardcodear API keys** en el código fuente
-2. Usar **Firebase Remote Config** para distribución segura
-3. Almacenamiento local con **EncryptedSharedPreferences**
-4. Implementar rate limiting y monitoreo de uso
+### Seguridad en Caché
+
+- **TTL (Time To Live)**: Cache automáticamente expira después de 5 minutos (configurable via Remote Config en futuro)
+- **Thread-Safe**: `ConcurrentHashMap` para evitar race conditions en acceso concurrente
+- **Snapshot Listeners**: Real-time sync en Activities críticas (PlanDetailsActivity) para cambios desde otros dispositivos
+- **Offline Resilience**: Fallback a cache stale si hay errores de red durante refresh
+- **Memory Management**: Limpieza automática de entradas expiradas en acceso; métodos `clearCache()` e `invalidatePlanCache()` para manual cleanup
+- **Logging**: Detallado de cache HIT/MISS/EXPIRED con edad en segundos para debugging
+
+### Arquitectura de Caché
+
+**UserRepository PLAN_CACHE:**
+```java
+ConcurrentHashMap<String, CachedPlan> PLAN_CACHE = new ConcurrentHashMap<>();
+
+class CachedPlan {
+    StudyPlan plan;
+    long cachedAtMillis;
+    long ttlMillis = 5 * 60 * 1000;  // 5 minutes
+    boolean isExpired();
+    long getAgeSeconds();
+}
+```
+
+**Métodos principales:**
+1. `getPlan(uid, planId, onSuccess, onFailure)`: Check cache TTL, serve if fresh, fetch if expired
+2. `refreshPlanIfNeeded(uid, planId, onSuccess, onFailure)`: Conditional refresh basado en TTL con fallback
+3. `registerPlanListener(uid, planId, onUpdate)`: Real-time listener retorna `ListenerRegistration`
+4. `clearCache()` / `invalidatePlanCache(uid, planId)`: Manual cleanup
+
+**Integración con Activities:**
+- `PlanDetailsActivity`: Register listener en `onCreate()`, cleanup en `onDestroy()`, refresh en `onResume()`
+- `QuizActivity` / `FlashcardActivity`: `refreshPlanIfNeeded()` en `onCreate()` y `onResume()`
+
+### Nunca hardcodear API keys en el código fuente
 
 ### Autenticación
 
@@ -550,6 +581,26 @@ match /users/{userId}/plans/{planId} {
 - [x] Tests instrumentados básicos: `SignInFlowTest`, `QuizActivityUiTest`, `StorageHelperInstrumentedTest`
 - [x] Configuración JaCoCo para cobertura de tests unitarios
 - [x] CI/CD inicial: GitHub Actions workflow para unit tests automáticos en PRs y pushs
+- [x] **Sistema unificado de error handling**:
+  - `ErrorHandler.java`: Clasificador universal de excepciones (Auth, Firestore, Storage, Network)
+  - `GeneralErrorType.java`: Enum con 11 tipos de error y mensajes user-friendly
+  - `ErrorDialogHelper.java`: Diálogos consistentes con retry logic, debug details (BuildConfig.DEBUG), Toast para errores no-críticos
+  - Refactorizadas 7 Activities: SignIn, SignUp, MainActivity, UserActivity, PlanDetails, Quiz, Flashcard
+  - Diferenciación de errores específicos: USER_COLLISION, WEAK_PASSWORD, INVALID_CREDENTIALS, INVALID_EMAIL
+  - Logging estructurado con contexto (`ErrorHandler.logError(exception, "Activity.method")`)
+  - Feedback visual cuando se usan datos offline/locales
+  - Botón "Reintentar" condicional solo para errores recuperables (network, timeout, firestore)
+- [x] **Política de refresco de caché con TTL y snapshot listeners**:
+  - `CachedPlan` class: Wrapper con plan, timestamp, TTL (5 minutos por defecto)
+  - Cache thread-safe con `ConcurrentHashMap` en lugar de `HashMap`
+  - Logging detallado: cache HIT/MISS/EXPIRED con edad en segundos
+  - `refreshPlanIfNeeded()`: Conditional refresh basado en TTL con fallback a cache stale en errores de red
+  - `registerPlanListener()`: Real-time updates via Firestore snapshot listeners (retorna `ListenerRegistration`)
+  - `clearCache()` y `invalidatePlanCache()`: Manual cache invalidation
+  - PlanDetailsActivity: Snapshot listener en `onCreate()`, cleanup en `onDestroy()`, refresh en `onResume()` con TTL
+  - QuizActivity: `refreshPlanIfNeeded()` en `onCreate()` y `onResume()` para respuestas actualizadas
+  - FlashcardActivity: `refreshPlanIfNeeded()` en `onCreate()` y `onResume()` para progreso fresh
+  - Escalabilidad mejorada: evita refetches innecesarios (cache <5min), real-time collaboration (PlanDetails), resilencia offline (stale cache fallback)
 
 ### 🔄 En Progreso
 
@@ -562,16 +613,16 @@ match /users/{userId}/plans/{planId} {
 
 ### ⚠️ Problemas Conocidos
 
-1. **Cache inválida potencial**: la caché in-memory de `UserRepository` (PLAN_CACHE) puede quedar obsoleta si hay cambios en Firestore desde otro dispositivo; falta política de refresco/TTL o listeners.
-2. **Concurrencia en progreso de quizzes**: `updateQuizProgress()` usa lectura-modificación-escritura sin transacción; riesgo de sobrescrituras concurrentes.
-3. **Divergencia local vs nube**: fallback con `StorageHelper.cargarPlan(...)` puede desalinear datos si se escriben localmente y no se sincronizan adecuadamente.
-4. **Validación de esquema en reglas**: las reglas de Firestore no validan estructura anidada (`quizzes`, `questions`, `progreso`); riesgo de datos malformados.
-5. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
-6. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
-7. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
-8. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
-9. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
-10. **Accesibilidad**: pendiente revisión completa de `contentDescription` y flujo con TalkBack.
+1. **Concurrencia en progreso de quizzes**: `updateQuizProgress()` usa lectura-modificación-escritura sin transacción; riesgo de sobrescrituras concurrentes.
+2. **Divergencia local vs nube**: fallback con `StorageHelper.cargarPlan(...)` puede desalinear datos si se escriben localmente y no se sincronizan adecuadamente.
+3. **Validación de esquema en reglas**: las reglas de Firestore no validan estructura anidada (`quizzes`, `questions`, `progreso`); riesgo de datos malformados.
+4. **Inconsistencias en constantes**: uso de literales vs `Constants.EXTRA_PLAN_ID`; requiere armonización.
+5. **Cobertura de tests limitada**: tests unitarios básicos creados (modelos); falta `UserRepository` completo con mocks de Firestore, validación de flujos de progreso y casos borde.
+6. **Tests instrumentados parciales**: `SignInFlowTest` y `QuizActivityUiTest` son básicos; falta navegación completa entre Activities, tests de adaptadores (visibilidad de botón "Reiniciar", progreso), modo oscuro/claro.
+7. **Sin integración Firebase en tests**: falta configuración de emuladores de Auth/Firestore/Storage para tests de integración y validación de transacción de `planId`.
+8. **Telemetría/Crash**: sin Analytics/Crashlytics para observar fallos de generación o de UI.
+9. **Accesibilidad**: pendiente revisión completa de `contentDescription` y flujo con TalkBack.
+10. **TTL configurable**: Actualmente fijo en 5 minutos; pendiente integración con Firebase Remote Config para ajustar dinámicamente (rango 1-30min).
 
 ---
 
@@ -582,10 +633,10 @@ match /users/{userId}/plans/{planId} {
 - [x] **Robustecer UploadActivity**: detección MIME real (PDF/TXT), validación de tamaño (max 50MB), manejo de errores clasificado con tipos user-friendly y retriable logic, logging estructurado
 - [x] **Armonizar uso de extras**: centralizar todas las constantes Intent en Constants.java (EXTRA_PLAN_ID, EXTRA_QUIZ_ID, EXTRA_FLASHCARD_INDEX, EXTRA_CORRECT/INCORRECT/PERCENT)
 - [x] **Implementar tests unitarios básicos**: modelos, serialización (StudyPlanTest, QuizTest creados)
+- [x] **Mejorar manejo de errores**: feedback claro al usuario en fallos de red/API (ErrorHandler + ErrorDialogHelper + 11 error types, refactorizadas 7 Activities con retry logic y logging estructurado)
+- [x] **Política de refresco de caché**: TTL simple (5 min) para `PLAN_CACHE` con `CachedPlan` wrapper, snapshot listeners para `users/{uid}/plans/{planId}` en PlanDetailsActivity, refresh condicional en `onResume()` con fallback stale cache
 - [ ] **Ampliar tests unitarios**: `UserRepositoryTest` con mocks Firestore, casos de `updateQuizProgress`, fallback local
 - [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, visibilidad de botón "Reiniciar", adaptadores
-- [ ] **Mejorar manejo de errores**: feedback claro al usuario en fallos de red/API
-- [ ] **Política de refresco de caché**: TTL simple para `PLAN_CACHE` y/o snapshot listeners para `users/{uid}/plans/{planId}`; refrescar en `onResume`.
 - [ ] **Transacciones en progreso**: migrar `updateQuizProgress()` a `runTransaction` (Firestore) o usar contadores atómicos por campo.
 - [ ] **Repositorio de acciones de quiz**: añadir `resetQuizProgress(uid, planId, quizId)` y usarlo desde UI en lugar de mutar el plan completo.
 - [ ] **Unificar fallback local**: encapsular lecturas/escrituras locales en `UserRepository` y evitar escrituras directas desde Activities.

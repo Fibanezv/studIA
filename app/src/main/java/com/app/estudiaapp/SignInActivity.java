@@ -24,6 +24,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 import java.util.Map;
 public class SignInActivity extends AppCompatActivity {
 
@@ -67,10 +69,18 @@ public class SignInActivity extends AppCompatActivity {
     private void signInWithEmail() {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString();
-        if (!email.contains("@") || password.length() < 4) {
-            Toast.makeText(this, "Credenciales incorrectas", Toast.LENGTH_SHORT).show();
+        
+        // Validación básica
+        if (!email.contains("@")) {
+            ErrorDialogHelper.showErrorDialog(this, com.app.estudiaapp.utils.GeneralErrorType.INVALID_EMAIL, null);
             return;
         }
+        
+        if (password.length() < 4) {
+            ErrorDialogHelper.showErrorDialog(this, com.app.estudiaapp.utils.GeneralErrorType.WEAK_PASSWORD, null);
+            return;
+        }
+        
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
@@ -96,12 +106,20 @@ public class SignInActivity extends AppCompatActivity {
                             // Migrate any local plans to Firestore in background (idempotent)
                             try {
                                 new UserRepository(SignInActivity.this).migrateLocalPlansIfNeeded(uid);
-                            } catch (Exception ignore) {}
+                            } catch (Exception ignored) {
+                                Log.w(TAG, "Local migration failed", ignored);
+                            }
                         }
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(this, "Sign in error: " + task.getException(), Toast.LENGTH_LONG).show();
+                        Exception exception = task.getException();
+                        ErrorHandler.logError(exception, "SignInActivity.signInWithEmail");
+                        ErrorDialogHelper.showErrorDialog(
+                            SignInActivity.this, 
+                            exception, 
+                            () -> signInWithEmail()  // Retry callback
+                        );
                     }
                 });
     }
@@ -141,16 +159,29 @@ public class SignInActivity extends AppCompatActivity {
                                 // Start migration of local plans to Firestore asynchronously
                                 try {
                                     new UserRepository(SignInActivity.this).migrateLocalPlansIfNeeded(user.getUid());
-                                } catch (Exception ignore) {}
+                                } catch (Exception ignored) {
+                                    Log.w(TAG, "Local migration failed", ignored);
+                                }
                             }
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(this, "Firebase auth with Google failed: " + task1.getException(), Toast.LENGTH_LONG).show();
+                        Exception exception = task1.getException();
+                        ErrorHandler.logError(exception, "SignInActivity.signInWithGoogle");
+                        ErrorDialogHelper.showErrorDialog(
+                            SignInActivity.this, 
+                            exception, 
+                            () -> signInWithGoogle()  // Retry callback
+                        );
                     }
                 });
             } catch (ApiException e) {
-                Toast.makeText(this, "Google sign in failed: " + e, Toast.LENGTH_LONG).show();
+                ErrorHandler.logError(e, "SignInActivity.googleSignInResult");
+                ErrorDialogHelper.showErrorDialog(
+                    this, 
+                    e, 
+                    () -> signInWithGoogle()  // Retry callback
+                );
             }
         }
     }

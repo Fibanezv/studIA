@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat;
 import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.app.estudiaapp.UserRepository;
 
@@ -59,13 +61,16 @@ public class FlashcardActivity extends BaseActivity {
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
         if (uid != null) {
-            new UserRepository(this).getPlan(uid, planId, p -> {
+            new UserRepository(this).refreshPlanIfNeeded(uid, planId, p -> {
                 if (p != null && p.flashcards != null) {
                     this.plan = p;
                     if (adapter != null) adapter.updateItems(p.flashcards);
                 }
             }, e -> {
-                // fallback: no-op (we already have local plan)
+                ErrorHandler.logError(e, "FlashcardActivity.refreshPlanIfNeeded");
+                // fallback: no-op (we already have local plan) - show offline message
+                ErrorDialogHelper.showErrorToast(FlashcardActivity.this, 
+                    com.app.estudiaapp.utils.GeneralErrorType.FIRESTORE_READ_FAILED);
             });
         }
 
@@ -80,12 +85,14 @@ public class FlashcardActivity extends BaseActivity {
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
         if (uid != null) {
-            new UserRepository(this).getPlan(uid, planId, p -> {
+            new UserRepository(this).refreshPlanIfNeeded(uid, planId, p -> {
                 if (p != null && p.flashcards != null) {
                     this.plan = p;
                     adapter.updateItems(p.flashcards);
                 }
             }, e -> {
+                ErrorHandler.logError(e, "FlashcardActivity.onResume.refreshPlanIfNeeded");
+                // Fallback to local storage silently - already have loaded plan
                 StudyPlan updated = StorageHelper.cargarPlan(this, planId);
                 if (updated != null) {
                     this.plan = updated;

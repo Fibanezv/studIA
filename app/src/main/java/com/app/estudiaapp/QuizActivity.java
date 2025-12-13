@@ -21,6 +21,8 @@ import com.app.estudiaapp.models.Question;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.models.Quiz;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import android.animation.ObjectAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -65,13 +67,41 @@ public class QuizActivity extends BaseActivity {
             return;
         }
 
-        // New: do not refetch plan. Retrieve only the target quiz via repository/cache.
+        loadQuizData();
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh quiz data when returning (e.g., from flashcards) to reflect progress updates
+        loadQuizData();
+    }
+    
+    /**
+     * Loads quiz data using cache with TTL refresh logic
+     */
+    private void loadQuizData() {
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        
         if (uid != null) {
-            new UserRepository(this).getQuiz(uid, planId, quizId, quiz -> {
-                initializeWithQuiz(quiz);
+            // Use refreshPlanIfNeeded to leverage TTL cache for quiz data
+            new UserRepository(this).refreshPlanIfNeeded(uid, planId, plan -> {
+                Quiz q = null;
+                if (plan != null && plan.quizzes != null) {
+                    for (Quiz qq : plan.quizzes) { 
+                        if (qq != null && quizId.equals(qq.id)) { 
+                            q = qq; 
+                            break; 
+                        } 
+                    }
+                }
+                initializeWithQuiz(q);
             }, e -> {
+                ErrorHandler.logError(e, "QuizActivity.refreshPlanIfNeeded");
+                ErrorDialogHelper.showErrorToast(QuizActivity.this, 
+                    com.app.estudiaapp.utils.GeneralErrorType.FIRESTORE_READ_FAILED);
+                
                 // fallback local: load plan then find quiz
                 StudyPlan plan = StorageHelper.cargarPlan(this, planId);
                 Quiz q = null;

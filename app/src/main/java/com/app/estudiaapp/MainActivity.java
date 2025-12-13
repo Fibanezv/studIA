@@ -18,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.app.estudiaapp.adapters.PlansAdapter;
 import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -97,7 +99,8 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
                                 if (userType != null) userType.setText("Free");
                             }
                         }, e -> {
-                            // on failure fallback
+                            // on failure fallback - log but don't show dialog, just use default values
+                            ErrorHandler.logError(e, "MainActivity.drawerUserInfo");
                             if (userName != null) userName.setText(current.getDisplayName() != null ? current.getDisplayName() : current.getEmail());
                             if (userType != null) userType.setText("Free");
                         });
@@ -192,12 +195,21 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
         plansListener = db.collection("users").document(uid).collection("plans")
             .addSnapshotListener((querySnapshot, error) -> {
                 if (error != null) {
-                    android.util.Log.w("MainActivity", "Listen failed: " + error.getMessage());
+                    ErrorHandler.logError(error, "MainActivity.setupPlansListener");
+                    
+                    // Show user a dialog with retry option
+                    ErrorDialogHelper.showErrorDialog(
+                        MainActivity.this,
+                        error,
+                        () -> setupPlansListener(uid)  // Retry callback
+                    );
+                    
                     // Fallback to one-time fetch
                     new UserRepository(this).getPlans(uid, plans -> {
                         planList = (plans != null) ? new ArrayList<>(plans) : new ArrayList<>();
                         updateAdapter();
                     }, e -> {
+                        ErrorHandler.logError(e, "MainActivity.fallbackPlansLoad");
                         ArrayList<StudyPlan> lstPlanesPruebas = StorageHelper.listarPlanes(this);
                         if (lstPlanesPruebas != null) planList = lstPlanesPruebas;
                         updateAdapter();
@@ -221,7 +233,7 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
                                 }
                             }
                         } catch (Exception ex) {
-                            android.util.Log.w("MainActivity", "Error parsing plan: " + doc.getId(), ex);
+                            ErrorHandler.logError(ex, "MainActivity.planParsing");
                         }
                     }
                     

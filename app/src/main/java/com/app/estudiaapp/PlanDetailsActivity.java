@@ -12,9 +12,14 @@ import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
 import com.app.estudiaapp.models.Quiz;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class PlanDetailsActivity extends BaseActivity {
     private String planIdField;
+    private ListenerRegistration planListener;
+    
     public static void start(Context context, String planId) {
         Intent intent = new Intent(context, PlanDetailsActivity.class);
         intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
@@ -34,26 +39,54 @@ public class PlanDetailsActivity extends BaseActivity {
 
         // initial UI population
         refreshUI();
+        
+        // Register snapshot listener for real-time updates
+        String uid = null;
+        try {
+            android.content.SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+            uid = prefs.getString("uid", null);
+        } catch (Exception ignored) {}
+        
+        if (uid != null) {
+            String finalUid = uid;
+            planListener = new UserRepository(this).registerPlanListener(uid, planId, plan -> {
+                // Real-time update received - refresh UI
+                if (plan != null) {
+                    populateUIWithPlan(plan);
+                }
+            });
+        }
+        
         // setup bottom navigation so user can move between sections
         setupNavigation();
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister snapshot listener to prevent memory leaks
+        if (planListener != null) {
+            planListener.remove();
+            planListener = null;
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh UI when returning to this activity so progress reflects recent changes
+        // Refresh UI when returning - checks cache TTL and refetches if needed
         refreshUI();
     }
 
     /**
      * Load the plan from storage and refresh all UI sections.
+     * Uses refreshPlanIfNeeded() to respect cache TTL and avoid unnecessary network calls.
      * This method is safe to call multiple times (e.g. onResume) and will update
      * visibility of sections and adapters accordingly.
      */
     private void refreshUI() {
         if (this.planIdField == null) return;
-        // Try to load plan from Firestore then fallback to local storage
-        StudyPlan[] holder = new StudyPlan[1];
+        
         String uid = null;
         try {
             android.content.SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
@@ -61,7 +94,8 @@ public class PlanDetailsActivity extends BaseActivity {
         } catch (Exception ignored) {}
 
         if (uid != null) {
-            new UserRepository(this).getPlan(uid, this.planIdField, p -> {
+            // Use refreshPlanIfNeeded to leverage TTL cache - only fetches if expired
+            new UserRepository(this).refreshPlanIfNeeded(uid, this.planIdField, p -> {
                 if (p == null) {
                     // fallback to local
                     StudyPlan planLocal = StorageHelper.cargarPlan(this, this.planIdField);
@@ -71,6 +105,11 @@ public class PlanDetailsActivity extends BaseActivity {
                     populateUIWithPlan(p);
                 }
             }, e -> {
+                ErrorHandler.logError(e, "PlanDetailsActivity.refreshPlanIfNeeded");
+                // Show feedback about using offline data and try to fallback
+                ErrorDialogHelper.showErrorToast(PlanDetailsActivity.this, 
+                    com.app.estudiaapp.utils.GeneralErrorType.FIRESTORE_READ_FAILED);
+                
                 StudyPlan planLocal = StorageHelper.cargarPlan(this, this.planIdField);
                 if (planLocal == null) { finish(); return; }
                 populateUIWithPlan(planLocal);

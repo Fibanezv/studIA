@@ -16,6 +16,8 @@ import android.widget.Toast;
 
 import com.app.estudiaapp.helper.StorageHelper;
 import com.app.estudiaapp.models.StudyPlan;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 import com.google.gson.Gson;
 
 import java.io.FileOutputStream;
@@ -167,7 +169,8 @@ public class UserActivity extends BaseActivity {
                     // fallback to prefs if doc not present
                     fallbackLoadFromPrefs();
                 }, e -> {
-                    // on failure fallback
+                    // on failure fallback - log but don't show dialog since this is UI setup
+                    ErrorHandler.logError(e, "UserActivity.loadUserInfo");
                     fallbackLoadFromPrefs();
                 });
             } catch (Exception ex) {
@@ -231,7 +234,8 @@ public class UserActivity extends BaseActivity {
                         if (tvHotTopicsCount != null) tvHotTopicsCount.setText(String.valueOf(fHot));
                     });
                 }, e -> {
-                    // fallback to local storage on error
+                    // fallback to local storage on error - log but don't show dialog since this is background
+                    ErrorHandler.logError(e, "UserActivity.computeStats");
                     computeStatsFromLocal();
                 });
                 return;
@@ -288,11 +292,18 @@ public class UserActivity extends BaseActivity {
                     prefUpdate.put("preferences.notificationsEnabled", isChecked);
                     com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("users").document(uid)
                             .update(prefUpdate)
+                            .addOnSuccessListener(a -> {
+                                ErrorDialogHelper.showErrorToast(UserActivity.this, 
+                                    com.app.estudiaapp.utils.GeneralErrorType.UNKNOWN);
+                            })
                             .addOnFailureListener(e -> {
-                                // ignore failures for now
+                                ErrorHandler.logError(e, "UserActivity.notificationsSwitch");
+                                ErrorDialogHelper.showErrorToast(UserActivity.this, e);
                             });
                 }
-            } catch (Exception ignore) {}
+            } catch (Exception ex) {
+                ErrorHandler.logError(ex, "UserActivity.notificationsSwitch");
+            }
         });
 
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -327,10 +338,12 @@ public class UserActivity extends BaseActivity {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("users").document(uid)
                             .update(prefUpdate)
                             .addOnFailureListener(e -> {
-                                // ignore failures for now
+                                ErrorHandler.logError(e, "UserActivity.darkModeSwitch");
                             });
                 }
-            } catch (Exception ignore) {}
+            } catch (Exception ex) {
+                ErrorHandler.logError(ex, "UserActivity.darkModeSwitch");
+            }
 
             // Re-enable the switch after a short delay; if the activity is recreated due to mode change, this code may not run, which is fine.
             new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
@@ -403,11 +416,15 @@ public class UserActivity extends BaseActivity {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("users").document(uid)
                             .update("photoUrl", selectedIcon[0], "displayName", newName)
                             .addOnSuccessListener(a -> {
-                                // update UI
-                            }).addOnFailureListener(e -> {
-                                // ignore
+                                Toast.makeText(UserActivity.this, "Perfil actualizado", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                ErrorHandler.logError(e, "UserActivity.editProfile");
+                                ErrorDialogHelper.showErrorToast(UserActivity.this, e);
                             });
-                } catch (Exception ignore) {}
+                } catch (Exception ex) {
+                    ErrorHandler.logError(ex, "UserActivity.editProfile");
+                }
             }
 
             // update UI in this activity
@@ -457,8 +474,8 @@ public class UserActivity extends BaseActivity {
             String path = getFilesDir().getAbsolutePath() + "/" + fname;
             Toast.makeText(this, "Datos exportados: " + path, Toast.LENGTH_LONG).show();
         } catch (Exception ex) {
-            ex.printStackTrace();
-            Toast.makeText(this, "Error exportando datos", Toast.LENGTH_SHORT).show();
+            ErrorHandler.logError(ex, "UserActivity.exportData");
+            ErrorDialogHelper.showErrorToast(this, ex);
         }
     }
     

@@ -16,6 +16,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.app.estudiaapp.utils.ErrorDialogHelper;
+import com.app.estudiaapp.utils.ErrorHandler;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -47,8 +49,14 @@ public class SignUpActivity extends AppCompatActivity {
         String password = passwordInput.getText().toString();
         String displayName = userNameInput.getText().toString().trim();
 
-        if (!email.contains("@") || password.length() < 6) {
-            Toast.makeText(this, "Datos inválidos: email o contraseña", Toast.LENGTH_SHORT).show();
+        // Validación básica
+        if (!email.contains("@")) {
+            ErrorDialogHelper.showErrorDialog(this, com.app.estudiaapp.utils.GeneralErrorType.INVALID_EMAIL, null);
+            return;
+        }
+        
+        if (password.length() < 6) {
+            ErrorDialogHelper.showErrorDialog(this, com.app.estudiaapp.utils.GeneralErrorType.WEAK_PASSWORD, null);
             return;
         }
 
@@ -61,13 +69,21 @@ public class SignUpActivity extends AppCompatActivity {
                             // Migrate any local plans to Firestore in background
                             try {
                                 new UserRepository(SignUpActivity.this).migrateLocalPlansIfNeeded(user.getUid());
-                            } catch (Exception ignore) {}
+                            } catch (Exception ignored) {
+                                Log.w(TAG, "Local migration failed", ignored);
+                            }
                         }
                         // Proceed to main
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {
-                        Toast.makeText(this, "Register error: " + task.getException(), Toast.LENGTH_LONG).show();
+                        Exception exception = task.getException();
+                        ErrorHandler.logError(exception, "SignUpActivity.registerUser");
+                        ErrorDialogHelper.showErrorDialog(
+                            SignUpActivity.this, 
+                            exception, 
+                            () -> registerUser()  // Retry callback
+                        );
                     }
                 });
     }

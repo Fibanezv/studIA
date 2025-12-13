@@ -25,20 +25,58 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.ListenerRegistration;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * UserRepository centraliza operaciones relacionadas con el documento users/{uid}
  * y la migración de planes locales (JSON) a Firestore.
+ * 
+ * Incluye sistema de caché con TTL (Time To Live) y snapshot listeners opcionales
+ * para mantener datos actualizados en tiempo real.
  */
 public class UserRepository {
 
     private static final String TAG = "UserRepository";
     private final FirebaseFirestore db;
-    // Minimal in-memory cache for last loaded plan to avoid refetching across activities
-    private static final java.util.Map<String, com.app.estudiaapp.models.StudyPlan> PLAN_CACHE = new java.util.HashMap<>();
+    
+    // Cache with TTL for plans - thread-safe ConcurrentHashMap
+    private static final java.util.Map<String, CachedPlan> PLAN_CACHE = new ConcurrentHashMap<>();
+    
+    // Default TTL: 5 minutes (configurable via Remote Config in future)
+    private static final long DEFAULT_CACHE_TTL_MILLIS = 5 * 60 * 1000;
+    
     private final Context ctx;
+
+    /**
+     * Wrapper class for cached plans with expiration logic
+     */
+    private static class CachedPlan {
+        final StudyPlan plan;
+        final long cachedAtMillis;
+        final long ttlMillis;
+
+        CachedPlan(StudyPlan plan, long cachedAtMillis) {
+            this(plan, cachedAtMillis, DEFAULT_CACHE_TTL_MILLIS);
+        }
+
+        CachedPlan(StudyPlan plan, long cachedAtMillis, long ttlMillis) {
+            this.plan = plan;
+            this.cachedAtMillis = cachedAtMillis;
+            this.ttlMillis = ttlMillis;
+        }
+
+        boolean isExpired() {
+            long age = System.currentTimeMillis() - cachedAtMillis;
+            return age > ttlMillis;
+        }
+
+        long getAgeSeconds() {
+            return (System.currentTimeMillis() - cachedAtMillis) / 1000;
+        }
+    }
 
     public UserRepository(@NonNull Context context) {
         this.db = FirebaseFirestore.getInstance();
@@ -222,15 +260,27 @@ public class UserRepository {
     }
 
     /**
-     * Obtener un plan concreto
+     * Obtener un plan concreto con soporte de cache TTL
      */
     public void getPlan(@NonNull String uid, @NonNull String planId, OnSuccessListener<StudyPlan> onSuccess, OnFailureListener onFailure) {
-        // Serve from cache first if available
-        com.app.estudiaapp.models.StudyPlan cached = PLAN_CACHE.get(uid + "::" + planId);
+        String cacheKey = uid + "::" + planId;
+        
+        // Check cache - serve if not expired
+        CachedPlan cached = PLAN_CACHE.get(cacheKey);
         if (cached != null) {
-            onSuccess.onSuccess(cached);
-            return;
+            if (!cached.isExpired()) {
+                Log.d(TAG, "Cache HIT for " + planId + " (age: " + cached.getAgeSeconds() + "s)");
+                onSuccess.onSuccess(cached.plan);
+                return;
+            } else {
+                Log.d(TAG, "Cache EXPIRED for " + planId + " (age: " + cached.getAgeSeconds() + "s)");
+                PLAN_CACHE.remove(cacheKey); // Clean up expired entry
+            }
+        } else {
+            Log.d(TAG, "Cache MISS for " + planId);
         }
+        
+        // Fetch from Firestore
         db.collection("users").document(uid).collection("plans").document(planId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
@@ -238,11 +288,14 @@ public class UserRepository {
                             Gson gson = new Gson();
                             String json = gson.toJson(doc.getData());
                             StudyPlan p = gson.fromJson(json, StudyPlan.class);
-                            // cache
-                            PLAN_CACHE.put(uid + "::" + planId, p);
+                            
+                            // Cache with current timestamp
+                            PLAN_CACHE.put(cacheKey, new CachedPlan(p, System.currentTimeMillis()));
+                            Log.d(TAG, "Cached plan " + planId + " with TTL=" + (DEFAULT_CACHE_TTL_MILLIS / 1000) + "s");
+                            
                             onSuccess.onSuccess(p);
                         } catch (Exception ex) {
-                            Log.w(TAG, "Error parsing plan", ex);
+                            Log.w(TAG, "Error parsing plan " + planId, ex);
                             onFailure.onFailure(ex);
                         }
                     } else {
@@ -253,17 +306,26 @@ public class UserRepository {
 
     /**
      * Get a specific quiz by id from cache or Firestore. If plan not in cache, fetch it then resolve quiz.
+     * Uses cache TTL logic from getPlan()
      */
     public void getQuiz(@NonNull String uid, @NonNull String planId, @NonNull String quizId,
                         OnSuccessListener<com.app.estudiaapp.models.Quiz> onSuccess,
                         OnFailureListener onFailure) {
-        com.app.estudiaapp.models.StudyPlan cached = PLAN_CACHE.get(uid + "::" + planId);
-        if (cached != null && cached.quizzes != null) {
-            for (com.app.estudiaapp.models.Quiz q : cached.quizzes) {
-                if (q != null && quizId.equals(q.id)) { onSuccess.onSuccess(q); return; }
+        String cacheKey = uid + "::" + planId;
+        CachedPlan cached = PLAN_CACHE.get(cacheKey);
+        
+        // Check cache if not expired
+        if (cached != null && !cached.isExpired() && cached.plan.quizzes != null) {
+            for (com.app.estudiaapp.models.Quiz q : cached.plan.quizzes) {
+                if (q != null && quizId.equals(q.id)) {
+                    Log.d(TAG, "Quiz " + quizId + " served from cache (age: " + cached.getAgeSeconds() + "s)");
+                    onSuccess.onSuccess(q);
+                    return;
+                }
             }
         }
-        // Fallback: fetch plan then find quiz
+        
+        // Fallback: fetch plan then find quiz (getPlan handles caching)
         getPlan(uid, planId, plan -> {
             if (plan != null && plan.quizzes != null) {
                 for (com.app.estudiaapp.models.Quiz q : plan.quizzes) {
@@ -356,5 +418,97 @@ public class UserRepository {
                 onFailure.onFailure(new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND));
             }
         }).addOnFailureListener(onFailure);
+    }
+    
+    // ==================== Cache Management Methods ====================
+    
+    /**
+     * Clears the entire plan cache. Useful for logout or manual refresh scenarios.
+     */
+    public void clearCache() {
+        int size = PLAN_CACHE.size();
+        PLAN_CACHE.clear();
+        Log.d(TAG, "Cache cleared manually (" + size + " entries removed)");
+    }
+    
+    /**
+     * Removes a specific plan from cache. Useful when plan is deleted or needs forced refresh.
+     */
+    public void invalidatePlanCache(@NonNull String uid, @NonNull String planId) {
+        String cacheKey = uid + "::" + planId;
+        CachedPlan removed = PLAN_CACHE.remove(cacheKey);
+        if (removed != null) {
+            Log.d(TAG, "Invalidated cache for plan " + planId + " (was " + removed.getAgeSeconds() + "s old)");
+        }
+    }
+    
+    /**
+     * Registers a real-time snapshot listener for a specific plan.
+     * Updates cache automatically when Firestore data changes.
+     * 
+     * @return ListenerRegistration that MUST be removed in Activity's onDestroy()
+     */
+    public ListenerRegistration registerPlanListener(@NonNull String uid, @NonNull String planId, 
+                                                      @NonNull OnSuccessListener<StudyPlan> onUpdate) {
+        String cacheKey = uid + "::" + planId;
+        
+        return db.collection("users").document(uid).collection("plans").document(planId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Log.w(TAG, "Snapshot listener error for plan " + planId, error);
+                        return;
+                    }
+                    
+                    if (snapshot != null && snapshot.exists()) {
+                        try {
+                            Gson gson = new Gson();
+                            String json = gson.toJson(snapshot.getData());
+                            StudyPlan plan = gson.fromJson(json, StudyPlan.class);
+                            
+                            // Update cache with fresh data
+                            PLAN_CACHE.put(cacheKey, new CachedPlan(plan, System.currentTimeMillis()));
+                            Log.d(TAG, "Snapshot listener updated cache for plan " + planId);
+                            
+                            onUpdate.onSuccess(plan);
+                        } catch (Exception ex) {
+                            Log.w(TAG, "Error parsing plan from snapshot " + planId, ex);
+                        }
+                    }
+                });
+    }
+    
+    /**
+     * Refreshes a plan from Firestore if cache is expired.
+     * Falls back to stale cache on network errors (offline resilience).
+     * 
+     * Call this in Activity's onResume() to ensure data freshness.
+     */
+    public void refreshPlanIfNeeded(@NonNull String uid, @NonNull String planId,
+                                     @NonNull OnSuccessListener<StudyPlan> onSuccess,
+                                     @NonNull OnFailureListener onFailure) {
+        String cacheKey = uid + "::" + planId;
+        CachedPlan cached = PLAN_CACHE.get(cacheKey);
+        
+        // If cache is fresh, serve immediately
+        if (cached != null && !cached.isExpired()) {
+            Log.d(TAG, "Refresh skipped for " + planId + " (cache fresh, age: " + cached.getAgeSeconds() + "s)");
+            onSuccess.onSuccess(cached.plan);
+            return;
+        }
+        
+        // Cache expired or missing - fetch from Firestore
+        Log.d(TAG, "Refreshing plan " + planId + " (cache expired or missing)");
+        
+        getPlan(uid, planId, onSuccess, exception -> {
+            // On network failure, fallback to stale cache if available
+            if (cached != null) {
+                Log.w(TAG, "Network error refreshing " + planId + ", falling back to stale cache (age: " + 
+                      cached.getAgeSeconds() + "s)", exception);
+                onSuccess.onSuccess(cached.plan);
+            } else {
+                // No cache fallback available
+                onFailure.onFailure(exception);
+            }
+        });
     }
 }
