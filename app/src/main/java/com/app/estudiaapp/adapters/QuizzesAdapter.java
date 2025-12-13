@@ -25,22 +25,17 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
     private OnQuizClickListener listener;
     private StudyPlan plan;
     private String userId;
-    private OnPlanUpdatedListener planUpdateListener;
+    // Adapter no gestiona refresh del plan; solo navega y permite reiniciar
 
     public interface OnQuizClickListener {
         void onQuizClick(Quiz quiz);
     }
 
-    public interface OnPlanUpdatedListener {
-        void onPlanUpdated();
-    }
-
-    public QuizzesAdapter(ArrayList<Quiz> quizzes, StudyPlan plan, String userId, OnQuizClickListener listener, OnPlanUpdatedListener planUpdateListener) {
+    public QuizzesAdapter(ArrayList<Quiz> quizzes, StudyPlan plan, String userId, OnQuizClickListener listener) {
         this.quizzes = quizzes;
         this.listener = listener;
         this.plan = plan;
         this.userId = userId;
-        this.planUpdateListener = planUpdateListener;
     }
 
     @NonNull
@@ -140,7 +135,6 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
                     q.progreso.currentIndex = 0;
                     q.progreso.nota = -1;
                     notifyItemChanged(position);
-                    if (planUpdateListener != null) planUpdateListener.onPlanUpdated();
                     Toast.makeText(ctx, "Quiz reiniciado", Toast.LENGTH_SHORT).show();
                 }, error -> {
                     Toast.makeText(ctx, "Error al reiniciar: " + error, Toast.LENGTH_SHORT).show();

@@ -36,6 +36,8 @@ public class UserRepository {
 
     private static final String TAG = "UserRepository";
     private final FirebaseFirestore db;
+    // Minimal in-memory cache for last loaded plan to avoid refetching across activities
+    private static final java.util.Map<String, com.app.estudiaapp.models.StudyPlan> PLAN_CACHE = new java.util.HashMap<>();
     private final Context ctx;
 
     public UserRepository(@NonNull Context context) {
@@ -223,6 +225,12 @@ public class UserRepository {
      * Obtener un plan concreto
      */
     public void getPlan(@NonNull String uid, @NonNull String planId, OnSuccessListener<StudyPlan> onSuccess, OnFailureListener onFailure) {
+        // Serve from cache first if available
+        com.app.estudiaapp.models.StudyPlan cached = PLAN_CACHE.get(uid + "::" + planId);
+        if (cached != null) {
+            onSuccess.onSuccess(cached);
+            return;
+        }
         db.collection("users").document(uid).collection("plans").document(planId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc != null && doc.exists()) {
@@ -230,6 +238,8 @@ public class UserRepository {
                             Gson gson = new Gson();
                             String json = gson.toJson(doc.getData());
                             StudyPlan p = gson.fromJson(json, StudyPlan.class);
+                            // cache
+                            PLAN_CACHE.put(uid + "::" + planId, p);
                             onSuccess.onSuccess(p);
                         } catch (Exception ex) {
                             Log.w(TAG, "Error parsing plan", ex);
@@ -239,6 +249,29 @@ public class UserRepository {
                         onSuccess.onSuccess(null);
                     }
                 }).addOnFailureListener(onFailure);
+    }
+
+    /**
+     * Get a specific quiz by id from cache or Firestore. If plan not in cache, fetch it then resolve quiz.
+     */
+    public void getQuiz(@NonNull String uid, @NonNull String planId, @NonNull String quizId,
+                        OnSuccessListener<com.app.estudiaapp.models.Quiz> onSuccess,
+                        OnFailureListener onFailure) {
+        com.app.estudiaapp.models.StudyPlan cached = PLAN_CACHE.get(uid + "::" + planId);
+        if (cached != null && cached.quizzes != null) {
+            for (com.app.estudiaapp.models.Quiz q : cached.quizzes) {
+                if (q != null && quizId.equals(q.id)) { onSuccess.onSuccess(q); return; }
+            }
+        }
+        // Fallback: fetch plan then find quiz
+        getPlan(uid, planId, plan -> {
+            if (plan != null && plan.quizzes != null) {
+                for (com.app.estudiaapp.models.Quiz q : plan.quizzes) {
+                    if (q != null && quizId.equals(q.id)) { onSuccess.onSuccess(q); return; }
+                }
+            }
+            onSuccess.onSuccess(null);
+        }, onFailure);
     }
 
     /**

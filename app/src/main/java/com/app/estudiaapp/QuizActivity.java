@@ -65,48 +65,33 @@ public class QuizActivity extends BaseActivity {
             return;
         }
 
-        // Load plan from Firestore (preferred) or fallback to local StorageHelper.
-        // If no plan or quizzes exist, still open the Activity and present an empty state.
+        // New: do not refetch plan. Retrieve only the target quiz via repository/cache.
         String uid = null;
         try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
         if (uid != null) {
-            new UserRepository(this).getPlan(uid, planId, plan -> {
-                if (plan == null) {
-                    // create an empty plan object so the activity can still open
-                    plan = new StudyPlan(planId, "");
-                }
-                if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
-                initializeWithPlan(plan);
+            new UserRepository(this).getQuiz(uid, planId, quizId, quiz -> {
+                initializeWithQuiz(quiz);
             }, e -> {
+                // fallback local: load plan then find quiz
                 StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-                if (plan == null) plan = new StudyPlan(planId, "");
-                if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
-                initializeWithPlan(plan);
+                Quiz q = null;
+                if (plan != null && plan.quizzes != null) {
+                    for (Quiz qq : plan.quizzes) { if (qq != null && quizId.equals(qq.id)) { q = qq; break; } }
+                }
+                initializeWithQuiz(q);
             });
-            return;
         } else {
             StudyPlan plan = StorageHelper.cargarPlan(this, planId);
-            if (plan == null) plan = new StudyPlan(planId, "");
-            if (plan.quizzes == null) plan.quizzes = new java.util.ArrayList<>();
-            initializeWithPlan(plan);
+            Quiz q = null;
+            if (plan != null && plan.quizzes != null) {
+                for (Quiz qq : plan.quizzes) { if (qq != null && quizId.equals(qq.id)) { q = qq; break; } }
+            }
+            initializeWithQuiz(q);
         }
-
-        // UI will be initialized inside initializeWithPlan(StudyPlan)
     }
 
-    private void initializeWithPlan(StudyPlan plan) {
-        // Seleccionar quiz por id (o fallback al primero)
-        currentQuiz = null;
-        if (plan.quizzes != null) {
-            for (Quiz q : plan.quizzes) {
-                if (q != null && q.id != null && q.id.equals(quizId)) {
-                    currentQuiz = q;
-                    break;
-                }
-            }
-        }
-        if (currentQuiz == null && plan.quizzes != null && !plan.quizzes.isEmpty()) currentQuiz = plan.quizzes.get(0);
-
+    private void initializeWithQuiz(Quiz quiz) {
+        currentQuiz = quiz;
         questionList = currentQuiz != null ? currentQuiz.questions : null;
         // reanudar desde progreso (si existe)
         if (currentQuiz != null && currentQuiz.progreso != null) {

@@ -66,7 +66,7 @@ public class QuizListActivity extends BaseActivity {
                     adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, plan, userId, quiz -> {
                         // Abrir QuizActivity con planId + quiz.id
                         QuizActivity.start(QuizListActivity.this, planId, quiz.id);
-                    }, this::refreshData);
+                    });
                     
                     recyclerView.setAdapter(adapter);
                 }
@@ -79,7 +79,7 @@ public class QuizListActivity extends BaseActivity {
                     
                     adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
                         QuizActivity.start(QuizListActivity.this, planId, quiz.id);
-                    }, this::refreshData);
+                    });
                     
                     recyclerView.setAdapter(adapter);
                 }
@@ -92,7 +92,7 @@ public class QuizListActivity extends BaseActivity {
                 
                 adapter = new com.app.estudiaapp.adapters.QuizzesAdapter(quizzesList, p, null, quiz -> {
                     QuizActivity.start(QuizListActivity.this, planId, quiz.id);
-                }, this::refreshData);
+                });
                 
                 recyclerView.setAdapter(adapter);
             }
