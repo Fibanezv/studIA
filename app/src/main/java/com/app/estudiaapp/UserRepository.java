@@ -411,7 +411,7 @@ public class UserRepository {
                 transaction.set(planRef, planMap, SetOptions.merge());
 
                 // Invalidate cache for this plan
-                PLAN_CACHE.remove(uid + "#" + planId);
+                PLAN_CACHE.remove(uid + "::" + planId);
                 Log.d(TAG, "updateQuizProgressWithTransaction: cache invalidated for " + uid + "/" + planId);
 
                 return null;
@@ -471,7 +471,7 @@ public class UserRepository {
                 transaction.set(planRef, planMap, SetOptions.merge());
 
                 // Invalidate cache for this plan
-                PLAN_CACHE.remove(uid + "#" + planId);
+                PLAN_CACHE.remove(uid + "::" + planId);
                 Log.d(TAG, "markFlashcardCompletedWithTransaction: cache invalidated for " + uid + "/" + planId);
 
                 return null;
