@@ -55,6 +55,7 @@ public class QuizActivity extends BaseActivity {
 
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         quizId = getIntent().getStringExtra(Constants.EXTRA_QUIZ_ID);
+        
         if (planId == null) {
             try {
                 android.content.SharedPreferences prefs = getSharedPreferences("app", MODE_PRIVATE);
@@ -73,8 +74,10 @@ public class QuizActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh quiz data when returning (e.g., from flashcards) to reflect progress updates
-        loadQuizData();
+        // Only refresh progress if quiz is already initialized (coming back from flashcards, etc)
+        if (currentQuiz != null) {
+            refreshProgressUI();
+        }
     }
     
     /**
@@ -123,6 +126,7 @@ public class QuizActivity extends BaseActivity {
     private void initializeWithQuiz(Quiz quiz) {
         currentQuiz = quiz;
         questionList = currentQuiz != null ? currentQuiz.questions : null;
+        
         // reanudar desde progreso (si existe)
         if (currentQuiz != null && currentQuiz.progreso != null) {
             int idx = currentQuiz.progreso.currentIndex;
@@ -163,6 +167,9 @@ public class QuizActivity extends BaseActivity {
     }
 
     private void showQuestion() {
+        try {
+            if (questionList == null) return;
+        
         if (questionList == null) return;
         if (current >= questionList.size()) {
             // Quiz completado: mostrar pantalla de resultados (final summary)
@@ -282,6 +289,11 @@ public class QuizActivity extends BaseActivity {
                 showQuestion();
             }
         });
+        } catch (Exception e) {
+            android.util.Log.e("QuizActivity", "ERROR in showQuestion: " + e.getMessage(), e);
+            e.printStackTrace();
+            finish();
+        }
     }
 
     private void showResultsDialog() {
