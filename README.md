@@ -8,7 +8,7 @@
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-**Última actualización:** 8 de diciembre de 2025  
+**Última actualización:** 13 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)
 
@@ -46,6 +46,7 @@
 - **Sistema de reintentos automático**: Hasta 2 intentos si no se genera el contenido completo
 - **Validación estricta**: Garantiza consistencia entre tipologías y formatos
 - **Personalización avanzada**: control sobre cantidad de quizzes, preguntas, flashcards y temas
+- **Orquestación directa en cliente**: `UploadActivity` sube el PDF a Storage y llama la Cloud Function sin WorkManager; asigna planId canónico `U0#####` via transacción en Firestore
 
 ### Gestión de Aprendizaje
 - **Sistema de progreso y estadísticas** con seguimiento detallado de:
@@ -103,7 +104,7 @@
   - `generateStudyPlan`: Endpoint principal (respuesta inmediata con planId)
   - `processStudyPlanGeneration`: Trigger de Firestore para generación en background
   - Runtime: Node.js 20, Memory: 8GB, Timeout: 540s
-- **WorkManager 2.8.1** - Procesamiento en background (cliente Android)
+- **Llamada directa desde UploadActivity** - Cloud Functions orchestration sin WorkManager
 
 #### Inteligencia Artificial
 - **OpenAI GPT-4o** - Generación de títulos (40 tokens, temp 0.3, max 60 chars)
@@ -155,18 +156,19 @@ Usuario → UploadActivity → Cloud Function (generateStudyPlan)
 1. Usuario selecciona un documento PDF en `UploadActivity`
 2. Configura límites (quizzes, preguntas, flashcards, hot topics)
 3. Configurar tipología de quiz (A/B/C/D, A/B/C, True/False, Palabras hueccas, Combinado)
-4. Llamada a Cloud Function `generateStudyPlan` con metadata
-5. Función responde inmediatamente con planId y crea documento "placeholder" en Firestore
-6. Trigger de Firestore activa `processStudyPlanGeneration` en background
-7. Procesamiento en 3 fases paralelas:
+ 4. `UploadActivity` asigna planId canónico (`U0#####`) mediante transacción en `users/{uid}.nextPlanNumber`
+ 5. Llamada a Cloud Function `generateStudyPlan` con metadata y planId propuesto
+ 6. Función responde inmediatamente con planId y crea documento "placeholder" en Firestore
+ 7. Trigger de Firestore activa `processStudyPlanGeneration` en background
+ 8. Procesamiento en 3 fases paralelas:
    - **Fase 1**: Generación de título (GPT-4o, ~2s)
    - **Fase 2**: Generación de descripción (GPT-4o, ~3s)
    - **Fase 3**: Generación de contenido en lotes (GPT-4o-mini, ~15-30s por lote)
      - Validación estricta por tipología
      - Sistema de reintentos (hasta 2 intentos si faltan items)
      - Subida de PDF a Storage en paralelo
-8. Actualización progresiva en Firestore (generationProgress: 0-100%)
-9. Usuario ve el plan completado en `MainActivity` con acceso a todo el contenido
+9. Actualización progresiva en Firestore (generationProgress: 0-100%)
+10. Usuario ve el plan completado en `MainActivity` con acceso a todo el contenido
 
 ---
 
@@ -211,12 +213,11 @@ EstudiaApp/
 │   │   │   │   │   ├── QuizzesAdapter.java       # Adaptador de quizzes
 │   │   │   │   │   ├── FlashcardsAdapter.java    # Adaptador de flashcards
 │   │   │   │   │   └── HotTopicsAdapter.java     # Adaptador de hot topics
-│   │   │   │   ├── workers/               # Background workers (deprecado)
-│   │   │   │   │   └── StudyPlanWorker.java      # Legacy - usar Cloud Functions
 │   │   │   │   ├── helper/                # Helpers y utilidades
 │   │   │   │   │   └── StorageHelper.java        # Persistencia local JSON
 │   │   │   │   ├── utils/                 # Utilidades generales
-│   │   │   │   │   └── OpenAiKeyStore.java       # Gestión segura de API key
+│   │   │   │   │   ├── OpenAiKeyStore.java       # Gestión segura de API key
+│   │   │   │   │   └── DocumentExtractor.java    # Stub: extracción removida, lanza excepción
 │   │   │   │   ├── ui/                    # Componentes UI personalizados
 │   │   │   │   │   └── OverlayManager.java       # Gestión de overlays de progreso
 │   │   │   │   ├── api/                   # Clientes API
@@ -530,6 +531,7 @@ match /users/{userId}/plans/{planId} {
 - [x] Cards plegables en PlanDetailsActivity (Descripción y Logros)
 - [x] Formulario de creación mejorado (spinners alineados, botón remover documento)
 - [x] Overlay de progreso para tareas largas
+- [x] Orquestación directa de generación sin WorkManager (UploadActivity → Cloud Function)
 
 ### 🔄 En Progreso
 
@@ -547,7 +549,6 @@ match /users/{userId}/plans/{planId} {
 3. **Detección de MIME type**: actualmente asume PDF, necesita ContentResolver
 4. **Tests**: cobertura insuficiente (unitarios e instrumentados)
 5. **Historial**: solo se muestra cuando `lastUpdatedMillis > 0`
-6. **WorkManager deprecado**: Migración pendiente a Cloud Functions completa (cliente ya usa Cloud Functions, pero WorkManager aún existe en el código)
 
 ---
 

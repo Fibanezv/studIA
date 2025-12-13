@@ -12,12 +12,16 @@ import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.google.firebase.storage.FirebaseStorage;
 import com.app.estudiaapp.ui.OverlayManager;
 import androidx.appcompat.app.AlertDialog;
 import android.widget.EditText;
 import com.app.estudiaapp.utils.OpenAiKeyStore;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.SetOptions;
 
 public class UploadActivity extends BaseActivity {
 
@@ -145,73 +149,100 @@ public class UploadActivity extends BaseActivity {
             limitsJson = limitsObj.toString();
         } catch (Exception ignored) {}
 
-        androidx.work.Data workInput = new androidx.work.Data.Builder()
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_URI, uri.toString())
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_LIMITS_JSON, limitsJson)
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_MEMBERSHIP, membership)
-            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_QUIZZES, includeQuizzes)
-            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_QUIZ_LIMIT, quizLimit)
-            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_QUESTIONS_LIMIT, questionsLimit)
-            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_FLASHCARDS, includeFlashcards)
-            .putInt(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_FLASHCARD_LIMIT, flashcardLimit)
-            .putBoolean(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_INCLUDE_HOT_TOPICS, includeHotTopics)
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_LANGUAGE, language)
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_QUIZ_TYPOLOGY, quizTypology)
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_LEVEL, level)
-            .putString(com.app.estudiaapp.workers.StudyPlanWorker.INPUT_PRIORITY_POINTS, priorityPoints)
-            .build();
+        java.util.Map<String, Object> limitsMap = new java.util.HashMap<>();
+        limitsMap.put("quizLimit", quizLimit);
+        limitsMap.put("questionsLimit", questionsLimit);
+        limitsMap.put("flashcardLimit", flashcardLimit);
+        limitsMap.put("hotTopicsLimit", hotTopicsLimit);
 
-        androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.app.estudiaapp.workers.StudyPlanWorker.class)
-            .setInputData(workInput)
-                .build();
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("membership", membership);
+        payload.put("limits", limitsMap);
+        payload.put("includeQuizzes", includeQuizzes);
+        payload.put("quizLimit", quizLimit);
+        payload.put("questionsLimit", questionsLimit);
+        payload.put("includeFlashcards", includeFlashcards);
+        payload.put("flashcardLimit", flashcardLimit);
+        payload.put("includeHotTopics", includeHotTopics);
+        if (language != null && !language.trim().isEmpty()) payload.put("language", language.trim());
+        if (quizTypology != null && !quizTypology.trim().isEmpty()) payload.put("quizTypology", quizTypology.trim());
+        if (priorityPoints != null && !priorityPoints.trim().isEmpty()) payload.put("priorityPoints", priorityPoints.trim());
+        if (level != null && !level.trim().isEmpty()) payload.put("difficulty", level.trim());
 
-        androidx.work.WorkManager.getInstance(this).enqueue(work);
+        String uid = null;
+        try { uid = FirebaseAuth.getInstance().getCurrentUser().getUid(); } catch (Exception ignored) {}
+        if (uid == null || uid.trim().isEmpty()) {
+            showTemporaryStatus("Debes iniciar sesión para generar un plan", 2500);
+            return;
+        }
 
-        androidx.work.WorkManager.getInstance(this).getWorkInfoByIdLiveData(work.getId()).observe(this, workInfo -> {
-            if (workInfo == null) return;
-            androidx.work.Data progress = workInfo.getProgress();
-            String status = progress.getString("status");
-            if (status != null) showProcessing("Procesando: " + status);
-            if (workInfo.getState().isFinished()) {
-                if (workInfo.getState() == androidx.work.WorkInfo.State.SUCCEEDED) {
-                    // Show loading for 50 seconds to give backend time to generate progress
-                    showProcessing("Generando contenido del plan...\nEsto puede tardar hasta 1 minuto");
-                    
-                    new android.os.Handler().postDelayed(() -> {
-                        hideProcessing();
-                        showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
-                        try {
-                            Intent i = new Intent(UploadActivity.this, MainActivity.class);
-                            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(i);
-                            finish();
-                        } catch (Exception ignored) {}
-                    }, 30000); // 50 seconds delay
-                } else {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        String uploadId = java.util.UUID.randomUUID().toString();
+        com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/uploads/" + uploadId + "/source.pdf");
+        com.google.firebase.storage.UploadTask uploadTask = ref.putFile(uri);
+
+        try { overlayManager.show("Subiendo documento...", () -> { try { uploadTask.cancel(); } catch (Exception ignored) {} }); } catch (Exception ignored) {}
+
+        com.google.android.gms.tasks.Task<String> urlTask = uploadTask
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    return ref.getDownloadUrl();
+                })
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    android.net.Uri download = task.getResult();
+                    return download != null ? download.toString() : null;
+                });
+
+        com.google.android.gms.tasks.Task<String> planIdTask = allocateCanonicalPlanId(uid);
+
+        com.google.android.gms.tasks.Tasks.whenAllSuccess(urlTask, planIdTask)
+                .addOnSuccessListener(results -> {
+                    String pdfUrl = (String) results.get(0);
+                    String clientPlanId = results.size() > 1 ? (String) results.get(1) : null;
+                    if (pdfUrl == null || pdfUrl.trim().isEmpty()) throw new IllegalStateException("No se obtuvo URL del archivo");
+                    payload.put("pdfUrl", pdfUrl);
+                    if (clientPlanId != null && !clientPlanId.isEmpty()) payload.put("clientPlanId", clientPlanId);
+
+                    try { overlayManager.show("Generando plan en la nube...", null); } catch (Exception ignored) {}
+
+                    FirebaseFunctions.getInstance()
+                            .getHttpsCallable("generateStudyPlan")
+                            .call(payload)
+                            .addOnSuccessListener(result -> {
+                                hideProcessing();
+                                showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
+                                try {
+                                    Intent i = new Intent(UploadActivity.this, MainActivity.class);
+                                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(i);
+                                    finish();
+                                } catch (Exception ignored) {}
+                            })
+                            .addOnFailureListener(e -> {
+                                hideProcessing();
+                                new AlertDialog.Builder(UploadActivity.this)
+                                        .setTitle("Error al generar plan")
+                                        .setMessage(e != null && e.getMessage() != null ? e.getMessage() : "No se pudo generar StudyPlan")
+                                        .setPositiveButton("Reintentar", (dialog, which) -> {
+                                            if (selectedFileUri != null) createPlanInApp(selectedFileUri);
+                                        })
+                                        .setNegativeButton("Cerrar", (d, w) -> { /* no-op */ })
+                                        .show();
+                            });
+
+                })
+                .addOnFailureListener(e -> {
                     hideProcessing();
-                    androidx.work.Data out = workInfo.getOutputData();
-                    String err = out != null ? out.getString("error") : null;
-                    if (err == null || err.trim().isEmpty()) err = "No se pudo generar StudyPlan. Revise logs.";
-                    final String errFinal = err;
-
-                    // Generic error dialog with retry option. API key must be provided via
-                    // Firebase Remote Config and persisted by the Application startup flow.
                     new AlertDialog.Builder(UploadActivity.this)
                             .setTitle("Error al generar plan")
-                            .setMessage(errFinal)
+                            .setMessage(e != null && e.getMessage() != null ? e.getMessage() : "No se pudo subir o procesar el archivo")
                             .setPositiveButton("Reintentar", (dialog, which) -> {
                                 if (selectedFileUri != null) createPlanInApp(selectedFileUri);
                             })
                             .setNegativeButton("Cerrar", (d, w) -> { /* no-op */ })
                             .show();
-                }
-            }
-        });
-
-        // Show overlay and pass cancel action (so the manager binds cancel listener once)
-        try {
-            overlayManager.show("Procesando documento...", () -> androidx.work.WorkManager.getInstance(UploadActivity.this).cancelWorkById(work.getId()));
-        } catch (Exception ignored) {}
+                });
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -254,6 +285,30 @@ public class UploadActivity extends BaseActivity {
         } catch (Exception e) {
             android.util.Log.w(TAG, "openFileChooser failed", e);
         }
+    }
+
+    private com.google.android.gms.tasks.Task<String> allocateCanonicalPlanId(String uid) {
+        if (uid == null || uid.trim().isEmpty()) return com.google.android.gms.tasks.Tasks.forResult(null);
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        com.google.firebase.firestore.DocumentReference userRef = db.collection("users").document(uid);
+        return db.runTransaction((com.google.firebase.firestore.Transaction.Function<String>) transaction -> {
+            com.google.firebase.firestore.DocumentSnapshot snap = transaction.get(userRef);
+            long current = 0L;
+            if (snap != null && snap.exists() && snap.contains("nextPlanNumber")) {
+                try {
+                    Object v = snap.get("nextPlanNumber");
+                    if (v instanceof Number) current = ((Number) v).longValue();
+                    else current = Long.parseLong(String.valueOf(v));
+                } catch (Exception ignored) {
+                    current = 0L;
+                }
+            }
+            long next = current + 1L;
+            java.util.Map<String, Object> updates = new java.util.HashMap<>();
+            updates.put("nextPlanNumber", next);
+            transaction.set(userRef, updates, com.google.firebase.firestore.SetOptions.merge());
+            return String.format("U0%05d", next);
+        });
     }
 
     private void showProcessing(String message) {
