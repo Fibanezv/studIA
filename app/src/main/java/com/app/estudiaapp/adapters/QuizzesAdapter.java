@@ -81,13 +81,21 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
 
         // Si está completo (100%), hacerlo no clickable pero mantener la apariencia
         boolean isComplete = (percent >= 100 && total > 0);
-        // Do not change alpha or enabled state so visual appearance remains the same
-        holder.itemView.setClickable(!isComplete);
+        
+        // Always set clickable and focusable to ensure clicks work
+        holder.itemView.setClickable(true);
+        holder.itemView.setFocusable(true);
         holder.itemView.setLongClickable(false);
 
         if (!isComplete) {
-            holder.itemView.setOnClickListener(v -> listener.onQuizClick(q));
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onQuizClick(q);
+                }
+            });
         } else {
+            // Quiz completed - disable click
+            holder.itemView.setClickable(false);
             holder.itemView.setOnClickListener(null);
         }
 
