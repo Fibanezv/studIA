@@ -6,31 +6,31 @@
     android:layout_height="match_parent"
     android:background="?android:windowBackground">
 
-    <ScrollView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
         <LinearLayout
+            android:id="@+id/content_container"
+            android:orientation="vertical"
+            android:padding="16dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
             <include layout="@layout/include_app_header" />
 
-            <!-- Information placeholder -->
-            <TextView
+            <!-- RecyclerView for FAQs -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_faqs"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Información"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textAlignment="center"
-                android:textColor="@color/black" />
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp" />
 
         </LinearLayout>
 
-    </ScrollView>
+    </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"

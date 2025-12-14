@@ -1,0 +1,64 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "pregunta": "¿Qué es studIA?",
+      "respuesta": "studIA es una aplicación educativa diseñada para ayudarte a aprender de forma efectiva mediante planes de estudio personalizados, cuestionarios interactivos y flashcards para memorizar conceptos clave."
+    },
+    {
+      "id": 2,
+      "pregunta": "¿Cómo crear un plan de estudio?",
+      "respuesta": "En la sección 'Planes', puedes crear un nuevo plan dándole un nombre descriptivo. Una vez creado, podrás agregar temas y subtemas para organizar tu contenido de estudio de manera jerárquica."
+    },
+    {
+      "id": 3,
+      "pregunta": "¿Qué son las flashcards?",
+      "respuesta": "Las flashcards son tarjetas de estudio que contienen una pregunta en el anverso y una respuesta en el reverso. Son ideales para memorizar conceptos, definiciones, fórmulas y otros contenidos en formato de pregunta-respuesta."
+    },
+    {
+      "id": 4,
+      "pregunta": "¿Cómo usar el modo Presentación en flashcards?",
+      "respuesta": "El modo Presentación te permite recorrer las flashcards de manera secuencial, una a una. Perfecto para revisar todo el contenido de forma ordenada. Usa los botones de navegación para avanzar y retroceder."
+    },
+    {
+      "id": 5,
+      "pregunta": "¿Qué es el modo Aleatorio?",
+      "respuesta": "El modo Aleatorio selecciona una flashcard al azar cada vez que presionas el botón de recarga. Es excelente para practicar y reforzar tu memoria sin seguir un orden específico."
+    },
+    {
+      "id": 6,
+      "pregunta": "¿Cómo marcar flashcards como favoritas?",
+      "respuesta": "Abre cualquier flashcard en la vista detallada y presiona el botón de estrella. Esto marcará la tarjeta como favorita. Usa el modo Favoritas para estudiar solo tus tarjetas seleccionadas."
+    },
+    {
+      "id": 7,
+      "pregunta": "¿Cómo funcionan los cuestionarios?",
+      "respuesta": "Los cuestionarios contienen preguntas de opción múltiple. Selecciona tu respuesta y la aplicación te indicará si es correcta. Al final, podrás ver un resumen de tu desempeño y revisar todas tus respuestas."
+    },
+    {
+      "id": 8,
+      "pregunta": "¿Se sincronizan mis datos en la nube?",
+      "respuesta": "Sí, si cuentas con una cuenta registrada, tus planes, cuestionarios resueltos, flashcards completadas y favoritas se sincronizan automáticamente con la nube para que puedas acceder desde cualquier dispositivo."
+    },
+    {
+      "id": 9,
+      "pregunta": "¿Puedo compartir mis planes con otros usuarios?",
+      "respuesta": "Actualmente, los planes son personales a tu cuenta. Sin embargo, puedes exportar o describir tu plan a otros usuarios para que lo recreren en sus cuentas."
+    },
+    {
+      "id": 10,
+      "pregunta": "¿Cómo controlo mi progreso de estudio?",
+      "respuesta": "En la sección 'Progreso', podrás ver un resumen de tus actividades: cuestionarios completados, flashcards estudiadas, y tu desempeño general. Esto te ayuda a monitorear tu avance y áreas que necesitan más trabajo."
+    },
+    {
+      "id": 11,
+      "pregunta": "¿Qué pasa si cierro la app sin terminar un cuestionario?",
+      "respuesta": "Tu progreso se guarda automáticamente. La próxima vez que abras la app, podrás continuar desde donde lo dejaste. No perderás tu avance."
+    },
+    {
+      "id": 12,
+      "pregunta": "¿Cómo cambio mi contraseña?",
+      "respuesta": "Ve a tu perfil de usuario en la sección 'Mi Cuenta' y busca la opción 'Cambiar Contraseña'. Ingresa tu contraseña actual y luego la nueva contraseña dos veces para confirmar."
+    }
+  ]
+}

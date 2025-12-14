@@ -11,7 +11,7 @@
 **Última actualización:** 14 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)  
-**Últimas funcionalidades:** Resultados detallados de quizzes con layout fijo y validación de respuesta, y overlay de procesamiento mejorado
+**Últimas funcionalidades:** InfoActivity con FAQs expandibles, flashcards con modos Presentación/Aleatorio/Favoritas, persistencia local y Firestore
 
 ---
 
@@ -119,8 +119,30 @@
   - `markFlashcardFavoriteWithTransaction(uid, planId, index, favorita)` guarda la marca de favorita de forma atómica e invalida la caché.
   - La actividad de detalle intenta persistir en Firestore cuando hay sesión (`uid`) y siempre hace fallback al guardado local.
 
+### InfoActivity: Preguntas Frecuentes (FAQs)
+- **Listado expandible de FAQs** cargadas desde JSON en assets (`faqs.json`).
+- **Estructura de cada FAQ**:
+  - Pregunta visible por defecto (texto en `colorPrimary`, bold, 16sp)
+  - Icono de expansión (↓) que rota 180° al expandir
+  - Card estilizada con fondo `beige_300_theme`
+- **Comportamiento interactivo**:
+  - Click en pregunta expande/contrae la respuesta
+  - Respuesta se muestra/oculta con animación suave
+  - Respuesta en `colorPrimary`, 14sp, con padding superior para separación
+- **Archivo JSON** con 12 FAQs predefinidas cubriendo:
+  - ¿Qué es studIA?
+  - Cómo crear planes, usar flashcards, cuestionarios
+  - Modos de estudio (Presentación, Aleatorio, Favoritas)
+  - Sincronización en la nube
+  - Gestión de cuenta y datos
+- **Integración**:
+  - `InfoActivity` extiende `BaseActivity` para header y drawer navigation
+  - `FAQAdapter` gestiona expand/collapse con lógica local de estado
+  - `LinearLayoutManager` para list vertical de FAQs
+
 ## Estado actual de la app
 - Build `assembleDebug` exitoso.
+- **InfoActivity completado**: FAQs expandibles, header funcional, drawer lateral integrado.
 - UI de flashcards integrada: controles superiores, grid 2 columnas, detalle con FABs, indicadores en items.
 - Navegación completa en modos Presentación, Aleatorio y Favoritas con retorno a lista al finalizar.
 - Persistencia local y sincronización a Firestore para completadas y favoritas.
@@ -128,6 +150,7 @@
   - CardView fijo (320x320dp) sin elevación
   - Sistema de estados con cola FIFO y duración mínima de 10s por estado
   - Tres imágenes dinámicas: ic_load_plan_1 (procesando) → ic_load_plan_2 (subiendo) → ic_load_plan_3 (generando)
+
   - Mensajes de estado centrados debajo de cada imagen
   - Sin progress bar circular, diseño más limpio
 - **Formulario de creación mejorado**: 
