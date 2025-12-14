@@ -53,7 +53,7 @@ public class FlashcardActivity extends BaseActivity {
 
         // Setup RecyclerView listing all flashcards for this plan (empty list allowed)
         androidx.recyclerview.widget.RecyclerView rv = findViewById(R.id.rv_flashcards_list);
-        rv.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rv.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 2));
         adapter = new com.app.estudiaapp.adapters.FlashcardsAdapter(plan.flashcards, planId);
         rv.setAdapter(adapter);
 
@@ -71,6 +71,67 @@ public class FlashcardActivity extends BaseActivity {
                 // fallback: no-op (we already have local plan) - show offline message
                 ErrorDialogHelper.showErrorToast(FlashcardActivity.this, 
                     com.app.estudiaapp.utils.GeneralErrorType.FIRESTORE_READ_FAILED);
+            });
+        }
+
+        // Setup navigation buttons
+        com.google.android.material.button.MaterialButton btnPresentation = findViewById(R.id.btn_flashcards_presentation);
+        if (btnPresentation != null) {
+            btnPresentation.setOnClickListener(v -> {
+                if (plan != null && plan.flashcards != null && !plan.flashcards.isEmpty()) {
+                    // Abrir la primera flashcard
+                    Intent intent = new Intent(this, FlashcardDetailActivity.class);
+                    intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                    intent.putExtra(Constants.EXTRA_FLASHCARD_INDEX, 0);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "No hay flashcards disponibles", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        com.google.android.material.button.MaterialButton btnShuffle = findViewById(R.id.btn_flashcards_shuffle);
+        if (btnShuffle != null) {
+            btnShuffle.setOnClickListener(v -> {
+                if (plan != null && plan.flashcards != null && !plan.flashcards.isEmpty()) {
+                    // Abrir una flashcard aleatoria
+                    int randomIndex = new java.util.Random().nextInt(plan.flashcards.size());
+                    Intent intent = new Intent(this, FlashcardDetailActivity.class);
+                    intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                    intent.putExtra(Constants.EXTRA_FLASHCARD_INDEX, randomIndex);
+                    intent.putExtra("random_mode", true);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "No hay flashcards disponibles", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        com.google.android.material.button.MaterialButton btnFavorites = findViewById(R.id.btn_flashcards_favorites);
+        if (btnFavorites != null) {
+            btnFavorites.setOnClickListener(v -> {
+                if (plan != null && plan.flashcards != null && !plan.flashcards.isEmpty()) {
+                    // Buscar la primera flashcard favorita
+                    int firstFavoriteIndex = -1;
+                    for (int i = 0; i < plan.flashcards.size(); i++) {
+                        if (plan.flashcards.get(i).favorita) {
+                            firstFavoriteIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (firstFavoriteIndex >= 0) {
+                        Intent intent = new Intent(this, FlashcardDetailActivity.class);
+                        intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+                        intent.putExtra(Constants.EXTRA_FLASHCARD_INDEX, firstFavoriteIndex);
+                        intent.putExtra("favorites_mode", true);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "No tienes flashcards favoritas aún", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, "No hay flashcards disponibles", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 

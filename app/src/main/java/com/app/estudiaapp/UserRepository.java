@@ -528,6 +528,59 @@ public class UserRepository {
     }
 
     /**
+     * TRANSACTIONAL VERSION: Marca o desmarca una flashcard como favorita de forma atómica.
+     * Actualiza el documento y invalida caché.
+     */
+    public void markFlashcardFavoriteWithTransaction(@NonNull String uid, @NonNull String planId, int index, boolean favorita,
+                                                      OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        db.runTransaction(transaction -> {
+            DocumentReference planRef = db.collection("users").document(uid).collection("plans").document(planId);
+            DocumentSnapshot planDoc = transaction.get(planRef);
+
+            if (!planDoc.exists()) {
+                throw new FirebaseFirestoreException("Plan document not found", FirebaseFirestoreException.Code.NOT_FOUND);
+            }
+
+            try {
+                Gson gson = new Gson();
+                StudyPlan plan = gson.fromJson(gson.toJson(planDoc.getData()), StudyPlan.class);
+
+                if (plan == null || plan.flashcards == null || index < 0 || index >= plan.flashcards.size()) {
+                    throw new FirebaseFirestoreException("Flashcard index out of bounds or plan missing",
+                            FirebaseFirestoreException.Code.INVALID_ARGUMENT);
+                }
+
+                // Toggle favorite flag
+                if (plan.flashcards.get(index) == null) {
+                    plan.flashcards.set(index, new com.app.estudiaapp.models.Flashcard("", ""));
+                }
+                plan.flashcards.get(index).favorita = favorita;
+
+                // Convert and update in transaction
+                Map<String, Object> planMap = gson.fromJson(gson.toJson(plan), new TypeToken<Map<String, Object>>(){}.getType());
+                transaction.set(planRef, planMap, SetOptions.merge());
+
+                // Invalidate cache for this plan
+                PLAN_CACHE.remove(uid + "::" + planId);
+                Log.d(TAG, "markFlashcardFavoriteWithTransaction: cache invalidated for " + uid + "/" + planId);
+
+                return null;
+            } catch (Exception ex) {
+                Log.e(TAG, "markFlashcardFavoriteWithTransaction: error parsing plan", ex);
+                throw new RuntimeException(ex);
+            }
+        }).addOnSuccessListener(result -> onSuccess.onSuccess(null)).addOnFailureListener(onFailure);
+    }
+
+    /**
+     * Marca o desmarca favorita delegando a versión transaccional.
+     */
+    public void markFlashcardFavorite(@NonNull String uid, @NonNull String planId, int index, boolean favorita,
+                                       OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        markFlashcardFavoriteWithTransaction(uid, planId, index, favorita, onSuccess, onFailure);
+    }
+
+    /**
      * TRANSACTIONAL VERSION: Reinicia el progreso de un quiz de forma atómica.
      * 
      * Resetea todos los campos de progreso (preguntasRespondidas, preguntasCorrectas, 

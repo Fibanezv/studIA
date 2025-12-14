@@ -58,11 +58,19 @@ public class FlashcardsAdapter extends RecyclerView.Adapter<FlashcardsAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Flashcard f = items.get(position);
         holder.title.setText(f.pregunta != null ? f.pregunta : "");
-        // show 'Completada' label if completed (do not change background)
+        
+        // Show 'Completada' icon if completed
         if (f.completada) {
             holder.status.setVisibility(View.VISIBLE);
         } else {
             holder.status.setVisibility(View.GONE);
+        }
+
+        // Show 'Favorita' icon if favorite
+        if (f.favorita) {
+            holder.favorite.setVisibility(View.VISIBLE);
+        } else {
+            holder.favorite.setVisibility(View.GONE);
         }
 
         Context ctx = holder.itemView.getContext();
@@ -90,15 +98,17 @@ public class FlashcardsAdapter extends RecyclerView.Adapter<FlashcardsAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-    TextView title;
-    CardView card;
-    ImageView status;
+        TextView title;
+        CardView card;
+        ImageView status;
+        ImageView favorite;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.item_flashcard_text);
             card = itemView.findViewById(R.id.card_root);
             status = itemView.findViewById(R.id.item_flashcard_status);
+            favorite = itemView.findViewById(R.id.item_flashcard_favorite);
         }
     }
 }

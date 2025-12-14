@@ -62,15 +62,96 @@
                         android:backgroundTint="@color/colorPrimary"
                         android:visibility="gone">
 
-                        <TextView
-                            android:id="@+id/detail_back_text"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/beige_300_theme"
-                            android:padding="16dp" />
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/detail_back_text"
+                                android:layout_width="match_parent"
+                                android:layout_height="0dp"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/beige_300_theme" />
+
+                            <!-- Botones de navegación estilo Tinder -->
+                            <LinearLayout
+                                android:id="@+id/flashcard_nav_buttons"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center"
+                                android:layout_marginTop="16dp"
+                                android:layout_marginBottom="8dp">
+
+                                <!-- Botón Anterior -->
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/btn_flashcard_previous"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="8dp"
+                                    app:fabSize="normal"
+                                    app:backgroundTint="@color/white"
+                                    app:tint="@color/colorPrimary"
+                                    android:src="@android:drawable/ic_media_previous"
+                                    android:contentDescription="Anterior" />
+
+                                <!-- Botón X (cerrar/no me gusta) -->
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/btn_flashcard_discard"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="8dp"
+                                    app:fabSize="normal"
+                                    app:backgroundTint="@color/colorAccent"
+                                    app:tint="@color/white"
+                                    android:src="@android:drawable/ic_delete"
+                                    android:contentDescription="Descartar" />
+
+                                <!-- Botón Like (favorito) -->
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/btn_flashcard_favorite"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="8dp"
+                                    app:fabSize="normal"
+                                    app:backgroundTint="@color/colorSecondary"
+                                    app:tint="@color/colorOnSecondary"
+                                    android:src="@android:drawable/btn_star_big_on"
+                                    android:contentDescription="Favorito" />
+
+                                <!-- Botón Reload (aleatorio) - solo visible en modo aleatorio -->
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/btn_flashcard_reload"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="8dp"
+                                    app:fabSize="normal"
+                                    app:backgroundTint="@color/colorPrimaryVariant"
+                                    app:tint="@color/white"
+                                    android:src="@android:drawable/ic_popup_sync"
+                                    android:contentDescription="Otra aleatoria"
+                                    android:visibility="gone" />
+
+                                <!-- Botón Siguiente -->
+                                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                    android:id="@+id/btn_flashcard_next"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_margin="8dp"
+                                    app:fabSize="normal"
+                                    app:backgroundTint="@color/white"
+                                    app:tint="@color/colorPrimary"
+                                    android:src="@android:drawable/ic_media_next"
+                                    android:contentDescription="Siguiente" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
 
                     </androidx.cardview.widget.CardView>
 

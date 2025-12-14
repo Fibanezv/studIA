@@ -19,6 +19,80 @@
 
             <include layout="@layout/include_app_header" />
 
+            <!-- Controles de vista -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:weightSum="3">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_flashcards_presentation"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:text="Presentación"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textColor="@color/white"
+                    app:backgroundTint="@color/colorPrimary"
+                    app:cornerRadius="12dp" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_flashcards_shuffle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:text="Aleatorio"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textColor="@color/white"
+                    app:backgroundTint="@color/colorAccent"
+                    app:cornerRadius="12dp" />
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_flashcards_favorites"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:text="Favoritas"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textColor="@color/colorOnSecondary"
+                    app:backgroundTint="@color/colorSecondary"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+
             <!-- Show a list of flashcards (question-only items). Clicking opens the detail flip view. -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_flashcards_list"
@@ -57,4 +131,5 @@
         app:itemTextColor="@color/black"
         app:itemTextAppearance="@style/DrawerMenuTextAppearance" />
 
-</androidx.drawerlayout.widget.DrawerLayout>
+        <!-- End of layout -->
+    </androidx.drawerlayout.widget.DrawerLayout>

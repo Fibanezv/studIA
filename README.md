@@ -42,6 +42,7 @@
   - **Palabras hueccas**: Completar espacios en blanco con 4 opciones de palabras
   - **Combinado**: Mezcla aleatoria de todas las tipologías
 - **Flashcards inteligentes** para repaso rápido y eficiente con respuestas detalladas
+ - Vista de flashcards en cuadrícula (2 por fila) con controles superiores: Presentación, Aleatorio, Favoritas
 - **Hot Topics**: identificación de temas clave del material de estudio (50-75 caracteres)
 - **Títulos y descripciones generados con GPT-4o**: Contenido orgánico sin URLs ni metadatos
 - **Sistema de reintentos automático**: Hasta 2 intentos si no se genera el contenido completo
@@ -88,6 +89,41 @@
   - CardView con lista completa scrollable dentro del card (sin corte a 4 ítems)
   - Ítems de preguntas con fondo beige fijo (modo claro/oscuro), mostrando pregunta, respuesta del usuario y correcta (si falló) con ✔️/❌
   - Compatible con quizzes antiguos (solo muestra resumen sin detalles)
+
+## Flashcards: funcionalidades actuales
+
+- **Presentación**: abre la primera flashcard del plan y permite avanzar con controles circulares en la parte trasera (anterior/siguiente).
+- **Aleatorio**: abre una flashcard aleatoria; en este modo se ocultan anterior/siguiente y se muestra un botón de recarga (↻) para otra aleatoria sin repetir la actual.
+- **Favoritas**:
+  - Marca/desmarca una flashcard como favorita desde la parte trasera (botón ⭐ para añadir; botón ❌ para quitar).
+  - Navegación por lista de favoritas con anterior/siguiente; al quitar una favorita en este modo se salta a la siguiente favorita.
+  - Al terminar la última flashcard en cualquier modo (presentación, aleatorio, favoritas) el botón siguiente vuelve a la lista principal.
+
+### UI de flashcards
+- Lista en **grid 2 columnas** con cards compactas estilo baraja.
+- En cada item:
+  - Título centrado.
+  - Icono de estado `checked` en esquina inferior derecha cuando está completada.
+  - Icono de favorita en esquina inferior izquierda cuando está marcada como favorita.
+- En la vista detalle (parte trasera): **4 FABs circulares** centrados debajo de la respuesta:
+  - Anterior (◄) — oculto en la primera.
+  - ❌ (quitar de favoritas) — visible solo si es favorita.
+  - ⭐ (añadir a favoritas) — visible solo si no es favorita.
+  - Siguiente (►) — oculta en modo aleatorio.
+  - En modo aleatorio se añade **↻ recargar** para pedir otra flashcard aleatoria.
+
+### Persistencia y sincronización
+- **Local**: cambios (completada y favorita) se guardan inmediatamente con `StorageHelper.guardarPlan()`; al reabrir el plan se cargan con `StorageHelper.cargarPlan()`.
+- **Firestore**:
+  - `markFlashcardCompletedWithTransaction(uid, planId, index)` actualiza el estado de completada y contadores de progreso.
+  - `markFlashcardFavoriteWithTransaction(uid, planId, index, favorita)` guarda la marca de favorita de forma atómica e invalida la caché.
+  - La actividad de detalle intenta persistir en Firestore cuando hay sesión (`uid`) y siempre hace fallback al guardado local.
+
+## Estado actual de la app
+- Build `assembleDebug` exitoso.
+- UI de flashcards integrada: controles superiores, grid 2 columnas, detalle con FABs, indicadores en items.
+- Navegación completa en modos Presentación, Aleatorio y Favoritas con retorno a lista al finalizar.
+- Persistencia local y sincronización a Firestore para completadas y favoritas.
 - **Overlay de procesamiento mejorado**:
   - CardView fijo (320x320dp) sin elevación
   - Sistema de estados con cola FIFO y duración mínima de 10s por estado

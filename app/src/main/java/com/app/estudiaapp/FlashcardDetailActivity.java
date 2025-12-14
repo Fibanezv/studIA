@@ -24,6 +24,8 @@ public class FlashcardDetailActivity extends BaseActivity {
     private int index = 0;
     private StudyPlan plan;
     private Flashcard flashcard;
+    private boolean randomMode = false;
+    private boolean favoritesMode = false;
 
     private View cardContainer;
     private androidx.cardview.widget.CardView frontCard;
@@ -39,6 +41,8 @@ public class FlashcardDetailActivity extends BaseActivity {
 
         planId = getIntent().getStringExtra(Constants.EXTRA_PLAN_ID);
         index = getIntent().getIntExtra(Constants.EXTRA_FLASHCARD_INDEX, 0);
+        randomMode = getIntent().getBooleanExtra("random_mode", false);
+        favoritesMode = getIntent().getBooleanExtra("favorites_mode", false);
 
         if (planId == null) {
             finish();
@@ -102,6 +106,8 @@ public class FlashcardDetailActivity extends BaseActivity {
         if (frontCard != null) frontCard.setOnClickListener(v -> flipCard());
         if (backCard != null) backCard.setOnClickListener(v -> flipCard());
 
+        // Setup navigation buttons
+        setupNavigationButtons();
         setupNavigation();
     }
 
@@ -153,6 +159,219 @@ public class FlashcardDetailActivity extends BaseActivity {
                 StorageHelper.guardarPlan(this, plan);
             }
         }
+    }
+
+    private void setupNavigationButtons() {
+        updateNavigationButtonsVisibility();
+        setupNavigationButtonsListeners();
+    }
+
+    private void setupNavigationButtonsListeners() {
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnPrevious = findViewById(R.id.btn_flashcard_previous);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnNext = findViewById(R.id.btn_flashcard_next);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnDiscard = findViewById(R.id.btn_flashcard_discard);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnFavorite = findViewById(R.id.btn_flashcard_favorite);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnReload = findViewById(R.id.btn_flashcard_reload);
+
+        // Botón anterior
+        if (btnPrevious != null) {
+            btnPrevious.setOnClickListener(v -> navigateToPrevious());
+        }
+
+        // Botón siguiente
+        if (btnNext != null) {
+            btnNext.setOnClickListener(v -> navigateToNext());
+        }
+
+        // Botón X (quitar de favoritos)
+        if (btnDiscard != null) {
+            btnDiscard.setOnClickListener(v -> toggleFavorite(false));
+        }
+
+        // Botón favorito (añadir a favoritos)
+        if (btnFavorite != null) {
+            btnFavorite.setOnClickListener(v -> toggleFavorite(true));
+        }
+
+        // Botón reload (modo aleatorio)
+        if (btnReload != null) {
+            btnReload.setOnClickListener(v -> loadRandomFlashcard());
+        }
+    }
+
+    private void updateNavigationButtonsVisibility() {
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnPrevious = findViewById(R.id.btn_flashcard_previous);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnNext = findViewById(R.id.btn_flashcard_next);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnReload = findViewById(R.id.btn_flashcard_reload);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnDiscard = findViewById(R.id.btn_flashcard_discard);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnFavorite = findViewById(R.id.btn_flashcard_favorite);
+
+        if (randomMode) {
+            // En modo aleatorio: ocultar anterior/siguiente, mostrar reload
+            if (btnPrevious != null) btnPrevious.setVisibility(View.GONE);
+            if (btnNext != null) btnNext.setVisibility(View.GONE);
+            if (btnReload != null) btnReload.setVisibility(View.VISIBLE);
+        } else {
+            // Modo normal: mostrar anterior/siguiente según posición, ocultar reload
+            if (btnPrevious != null) {
+                btnPrevious.setVisibility(index <= 0 ? View.GONE : View.VISIBLE);
+            }
+            if (btnNext != null) btnNext.setVisibility(View.VISIBLE);
+            if (btnReload != null) btnReload.setVisibility(View.GONE);
+        }
+
+        // Mostrar botón de favorito o quitar favorito según estado
+        boolean isFavorite = flashcard != null && flashcard.favorita;
+        if (btnDiscard != null) {
+            btnDiscard.setVisibility(isFavorite ? View.VISIBLE : View.GONE);
+        }
+        if (btnFavorite != null) {
+            btnFavorite.setVisibility(isFavorite ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void loadRandomFlashcard() {
+        if (plan == null || plan.flashcards == null || plan.flashcards.isEmpty()) {
+            Toast.makeText(this, "No hay flashcards disponibles", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (plan.flashcards.size() == 1) {
+            Toast.makeText(this, "Solo hay una flashcard", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Elegir un índice aleatorio diferente al actual
+        int newIndex;
+        java.util.Random random = new java.util.Random();
+        do {
+            newIndex = random.nextInt(plan.flashcards.size());
+        } while (newIndex == index);
+
+        index = newIndex;
+        flashcard = plan.flashcards.get(index);
+        updateFlashcardView();
+    }
+
+    private void toggleFavorite(boolean addToFavorites) {
+        if (flashcard == null || plan == null) return;
+
+        flashcard.favorita = addToFavorites;
+        
+        // Persistir cambio local
+        StorageHelper.guardarPlan(this, plan);
+
+        // Persistir en Firestore si el usuario está autenticado
+        String uid = null;
+        try { uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null); } catch (Exception ignored) {}
+        if (uid != null) {
+            new UserRepository(this).markFlashcardFavorite(uid, planId, index, addToFavorites, a -> {
+                // no-op
+            }, e -> {
+                // fallback: ya guardado local
+            });
+        }
+        
+        // Actualizar visibilidad de botones
+        updateNavigationButtonsVisibility();
+        
+        String message = addToFavorites ? "❤️ Añadida a favoritas" : "Quitada de favoritas";
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+
+        // Si estamos en modo favoritas y quitamos de favoritas, navegar a la siguiente o volver
+        if (favoritesMode && !addToFavorites) {
+            navigateToNextInFavoritesMode();
+        }
+    }
+
+    private void navigateToNextInFavoritesMode() {
+        if (plan == null || plan.flashcards == null) return;
+
+        // Buscar la siguiente favorita
+        for (int i = index + 1; i < plan.flashcards.size(); i++) {
+            if (plan.flashcards.get(i).favorita) {
+                index = i;
+                flashcard = plan.flashcards.get(index);
+                updateFlashcardView();
+                return;
+            }
+        }
+
+        // No hay más favoritas, volver a la lista
+        Toast.makeText(this, "No hay más favoritas", Toast.LENGTH_SHORT).show();
+        returnToFlashcardList();
+    }
+
+    private void returnToFlashcardList() {
+        Intent intent = new Intent(this, FlashcardActivity.class);
+        intent.putExtra(Constants.EXTRA_PLAN_ID, planId);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+        finish();
+    }
+
+    private void navigateToPrevious() {
+        if (plan == null || plan.flashcards == null) return;
+
+        if (favoritesMode) {
+            // En modo favoritas, buscar la anterior favorita
+            for (int i = index - 1; i >= 0; i--) {
+                if (plan.flashcards.get(i).favorita) {
+                    index = i;
+                    flashcard = plan.flashcards.get(index);
+                    updateFlashcardView();
+                    return;
+                }
+            }
+            Toast.makeText(this, "No hay favoritas anteriores", Toast.LENGTH_SHORT).show();
+        } else if (index > 0) {
+            index--;
+            flashcard = plan.flashcards.get(index);
+            updateFlashcardView();
+        }
+    }
+
+    private void navigateToNext() {
+        if (plan == null || plan.flashcards == null) return;
+
+        if (favoritesMode) {
+            // En modo favoritas, buscar la siguiente favorita
+            for (int i = index + 1; i < plan.flashcards.size(); i++) {
+                if (plan.flashcards.get(i).favorita) {
+                    index = i;
+                    flashcard = plan.flashcards.get(index);
+                    updateFlashcardView();
+                    return;
+                }
+            }
+            // No hay más favoritas, volver a la lista
+            Toast.makeText(this, "Has terminado de revisar las favoritas", Toast.LENGTH_SHORT).show();
+            returnToFlashcardList();
+        } else if (index < plan.flashcards.size() - 1) {
+            // Modo normal, avanzar a la siguiente
+            index++;
+            flashcard = plan.flashcards.get(index);
+            updateFlashcardView();
+        } else {
+            // Última flashcard, volver a la lista
+            Toast.makeText(this, "Has terminado de revisar todas las flashcards", Toast.LENGTH_SHORT).show();
+            returnToFlashcardList();
+        }
+    }
+
+    private void updateFlashcardView() {
+        // Reset to front side
+        if (backCard != null) backCard.setVisibility(View.GONE);
+        if (frontCard != null) frontCard.setVisibility(View.VISIBLE);
+        showingFront = true;
+        if (cardContainer != null) cardContainer.setRotationY(0f);
+
+        // Update text
+        if (frontText != null) frontText.setText(flashcard.pregunta != null ? flashcard.pregunta : "");
+        if (backText != null) backText.setText(flashcard.respuesta != null ? flashcard.respuesta : "");
+
+        // Update button visibility
+        updateNavigationButtonsVisibility();
     }
 
     private void setupNavigation() {
