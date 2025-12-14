@@ -35,12 +35,18 @@ public class OverlayManager {
             TextView tv = messageId != 0 ? (TextView) a.findViewById(messageId) : null;
             if (tv != null && message != null) tv.setText(message);
             // bind cancel only if provided (don't overwrite existing listener when null)
-            if (cancelButtonId != 0 && onCancel != null) {
+            if (cancelButtonId != 0) {
                 View cancel = a.findViewById(cancelButtonId);
                 if (cancel != null) {
-                    cancel.setOnClickListener(v -> {
-                        try { onCancel.run(); } catch (Exception ignored) {}
-                    });
+                    if (onCancel != null) {
+                        cancel.setVisibility(View.VISIBLE);
+                        cancel.setOnClickListener(v -> {
+                            try { onCancel.run(); } catch (Exception ignored) {}
+                        });
+                    } else {
+                        cancel.setVisibility(View.GONE);
+                        cancel.setOnClickListener(null);
+                    }
                 }
             }
             counter.incrementAndGet();

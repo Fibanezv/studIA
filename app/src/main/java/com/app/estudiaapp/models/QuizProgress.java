@@ -1,5 +1,8 @@
 package com.app.estudiaapp.models;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Progreso por cada Quiz. Se mantiene separado del UserProgress global para permitir
  * trazabilidad por quiz.
@@ -13,6 +16,8 @@ public class QuizProgress {
     public int currentIndex = 0;
     // Nota (porcentaje) obtenida al completar el quiz. -1 indica sin nota registrada.
     public int nota = -1;
+    // Mapa de respuestas del usuario: índice de pregunta -> respuesta seleccionada
+    public Map<String, String> userAnswers = new HashMap<>();
 
     public QuizProgress() {}
 

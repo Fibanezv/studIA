@@ -8,10 +8,10 @@
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-**Última actualización:** 13 de diciembre de 2025  
+**Última actualización:** 14 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)  
-**Última actualización de animaciones:** 13 de diciembre de 2025
+**Últimas funcionalidades:** Resultados detallados de quizzes y overlay de procesamiento mejorado
 
 ---
 
@@ -77,8 +77,21 @@
   - Imagen decorativa (ic_profile_1) entre respuestas y botón
   - Barra de progreso visual con animación
 - **Quiz items rediseñados**:
-  - Botón "Reiniciar" debajo de progreso/nota (120dp, alineado a la izquierda)
+  - Botones "Resultados" y "Reiniciar" (90dp, altura automática)
   - Visible solo cuando el quiz está completado al 100%
+  - Botón "Resultados" muestra lista detallada de preguntas/respuestas con ✔️/❌
+  - Sistema de almacenamiento de respuestas del usuario (userAnswers en QuizProgress)
+- **QuizResultsActivity mejorado**:
+  - RecyclerView scrollable (300dp) para lista de preguntas/respuestas
+  - Muestra pregunta, respuesta del usuario, respuesta correcta (si falló)
+  - Indicador visual de acierto/fallo (✔️/❌)
+  - Compatible con quizzes antiguos (solo muestra resumen sin detalles)
+- **Overlay de procesamiento mejorado**:
+  - CardView fijo (320x320dp) sin elevación
+  - Sistema de estados con cola FIFO y duración mínima de 10s por estado
+  - Tres imágenes dinámicas: ic_load_plan_1 (procesando) → ic_load_plan_2 (subiendo) → ic_load_plan_3 (generando)
+  - Mensajes de estado centrados debajo de cada imagen
+  - Sin progress bar circular, diseño más limpio
 - **Formulario de creación mejorado**: 
   - Spinners con texto alineado a la derecha
   - Labels "Total de" en lugar de "Límite de"

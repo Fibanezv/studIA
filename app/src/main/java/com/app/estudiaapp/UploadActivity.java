@@ -9,7 +9,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,6 +31,8 @@ import com.app.estudiaapp.utils.UploadErrorType;
 import com.app.estudiaapp.utils.UploadErrorHandler;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.SetOptions;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class UploadActivity extends BaseActivity {
 
@@ -38,6 +45,23 @@ public class UploadActivity extends BaseActivity {
     private LinearLayout selectedFileContainer;
     private static final String TAG = "UploadActivity";
     private OverlayManager overlayManager;
+    private ImageView processingStageImage;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private long processingStageStartedMs = 0L;
+    private final Queue<ProcessingStage> stageQueue = new LinkedList<>();
+    private boolean isProcessingQueue = false;
+    private static final long MIN_STAGE_DURATION_MS = 10_000L;
+
+    private static class ProcessingStage {
+        final int imageRes;
+        final String message;
+        final Runnable onCancel;
+        ProcessingStage(int imageRes, String message, Runnable onCancel) {
+            this.imageRes = imageRes;
+            this.message = message;
+            this.onCancel = onCancel;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +73,7 @@ public class UploadActivity extends BaseActivity {
         selectedFileNameText = findViewById(R.id.selected_file_name);
         selectedFileContainer = findViewById(R.id.selected_file_container);
         removeFileBtn = findViewById(R.id.button_remove_file);
+        processingStageImage = findViewById(R.id.processing_stage_image);
 
         // Initialize overlay manager with ids (use getIdentifier for cancel which may be absent in some layouts)
         int overlayId = getResources().getIdentifier("processing_overlay", "id", getPackageName());
@@ -193,77 +218,12 @@ public class UploadActivity extends BaseActivity {
             return;
         }
 
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        String uploadId = java.util.UUID.randomUUID().toString();
-        Log.i(TAG, "Phase: storage_init - uploadId: " + uploadId + ", uid: " + uid);
-        com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/uploads/" + uploadId + "/source.pdf");
-        com.google.firebase.storage.UploadTask uploadTask = ref.putFile(uri);
+        // Esperar mínimo 10s antes de pasar a fase de subida
+        final String finalUid = uid;
+        final java.util.Map<String, Object> finalPayload = payload;
+        mainHandler.postDelayed(() -> executeUploadPhase(uri, finalUid, finalPayload), MIN_STAGE_DURATION_MS);
 
-        try { overlayManager.show("Subiendo documento...", () -> { try { uploadTask.cancel(); } catch (Exception ignored) {} }); } catch (Exception ignored) {}
 
-        com.google.android.gms.tasks.Task<String> urlTask = uploadTask
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e(TAG, "Storage upload failed", task.getException());
-                        throw task.getException();
-                    }
-                    Log.i(TAG, "Storage upload successful, getting download URL");
-                    return ref.getDownloadUrl();
-                })
-                .continueWith(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e(TAG, "Failed to get download URL", task.getException());
-                        throw task.getException();
-                    }
-                    android.net.Uri download = task.getResult();
-                    String downloadUrl = download != null ? download.toString() : null;
-                    Log.i(TAG, "Download URL obtained: " + (downloadUrl != null ? downloadUrl.substring(0, Math.min(50, downloadUrl.length())) + "..." : "null"));
-                    return downloadUrl;
-                });
-
-        com.google.android.gms.tasks.Task<String> planIdTask = allocateCanonicalPlanId(uid);
-
-        com.google.android.gms.tasks.Tasks.whenAllSuccess(urlTask, planIdTask)
-                .addOnSuccessListener(results -> {
-                    String pdfUrl = (String) results.get(0);
-                    String clientPlanId = results.size() > 1 ? (String) results.get(1) : null;
-                    Log.i(TAG, "Phase: pre_function_call - pdfUrl obtained, clientPlanId: " + clientPlanId);
-                    if (pdfUrl == null || pdfUrl.trim().isEmpty()) {
-                        Log.e(TAG, "No PDF URL obtained from storage");
-                        throw new IllegalStateException("No se obtuvo URL del archivo");
-                    }
-                    payload.put("pdfUrl", pdfUrl);
-                    if (clientPlanId != null && !clientPlanId.isEmpty()) payload.put("clientPlanId", clientPlanId);
-
-                    try { overlayManager.show("Generando plan en la nube...", null); } catch (Exception ignored) {}
-
-                    Log.i(TAG, "Phase: function_call - calling generateStudyPlan with " + payload.size() + " parameters");
-                    FirebaseFunctions.getInstance()
-                            .getHttpsCallable("generateStudyPlan")
-                            .call(payload)
-                            .addOnSuccessListener(result -> {
-                                hideProcessing();
-                                showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
-                                Log.i(TAG, "=== Plan creation successful - returning to MainActivity ===");
-                                try {
-                                    Intent i = new Intent(UploadActivity.this, MainActivity.class);
-                                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(i);
-                                    finish();
-                                } catch (Exception ignored) {}
-                            })
-                            .addOnFailureListener(e -> {
-                                hideProcessing();
-                                Log.e(TAG, "Phase: function_call_failed - Cloud Function call failed", e);
-                                handleUploadError(e, "Error al llamar Cloud Function");
-                            });
-
-                })
-                .addOnFailureListener(e -> {
-                    hideProcessing();
-                    Log.e(TAG, "Phase: upload_or_id_allocation_failed", e);
-                    handleUploadError(e, "Error durante la subida y asignación de ID");
-                });
     }
 
     /**
@@ -390,6 +350,92 @@ public class UploadActivity extends BaseActivity {
         }
     }
 
+    private void executeUploadPhase(Uri uri, String uid, java.util.Map<String, Object> payload) {
+        showProcessingState(R.drawable.ic_load_plan_2, "Subiendo documento...", null);
+        
+        mainHandler.postDelayed(() -> {
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            String uploadId = java.util.UUID.randomUUID().toString();
+            Log.i(TAG, "Phase: storage_init - uploadId: " + uploadId + ", uid: " + uid);
+            com.google.firebase.storage.StorageReference ref = storage.getReference().child("users/" + uid + "/uploads/" + uploadId + "/source.pdf");
+            com.google.firebase.storage.UploadTask uploadTask = ref.putFile(uri);
+
+            com.google.android.gms.tasks.Task<String> urlTask = uploadTask
+                    .continueWithTask(task -> {
+                        if (!task.isSuccessful()) {
+                            Log.e(TAG, "Storage upload failed", task.getException());
+                            throw task.getException();
+                        }
+                        Log.i(TAG, "Storage upload successful, getting download URL");
+                        return ref.getDownloadUrl();
+                    })
+                    .continueWith(task -> {
+                        if (!task.isSuccessful()) {
+                            Log.e(TAG, "Failed to get download URL", task.getException());
+                            throw task.getException();
+                        }
+                        android.net.Uri download = task.getResult();
+                        String downloadUrl = download != null ? download.toString() : null;
+                        Log.i(TAG, "Download URL obtained: " + (downloadUrl != null ? downloadUrl.substring(0, Math.min(50, downloadUrl.length())) + "..." : "null"));
+                        return downloadUrl;
+                    });
+
+            com.google.android.gms.tasks.Task<String> planIdTask = allocateCanonicalPlanId(uid);
+
+            com.google.android.gms.tasks.Tasks.whenAllSuccess(urlTask, planIdTask)
+                    .addOnSuccessListener(results -> {
+                        String pdfUrl = (String) results.get(0);
+                        String clientPlanId = results.size() > 1 ? (String) results.get(1) : null;
+                        executeGenerationPhase(pdfUrl, clientPlanId, payload);
+                    })
+                    .addOnFailureListener(e -> {
+                        hideProcessing();
+                        Log.e(TAG, "Phase: upload_or_id_allocation_failed", e);
+                        handleUploadError(e, "Error durante la subida y asignación de ID");
+                    });
+        }, MIN_STAGE_DURATION_MS);
+    }
+
+    private void executeGenerationPhase(String pdfUrl, String clientPlanId, java.util.Map<String, Object> payload) {
+        showProcessingState(R.drawable.ic_load_plan_3, "Generando plan en la nube...", null);
+        
+        mainHandler.postDelayed(() -> {
+            Log.i(TAG, "Phase: pre_function_call - pdfUrl obtained, clientPlanId: " + clientPlanId);
+            if (pdfUrl == null || pdfUrl.trim().isEmpty()) {
+                Log.e(TAG, "No PDF URL obtained from storage");
+                hideProcessing();
+                handleUploadError(new IllegalStateException("No se obtuvo URL del archivo"), "Error al obtener URL");
+                return;
+            }
+            payload.put("pdfUrl", pdfUrl);
+            if (clientPlanId != null && !clientPlanId.isEmpty()) payload.put("clientPlanId", clientPlanId);
+
+            Log.i(TAG, "Phase: function_call - calling generateStudyPlan with " + payload.size() + " parameters");
+            FirebaseFunctions.getInstance()
+                    .getHttpsCallable("generateStudyPlan")
+                    .call(payload)
+                    .addOnSuccessListener(result -> {
+                        // Esperar mínimo 10s antes de navegar
+                        mainHandler.postDelayed(() -> {
+                            hideProcessing();
+                            showTemporaryStatus("Plan creado. Cargando contenido...", 1500);
+                            Log.i(TAG, "=== Plan creation successful - returning to MainActivity ===");
+                            try {
+                                Intent i = new Intent(UploadActivity.this, MainActivity.class);
+                                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(i);
+                                finish();
+                            } catch (Exception ignored) {}
+                        }, MIN_STAGE_DURATION_MS);
+                    })
+                    .addOnFailureListener(e -> {
+                        hideProcessing();
+                        Log.e(TAG, "Phase: function_call_failed - Cloud Function call failed", e);
+                        handleUploadError(e, "Error al llamar Cloud Function");
+                    });
+        }, MIN_STAGE_DURATION_MS);
+    }
+
     private com.google.android.gms.tasks.Task<String> allocateCanonicalPlanId(String uid) {
         if (uid == null || uid.trim().isEmpty()) return com.google.android.gms.tasks.Tasks.forResult(null);
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
@@ -414,12 +460,49 @@ public class UploadActivity extends BaseActivity {
         });
     }
 
+    private void processNextStage() {
+        if (isProcessingQueue) return;
+        ProcessingStage stage = stageQueue.poll();
+        if (stage == null) {
+            isProcessingQueue = false;
+            return;
+        }
+        isProcessingQueue = true;
+        long now = SystemClock.uptimeMillis();
+        long elapsed = now - processingStageStartedMs;
+        long delay = (processingStageStartedMs == 0L) ? 0L : Math.max(0L, MIN_STAGE_DURATION_MS - elapsed);
+        mainHandler.postDelayed(() -> {
+            if (processingStageImage != null && stage.imageRes != 0) {
+                processingStageImage.setImageResource(stage.imageRes);
+            }
+            try {
+                overlayManager.forceHide();
+                overlayManager.show(stage.message, stage.onCancel);
+            } catch (Exception ignored) {}
+            processingStageStartedMs = SystemClock.uptimeMillis();
+            isProcessingQueue = false;
+            processNextStage();
+        }, delay);
+    }
+
+    private void showProcessingState(@DrawableRes int imageRes, String message, @Nullable Runnable onCancel) {
+        stageQueue.offer(new ProcessingStage(imageRes, message, onCancel));
+        processNextStage();
+    }
+
     private void showProcessing(String message) {
-        try { overlayManager.show(message, null); } catch (Exception ignored) {}
+        processingStageStartedMs = 0L;
+        stageQueue.clear();
+        isProcessingQueue = false;
+        showProcessingState(R.drawable.ic_load_plan_1, message, null);
     }
 
     private void hideProcessing() {
-        try { overlayManager.hide(); } catch (Exception ignored) {}
+        stageQueue.clear();
+        isProcessingQueue = false;
+        mainHandler.removeCallbacksAndMessages(null);
+        try { overlayManager.forceHide(); } catch (Exception ignored) {}
+        processingStageStartedMs = 0L;
     }
 
     private void showTemporaryStatus(String message, int millis) {

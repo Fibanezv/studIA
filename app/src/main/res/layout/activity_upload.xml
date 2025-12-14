@@ -392,7 +392,7 @@
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="Eliminar documento"
                             android:scaleType="fitCenter"
-                            android:tint="@color/red" />
+                            app:tint="@color/red" />
 
                     </LinearLayout>
 
@@ -428,40 +428,36 @@
         android:background="#80000000">
 
         <androidx.cardview.widget.CardView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="320dp"
+            android:layout_height="320dp"
             android:layout_gravity="center"
             app:cardCornerRadius="12dp"
-            app:cardElevation="8dp"
+            app:cardElevation="0dp"
             android:padding="16dp">
 
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:gravity="center_horizontal">
+                android:gravity="center">
 
-                <ProgressBar
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    style="?android:attr/progressBarStyleLarge"
-                    android:indeterminate="true" />
+                <ImageView
+                    android:id="@+id/processing_stage_image"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
+                    android:src="@drawable/ic_load_plan_1"
+                    android:contentDescription="Ilustración del progreso de creación del plan"
+                    android:scaleType="fitCenter" />
 
                 <TextView
                     android:id="@+id/processing_message"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Procesando: creando plan de estudio"
-                    android:textSize="16sp"
-                    android:textColor="@color/black" />
-
-                <Button
-                    android:id="@+id/processing_cancel_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="Cancelar" />
+                    android:text="Preparando tu plan..."
+                    android:textSize="14sp"
+                    android:textColor="@color/black"
+                    android:textStyle="normal" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

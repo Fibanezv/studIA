@@ -8,7 +8,12 @@ import android.view.View;
 import android.animation.ValueAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.ViewGroup;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import com.app.estudiaapp.utils.Constants;
+import com.app.estudiaapp.models.QuestionResult;
+import com.app.estudiaapp.adapters.QuestionResultsAdapter;
+import java.util.ArrayList;
 
  
 public class QuizResultsActivity extends BaseActivity {
@@ -22,6 +27,7 @@ public class QuizResultsActivity extends BaseActivity {
     TextView summaryIncorrect = findViewById(R.id.results_incorrect);
     TextView summaryPercent = findViewById(R.id.results_percent);
         Button accept = findViewById(R.id.btn_results_accept);
+        RecyclerView questionsList = findViewById(R.id.results_questions_list);
 
         // progress views
         final View progressContainer = findViewById(R.id.quiz_progress_container);
@@ -34,6 +40,22 @@ public class QuizResultsActivity extends BaseActivity {
     summaryCorrect.setText("✔\uFE0F Aciertos: " + correct);
     summaryIncorrect.setText("\u200B❌\u200B Fallos: " + incorrect);
     summaryPercent.setText("\uD83C\uDF93\u200B Nota: " + percent + "%");
+
+        // Configurar lista de preguntas
+        @SuppressWarnings("unchecked")
+        ArrayList<QuestionResult> questionResults = (ArrayList<QuestionResult>) i.getSerializableExtra("QUESTION_RESULTS");
+        
+        android.util.Log.d("QuizResultsActivity", "Received questionResults: " + (questionResults != null ? questionResults.size() + " items" : "null"));
+        
+        if (questionResults != null && !questionResults.isEmpty()) {
+            android.util.Log.d("QuizResultsActivity", "Showing RecyclerView with " + questionResults.size() + " questions");
+            questionsList.setVisibility(View.VISIBLE);
+            questionsList.setLayoutManager(new LinearLayoutManager(this));
+            QuestionResultsAdapter adapter = new QuestionResultsAdapter(questionResults);
+            questionsList.setAdapter(adapter);
+        } else {
+            android.util.Log.w("QuizResultsActivity", "No question results to display");
+        }
 
         accept.setOnClickListener(v -> finish());
 

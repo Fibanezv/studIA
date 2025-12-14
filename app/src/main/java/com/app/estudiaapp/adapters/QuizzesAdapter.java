@@ -150,6 +150,55 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
                     .show();
             });
         }
+
+        // botón resultados
+        if (holder.resultsButton != null) {
+            holder.resultsButton.setVisibility(isComplete ? View.VISIBLE : View.GONE);
+            holder.resultsButton.setOnClickListener(v -> {
+                Context ctx = holder.itemView.getContext();
+                
+                // Recoger datos de resultados del quiz
+                int nota = (q.progreso == null) ? 0 : q.progreso.nota;
+                int correctas = (q.progreso == null) ? 0 : q.progreso.preguntasCorrectas;
+                int incorrectas = (q.progreso == null) ? 0 : q.progreso.preguntasIncorrectas;
+                
+                // Crear lista de resultados de preguntas
+                ArrayList<com.app.estudiaapp.models.QuestionResult> questionResults = new ArrayList<>();
+                
+                android.util.Log.d("QuizzesAdapter", "Quiz: " + q.id + ", progreso: " + (q.progreso != null) + 
+                    ", userAnswers: " + (q.progreso != null && q.progreso.userAnswers != null ? q.progreso.userAnswers.size() : "null") +
+                    ", questions: " + (q.questions != null ? q.questions.size() : "null"));
+                
+                // Solo mostrar preguntas si hay respuestas del usuario guardadas
+                if (q.progreso != null && q.progreso.userAnswers != null && 
+                    !q.progreso.userAnswers.isEmpty() && q.questions != null) {
+                    // Tenemos respuestas guardadas - mostrar resultados completos
+                    for (int i = 0; i < q.questions.size(); i++) {
+                        com.app.estudiaapp.models.Question question = q.questions.get(i);
+                        String userAnswer = q.progreso.userAnswers.get(String.valueOf(i));
+                        
+                        if (userAnswer != null) {
+                            boolean isCorrect = userAnswer.equals(question.answer);
+                            com.app.estudiaapp.models.QuestionResult result = new com.app.estudiaapp.models.QuestionResult(
+                                question.question,
+                                userAnswer,
+                                question.answer,
+                                isCorrect
+                            );
+                            questionResults.add(result);
+                        }
+                    }
+                }
+                
+                // Navegar a QuizResultsActivity
+                android.content.Intent intent = new android.content.Intent(ctx, com.app.estudiaapp.QuizResultsActivity.class);
+                intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_CORRECT, correctas);
+                intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_INCORRECT, incorrectas);
+                intent.putExtra(com.app.estudiaapp.utils.Constants.EXTRA_PERCENT, nota);
+                intent.putExtra("QUESTION_RESULTS", questionResults);
+                ctx.startActivity(intent);
+            });
+        }
     }
 
     @Override
@@ -164,6 +213,7 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
     TextView score;
     TextView scoreLabel;
     com.google.android.material.button.MaterialButton resetButton;
+    com.google.android.material.button.MaterialButton resultsButton;
 
         public QuizViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -173,6 +223,7 @@ public class QuizzesAdapter extends RecyclerView.Adapter<QuizzesAdapter.QuizView
             score = itemView.findViewById(R.id.quiz_score);
             scoreLabel = itemView.findViewById(R.id.quiz_score_label);
             resetButton = itemView.findViewById(R.id.btn_reset_quiz);
+            resultsButton = itemView.findViewById(R.id.btn_results_quiz);
         }
     }
 }

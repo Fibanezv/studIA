@@ -301,6 +301,16 @@ public class UserRepository {
                             String json = gson.toJson(doc.getData());
                             StudyPlan p = gson.fromJson(json, StudyPlan.class);
                             
+                            // Debug: log userAnswers for each quiz
+                            if (p != null && p.quizzes != null) {
+                                for (com.app.estudiaapp.models.Quiz q : p.quizzes) {
+                                    if (q != null && q.progreso != null) {
+                                        Log.d(TAG, "Quiz " + q.id + " userAnswers: " + 
+                                            (q.progreso.userAnswers != null ? q.progreso.userAnswers.size() + " items" : "null"));
+                                    }
+                                }
+                            }
+                            
                             // Cache with current timestamp
                             PLAN_CACHE.put(cacheKey, new CachedPlan(p, System.currentTimeMillis()));
                             Log.d(TAG, "Cached plan " + planId + " with TTL=" + (DEFAULT_CACHE_TTL_MILLIS / 1000) + "s");
@@ -409,6 +419,17 @@ public class UserRepository {
                 for (int i = 0; i < plan.quizzes.size(); i++) {
                     if (plan.quizzes.get(i) != null && quizId.equals(plan.quizzes.get(i).id)) {
                         plan.quizzes.get(i).progreso = newProgress;
+                        
+                        // Debug: log what we're saving
+                        Log.d(TAG, "Updating quiz " + quizId + " progress:");
+                        Log.d(TAG, "  - preguntasRespondidas: " + newProgress.preguntasRespondidas);
+                        Log.d(TAG, "  - userAnswers: " + (newProgress.userAnswers != null ? newProgress.userAnswers.size() + " items" : "null"));
+                        if (newProgress.userAnswers != null) {
+                            for (String key : newProgress.userAnswers.keySet()) {
+                                Log.d(TAG, "    [" + key + "] = " + newProgress.userAnswers.get(key));
+                            }
+                        }
+                        
                         found = true;
                         break;
                     }

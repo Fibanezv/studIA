@@ -107,11 +107,10 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Pregunta"
-                                android:textSize="18sp"
+                                android:textSize="14sp"
                                 android:maxLines="3"
                                 android:ellipsize="end"
                                 android:textColor="@color/black"
-                                android:textStyle="bold"
                                 android:layout_marginBottom="12dp"
                                 android:gravity="start"
                                 android:layout_gravity="top"/>
@@ -121,25 +120,16 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content" />
 
-                            <!-- Imagen ic_profile_1 -->
-                            <ImageView
-                                android:id="@+id/question_image"
-                                android:layout_width="120dp"
-                                android:layout_height="120dp"
-                                android:src="@drawable/ic_profile_1"
-                                android:layout_gravity="center_horizontal"
-                                android:layout_marginTop="16dp"
-                                android:layout_marginBottom="16dp"
-                                android:contentDescription="Imagen decorativa" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/submit_button"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Responder"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="16dp"
                                 app:backgroundTint="@color/colorPrimary"
-                                android:textColor="@color/white"/>
+                                android:textColor="@color/white"
+                                android:layout_marginBottom="16dp"/>
 
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

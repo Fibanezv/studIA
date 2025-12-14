@@ -28,6 +28,7 @@ import android.animation.ObjectAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class QuizActivity extends BaseActivity {
 
@@ -222,12 +223,16 @@ public class QuizActivity extends BaseActivity {
             int selected = group.getCheckedRadioButtonId();
             if (selected != -1) {
                 RadioButton selectedBtn = findViewById(selected);
-                boolean correcto = selectedBtn.getText().toString().equals(q.answer);
+                String selectedAnswer = selectedBtn.getText().toString();
+                boolean correcto = selectedAnswer.equals(q.answer);
 
                 // actualizar progreso del quiz y reanudar posición
                 if (currentQuiz != null && currentQuiz.progreso != null) {
                     int total = (questionList == null) ? 0 : questionList.size();
                     currentQuiz.progreso.actualizar(correcto, total);
+                    // Guardar respuesta del usuario
+                    int questionIndex = current; // índice actual antes de incrementar
+                    currentQuiz.progreso.userAnswers.put(String.valueOf(questionIndex), selectedAnswer);
                 }
 
                 // avanzar al siguiente índice y persistir currentIndex (cap al total)
@@ -330,6 +335,28 @@ public class QuizActivity extends BaseActivity {
         intent.putExtra(Constants.EXTRA_CORRECT, correct);
         intent.putExtra(Constants.EXTRA_INCORRECT, incorrect);
         intent.putExtra(Constants.EXTRA_PERCENT, percent);
+        
+        // Crear lista de resultados de preguntas
+        ArrayList<com.app.estudiaapp.models.QuestionResult> questionResults = new ArrayList<>();
+        if (currentQuiz.progreso != null && currentQuiz.progreso.userAnswers != null && questionList != null) {
+            for (int i = 0; i < questionList.size(); i++) {
+                Question question = questionList.get(i);
+                String userAnswer = currentQuiz.progreso.userAnswers.get(String.valueOf(i));
+                
+                if (userAnswer != null) {
+                    boolean isCorrect = userAnswer.equals(question.answer);
+                    com.app.estudiaapp.models.QuestionResult result = new com.app.estudiaapp.models.QuestionResult(
+                        question.question,
+                        userAnswer,
+                        question.answer,
+                        isCorrect
+                    );
+                    questionResults.add(result);
+                }
+            }
+        }
+        intent.putExtra("QUESTION_RESULTS", questionResults);
+        
         startActivity(intent);
         // remove transition animation when opening results
         try {

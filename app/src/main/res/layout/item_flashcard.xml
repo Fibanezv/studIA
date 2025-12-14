@@ -30,7 +30,7 @@
             android:id="@+id/item_flashcard_status"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_question_ok_20"
+            android:src="@drawable/ic_flashcard_checked"
             android:contentDescription="Completada"
             android:visibility="gone"
             android:layout_marginTop="6dp"
