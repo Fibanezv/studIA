@@ -10,51 +10,41 @@
         android:background="?android:windowBackground"
         android:gravity="top"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp">
 
         <!-- Small app icon at top like other screens -->
         <include layout="@layout/include_app_header" />
 
-        <!-- Progress label and visual progress (same IDs as activity_quiz for visual continuity) -->
+        <!-- Header: Title 'Nota' -->
         <TextView
-            android:id="@+id/quiz_progress_label"
+            android:id="@+id/results_header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"
-            android:text="Progreso"
-            android:textColor="@color/navi_700_theme"
-            android:textSize="16sp"
+            android:text="Nota"
+                android:textColor="@color/results_header_text"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
-        <FrameLayout
-            android:id="@+id/quiz_progress_container"
-            android:layout_width="match_parent"
-            android:layout_height="28dp"
+        <!-- Header: Icon + Percent -->
+        <TextView
+            android:id="@+id/results_percent_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginStart="40dp"
-            android:layout_marginEnd="40dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
+            android:text="🎓 0%"
+                android:textColor="@color/results_header_text"
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
-            <View
-                android:id="@+id/quiz_progress_track"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/progress_track_shape" />
-
-            <View
-                android:id="@+id/quiz_progress_fill"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:background="@drawable/progress_fill_shape" />
-
-        </FrameLayout>
-
+        <!-- Card with header and internal scrollable list -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_upload"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
@@ -63,78 +53,32 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/beige_300_theme"
-                android:gravity="center_vertical"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
+                android:gravity="top"
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:id="@+id/results_title"
-                    android:layout_width="225dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="24dp"
-                    android:text="Resultados: "
-                    android:textColor="@color/navi_700_theme"
-                    android:textSize="26sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/results_correct"
-                    android:layout_width="150dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="10dp"
-                    android:text="✔️ Aciertos: 0"
-                    android:textColor="@color/navi_700_theme"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/results_incorrect"
-                    android:layout_width="150dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="10dp"
-                    android:text="​❌​ Fallos: 0"
-                    android:textColor="@color/navi_700_theme"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/results_percent"
-                    android:layout_width="150dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="16dp"
-                    android:text="🎓​ Nota: 0%"
-                    android:textColor="@color/navi_700_theme"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <!-- Lista de preguntas y respuestas -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/results_questions_list"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
                     android:scrollbars="vertical"
                     android:visibility="gone" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_results_accept"
-                    android:layout_width="225dp"
-                    android:layout_height="wrap_content"
-                    android:text="Aceptar"
-                    android:textColor="@android:color/white"
-                    app:backgroundTint="@color/colorPrimary"
-                    android:layout_gravity="center"/>
 
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_results_accept"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:text="Aceptar"
+            android:textColor="@android:color/white"
+            app:backgroundTint="@color/colorPrimary"
+            android:layout_gravity="center"/>
 
     </LinearLayout>
 

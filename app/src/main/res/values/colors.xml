@@ -42,4 +42,7 @@
     <color name="navi_700_theme">#0b4462</color>
     <color name="navi_500_theme">#2d938e</color>
 
+    <!-- Theme-aware alias for results header text -->
+    <color name="results_header_text">#FF000000</color> <!-- black in light mode -->
+
 </resources>

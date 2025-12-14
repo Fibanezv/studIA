@@ -7,25 +7,25 @@
     android:layout_height="match_parent">
 
     <!-- Main content -->
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
+        android:orientation="vertical"
         android:background="?android:windowBackground">
 
+        <!-- Header fijo -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <include layout="@layout/include_app_header" />
 
-            <!-- Tarjeta: Crear Plan de Estudio (reuse drawer create-plan layout) -->
+            <!-- Tarjeta: Crear Plan de Estudio -->
             <include layout="@layout/nav_drawer_footer_create_plan" />
 
-            <!-- Aquí puedes agregar más tarjetas -->
-
-            <!-- RecyclerView para mostrar planes -->
+            <!-- Título de la lista -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,16 +36,20 @@
                 android:paddingBottom="5dp"
                 android:layout_marginTop="24dp"
                 android:textAlignment="center"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_plans"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                />
         </LinearLayout>
 
-    </ScrollView>
+        <!-- RecyclerView scrollable -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_plans"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="16dp"
+            android:clipToPadding="false" />
+
+    </LinearLayout>
 
     <!-- Navigation drawer -->
     <com.google.android.material.navigation.NavigationView

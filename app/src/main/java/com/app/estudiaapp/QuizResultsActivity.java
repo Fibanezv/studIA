@@ -23,23 +23,15 @@ public class QuizResultsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz_results);
 
-    TextView summaryCorrect = findViewById(R.id.results_correct);
-    TextView summaryIncorrect = findViewById(R.id.results_incorrect);
-    TextView summaryPercent = findViewById(R.id.results_percent);
+        TextView summaryPercent = findViewById(R.id.results_percent_header);
         Button accept = findViewById(R.id.btn_results_accept);
         RecyclerView questionsList = findViewById(R.id.results_questions_list);
-
-        // progress views
-        final View progressContainer = findViewById(R.id.quiz_progress_container);
-        final View progressFill = findViewById(R.id.quiz_progress_fill);
 
         Intent i = getIntent();
         int correct = i.getIntExtra(Constants.EXTRA_CORRECT, 0);
         int incorrect = i.getIntExtra(Constants.EXTRA_INCORRECT, 0);
         int percent = i.getIntExtra(Constants.EXTRA_PERCENT, 0);
-    summaryCorrect.setText("✔\uFE0F Aciertos: " + correct);
-    summaryIncorrect.setText("\u200B❌\u200B Fallos: " + incorrect);
-    summaryPercent.setText("\uD83C\uDF93\u200B Nota: " + percent + "%");
+        summaryPercent.setText("\uD83C\uDF93\u200B " + percent + "%");
 
         // Configurar lista de preguntas
         @SuppressWarnings("unchecked")
@@ -59,24 +51,6 @@ public class QuizResultsActivity extends BaseActivity {
 
         accept.setOnClickListener(v -> finish());
 
-        // The results screen is only reachable when the quiz is complete — show the bar as 100% filled (blue)
-        if (progressContainer != null && progressFill != null) {
-            progressContainer.post(() -> {
-                int containerWidth = progressContainer.getWidth();
-                int target = containerWidth; // full width (100%)
-                // Ensure the fill drawable is the navy color (progress_fill_shape)
-                progressFill.setBackgroundResource(R.drawable.progress_fill_shape);
-                ValueAnimator va = ValueAnimator.ofInt(0, target);
-                va.setDuration(600);
-                va.setInterpolator(new AccelerateDecelerateInterpolator());
-                va.addUpdateListener(animation -> {
-                    int val = (int) animation.getAnimatedValue();
-                    ViewGroup.LayoutParams lp = progressFill.getLayoutParams();
-                    lp.width = val;
-                    progressFill.setLayoutParams(lp);
-                });
-                va.start();
-            });
-        }
+        // No progress bar on results screen anymore
     }
 }

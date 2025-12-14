@@ -11,7 +11,7 @@
 **Última actualización:** 14 de diciembre de 2025  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)  
-**Últimas funcionalidades:** Resultados detallados de quizzes y overlay de procesamiento mejorado
+**Últimas funcionalidades:** Resultados detallados de quizzes con layout fijo y validación de respuesta, y overlay de procesamiento mejorado
 
 ---
 
@@ -76,15 +76,17 @@
   - Título "Pregunta X" centrado sobre cada pregunta
   - Imagen decorativa (ic_profile_1) entre respuestas y botón
   - Barra de progreso visual con animación
+  - Botón "Responder" fijado fuera de la tarjeta de la pregunta
+  - Validación: bloquea avance si no se selecciona opción (muestra toast)
 - **Quiz items rediseñados**:
   - Botones "Resultados" y "Reiniciar" (90dp, altura automática)
   - Visible solo cuando el quiz está completado al 100%
   - Botón "Resultados" muestra lista detallada de preguntas/respuestas con ✔️/❌
   - Sistema de almacenamiento de respuestas del usuario (userAnswers en QuizProgress)
 - **QuizResultsActivity mejorado**:
-  - RecyclerView scrollable (300dp) para lista de preguntas/respuestas
-  - Muestra pregunta, respuesta del usuario, respuesta correcta (si falló)
-  - Indicador visual de acierto/fallo (✔️/❌)
+  - Encabezado simplificado: "Nota" + icono 🎓 y % grande
+  - CardView con lista completa scrollable dentro del card (sin corte a 4 ítems)
+  - Ítems de preguntas con fondo beige fijo (modo claro/oscuro), mostrando pregunta, respuesta del usuario y correcta (si falló) con ✔️/❌
   - Compatible con quizzes antiguos (solo muestra resumen sin detalles)
 - **Overlay de procesamiento mejorado**:
   - CardView fijo (320x320dp) sin elevación

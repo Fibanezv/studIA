@@ -221,50 +221,42 @@ public class QuizActivity extends BaseActivity {
 
         ((Button) findViewById(R.id.submit_button)).setOnClickListener(v -> {
             int selected = group.getCheckedRadioButtonId();
-            if (selected != -1) {
-                RadioButton selectedBtn = findViewById(selected);
-                String selectedAnswer = selectedBtn.getText().toString();
-                boolean correcto = selectedAnswer.equals(q.answer);
+            if (selected == -1) {
+                Toast.makeText(this, "Debe seleccionar una de las opciones", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            RadioButton selectedBtn = findViewById(selected);
+            String selectedAnswer = selectedBtn.getText().toString();
+            boolean correcto = selectedAnswer.equals(q.answer);
 
-                // actualizar progreso del quiz y reanudar posición
-                if (currentQuiz != null && currentQuiz.progreso != null) {
-                    int total = (questionList == null) ? 0 : questionList.size();
-                    currentQuiz.progreso.actualizar(correcto, total);
-                    // Guardar respuesta del usuario
-                    int questionIndex = current; // índice actual antes de incrementar
-                    currentQuiz.progreso.userAnswers.put(String.valueOf(questionIndex), selectedAnswer);
-                }
+            // actualizar progreso del quiz y reanudar posición
+            if (currentQuiz != null && currentQuiz.progreso != null) {
+                int total = (questionList == null) ? 0 : questionList.size();
+                currentQuiz.progreso.actualizar(correcto, total);
+                // Guardar respuesta del usuario
+                int questionIndex = current; // índice actual antes de incrementar
+                currentQuiz.progreso.userAnswers.put(String.valueOf(questionIndex), selectedAnswer);
+            }
 
-                // avanzar al siguiente índice y persistir currentIndex (cap al total)
-                current++;
-                int totalNow = (questionList == null) ? 0 : questionList.size();
-                if (current > totalNow) current = totalNow;
-                if (currentQuiz != null && currentQuiz.progreso != null) {
-                    currentQuiz.progreso.currentIndex = Math.min(current, totalNow);
-                }
+            // avanzar al siguiente índice y persistir currentIndex (cap al total)
+            current++;
+            int totalNow = (questionList == null) ? 0 : questionList.size();
+            if (current > totalNow) current = totalNow;
+            if (currentQuiz != null && currentQuiz.progreso != null) {
+                currentQuiz.progreso.currentIndex = Math.min(current, totalNow);
+            }
 
-                // Guardar plan actualizado
-                // Persist progress: prefer updating Firestore
-                try {
-                    String uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null);
-                    if (uid != null) {
-                        // update only the quiz progress using repository method
-                        new UserRepository(QuizActivity.this).updateQuizProgress(uid, planId, currentQuiz.id, currentQuiz.progreso, a -> {
-                            // no-op success
-                        }, e -> {
-                            // fallback: save whole plan locally
-                            StudyPlan plan = StorageHelper.cargarPlan(QuizActivity.this, planId);
-                            if (plan != null) {
-                                for (int i = 0; i < plan.quizzes.size(); i++) {
-                                    if (plan.quizzes.get(i).id.equals(currentQuiz.id)) {
-                                        plan.quizzes.set(i, currentQuiz);
-                                        break;
-                                    }
-                                }
-                                StorageHelper.guardarPlan(QuizActivity.this, plan);
-                            }
-                        });
-                    } else {
+            // Guardar plan actualizado
+            // Persist progress: prefer updating Firestore
+            try {
+                String uid = getSharedPreferences("auth", MODE_PRIVATE).getString("uid", null);
+                if (uid != null) {
+                    // update only the quiz progress using repository method
+                    new UserRepository(QuizActivity.this).updateQuizProgress(uid, planId, currentQuiz.id, currentQuiz.progreso, a -> {
+                        // no-op success
+                    }, e -> {
+                        // fallback: save whole plan locally
                         StudyPlan plan = StorageHelper.cargarPlan(QuizActivity.this, planId);
                         if (plan != null) {
                             for (int i = 0; i < plan.quizzes.size(); i++) {
@@ -275,8 +267,8 @@ public class QuizActivity extends BaseActivity {
                             }
                             StorageHelper.guardarPlan(QuizActivity.this, plan);
                         }
-                    }
-                } catch (Exception ex) {
+                    });
+                } else {
                     StudyPlan plan = StorageHelper.cargarPlan(QuizActivity.this, planId);
                     if (plan != null) {
                         for (int i = 0; i < plan.quizzes.size(); i++) {
@@ -288,11 +280,22 @@ public class QuizActivity extends BaseActivity {
                         StorageHelper.guardarPlan(QuizActivity.this, plan);
                     }
                 }
-
-                // actualizar UI inmediatamente
-                refreshProgressUI();
-                showQuestion();
+            } catch (Exception ex) {
+                StudyPlan plan = StorageHelper.cargarPlan(QuizActivity.this, planId);
+                if (plan != null) {
+                    for (int i = 0; i < plan.quizzes.size(); i++) {
+                        if (plan.quizzes.get(i).id.equals(currentQuiz.id)) {
+                            plan.quizzes.set(i, currentQuiz);
+                            break;
+                        }
+                    }
+                    StorageHelper.guardarPlan(QuizActivity.this, plan);
+                }
             }
+
+            // actualizar UI inmediatamente
+            refreshProgressUI();
+            showQuestion();
         });
         } catch (Exception e) {
             android.util.Log.e("QuizActivity", "ERROR in showQuestion: " + e.getMessage(), e);

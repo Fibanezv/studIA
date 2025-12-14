@@ -120,19 +120,17 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content" />
 
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/submit_button"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Responder"
-                                android:layout_marginTop="16dp"
-                                app:backgroundTint="@color/colorPrimary"
-                                android:textColor="@color/white"
-                                android:layout_marginBottom="16dp"/>
-
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/submit_button"
+                        android:layout_width="225dp"
+                        android:layout_height="wrap_content"
+                        android:text="Responder"
+                        android:layout_gravity="center"
+                        app:backgroundTint="@color/colorPrimary"
+                        android:textColor="@color/white"/>
 
                 </LinearLayout>
 
