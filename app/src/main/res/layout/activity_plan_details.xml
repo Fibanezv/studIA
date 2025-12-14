@@ -289,7 +289,7 @@
                                     <!-- Progress Bar -->
                                     <FrameLayout
                                         android:layout_width="match_parent"
-                                        android:layout_height="32dp"
+                                        android:layout_height="16dp"
                                         android:background="@android:color/transparent">
 
                                         <ProgressBar
@@ -297,8 +297,7 @@
                                             style="?android:attr/progressBarStyleHorizontal"
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
-                                            android:minHeight="24dp"
-                                            android:scaleY="3"
+                                            android:minHeight="12dp"
                                             android:max="100"
                                             android:progress="0"
                                             android:progressDrawable="@drawable/progress_bar_rounded" />
@@ -336,7 +335,7 @@
 
                                     <FrameLayout
                                         android:layout_width="match_parent"
-                                        android:layout_height="32dp"
+                                        android:layout_height="16dp"
                                         android:background="@android:color/transparent">
 
                                         <ProgressBar
@@ -344,8 +343,7 @@
                                             style="?android:attr/progressBarStyleHorizontal"
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
-                                            android:minHeight="24dp"
-                                            android:scaleY="3"
+                                            android:minHeight="12dp"
                                             android:max="100"
                                             android:progress="0"
                                             android:progressDrawable="@drawable/progress_bar_rounded" />
@@ -383,7 +381,7 @@
 
                                     <FrameLayout
                                         android:layout_width="match_parent"
-                                        android:layout_height="32dp"
+                                        android:layout_height="16dp"
                                         android:background="@android:color/transparent">
 
                                         <ProgressBar
@@ -391,8 +389,7 @@
                                             style="?android:attr/progressBarStyleHorizontal"
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
-                                            android:minHeight="26dp"
-                                            android:scaleY="3"
+                                            android:minHeight="13dp"
                                             android:max="100"
                                             android:progress="0"
                                             android:progressDrawable="@drawable/progress_bar_rounded" />
@@ -429,7 +426,7 @@
 
                                     <FrameLayout
                                         android:layout_width="match_parent"
-                                        android:layout_height="32dp"
+                                        android:layout_height="16dp"
                                         android:background="@android:color/transparent">
 
                                         <ProgressBar
@@ -437,8 +434,7 @@
                                             style="?android:attr/progressBarStyleHorizontal"
                                             android:layout_width="match_parent"
                                             android:layout_height="match_parent"
-                                            android:minHeight="28dp"
-                                            android:scaleY="3"
+                                            android:minHeight="14dp"
                                             android:max="100"
                                             android:progress="0"
                                             android:progressDrawable="@drawable/progress_bar_rounded" />
