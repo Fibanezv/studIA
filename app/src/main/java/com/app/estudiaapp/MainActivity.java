@@ -38,6 +38,8 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
     private RecyclerView recyclerView;
     private PlansAdapter adapter;
     private ArrayList<StudyPlan> planList;
+    private View contentHasPlans;
+    private View contentNoPlans;
     // Drawer is handled by BaseActivity when present in the layout
     
     // NEW: Firestore listener for real-time plan updates
@@ -51,15 +53,24 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
 
         // Sample-plan creation disabled - do not auto-create example plans on startup.
 
-    recyclerView = findViewById(R.id.recycler_plans);
+        recyclerView = findViewById(R.id.recycler_plans);
+        contentHasPlans = findViewById(R.id.content_has_plans);
+        contentNoPlans = findViewById(R.id.content_no_plans);
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
         // No drawer here; keep original main activity behavior
 
-        // Acción al pulsar la tarjeta "Crear Plan de Estudio" (incluida)
-        View createPlanCard = findViewById(R.id.create_plan_card);
-        if (createPlanCard != null) {
-            createPlanCard.setOnClickListener(v -> startActivityFadeThrough(new Intent(MainActivity.this, UploadActivity.class)));
+        // Acción al pulsar la tarjeta "Crear Plan de Estudio" (incluida) en ambos bloques
+        View createPlanCardHasPlans = findViewById(R.id.create_plan_card);
+        if (createPlanCardHasPlans != null) {
+            createPlanCardHasPlans.setOnClickListener(v -> startActivityFadeThrough(new Intent(MainActivity.this, UploadActivity.class)));
+        }
+        // In empty state the include may resolve to the same id; search within the no-plans container too
+        if (contentNoPlans != null) {
+            View createPlanCardNoPlans = contentNoPlans.findViewById(R.id.create_plan_card);
+            if (createPlanCardNoPlans != null) {
+                createPlanCardNoPlans.setOnClickListener(v -> startActivityFadeThrough(new Intent(MainActivity.this, UploadActivity.class)));
+            }
         }
 
         // Header menu button: abrir drawer si existe
@@ -146,6 +157,15 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
         }
 
 
+        // Decide initial block visibility from splash hint to avoid flicker
+        try {
+            boolean initialHasPlans = getIntent().getBooleanExtra("initial_has_plans", false);
+            if (contentHasPlans != null && contentNoPlans != null) {
+                contentHasPlans.setVisibility(initialHasPlans ? View.VISIBLE : View.GONE);
+                contentNoPlans.setVisibility(initialHasPlans ? View.GONE : View.VISIBLE);
+            }
+        } catch (Exception ignored) {}
+
         // Configurar lista de planes
         setupPlanList();
     }
@@ -177,6 +197,7 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
             adapter = new PlansAdapter(planList, this);
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
             recyclerView.setAdapter(adapter);
+            updateEmptyStateVisibility();
         }
     }
     
@@ -251,6 +272,13 @@ public class MainActivity extends BaseActivity implements PlansAdapter.OnPlanCli
         } else {
             adapter.notifyDataSetChanged();
         }
+        updateEmptyStateVisibility();
+    }
+
+    private void updateEmptyStateVisibility() {
+        boolean hasPlans = planList != null && !planList.isEmpty();
+        if (contentHasPlans != null) contentHasPlans.setVisibility(hasPlans ? View.VISIBLE : View.GONE);
+        if (contentNoPlans != null) contentNoPlans.setVisibility(hasPlans ? View.GONE : View.VISIBLE);
     }
     
     @Override

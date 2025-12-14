@@ -69,7 +69,9 @@ public class SplashActivity extends AppCompatActivity {
             finished.set(true);
             // Proceed to MainActivity even if remote load didn't finish
             try { 
-                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                Intent i = new Intent(SplashActivity.this, MainActivity.class);
+                i.putExtra("initial_has_plans", computeHasPlansHint());
+                startActivity(i);
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             } catch (Exception ignore) {}
             finish();
@@ -103,7 +105,9 @@ public class SplashActivity extends AppCompatActivity {
                     h.removeCallbacks(timeout);
                     h.removeCallbacks(dotsAnim);
                     try { 
-                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                        Intent i = new Intent(SplashActivity.this, MainActivity.class);
+                        i.putExtra("initial_has_plans", computeHasPlansHint());
+                        startActivity(i);
                         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     } catch (Exception ignore) {}
                     finish();
@@ -114,7 +118,9 @@ public class SplashActivity extends AppCompatActivity {
                 h.removeCallbacks(timeout);
                 h.removeCallbacks(dotsAnim);
                 try { 
-                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    Intent i = new Intent(SplashActivity.this, MainActivity.class);
+                    i.putExtra("initial_has_plans", computeHasPlansHint());
+                    startActivity(i);
                     overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                 } catch (Exception ignore) {}
                 finish();
@@ -125,10 +131,31 @@ public class SplashActivity extends AppCompatActivity {
             h.removeCallbacks(timeout);
             h.removeCallbacks(dotsAnim);
             try { 
-                startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                Intent i = new Intent(SplashActivity.this, MainActivity.class);
+                i.putExtra("initial_has_plans", computeHasPlansHint());
+                startActivity(i);
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             } catch (Exception ignore) {}
             finish();
         }
+    }
+
+    // Compute a quick hint whether there are plans to show, to avoid flicker in MainActivity
+    private boolean computeHasPlansHint() {
+        try {
+            SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+            String uid = prefs.getString("uid", null);
+            if (uid != null) {
+                SharedPreferences cache = getSharedPreferences("cache", MODE_PRIVATE);
+                int count = cache.getInt("plans_count", -1);
+                if (count >= 0) return count > 0;
+                java.util.ArrayList<com.app.estudiaapp.models.StudyPlan> local = com.app.estudiaapp.helper.StorageHelper.listarPlanes(this);
+                return local != null && !local.isEmpty();
+            } else {
+                java.util.ArrayList<com.app.estudiaapp.models.StudyPlan> local = com.app.estudiaapp.helper.StorageHelper.listarPlanes(this);
+                return local != null && !local.isEmpty();
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 }

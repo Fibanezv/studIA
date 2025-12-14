@@ -6,14 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Main content -->
+    <!-- Main content wrapper: common header and padding for both states -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="?android:windowBackground">
 
-        <!-- Header fijo -->
+        <!-- Common header (drawer/menu + app icon) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -22,10 +22,21 @@
 
             <include layout="@layout/include_app_header" />
 
-            <!-- Tarjeta: Crear Plan de Estudio -->
+        </LinearLayout>
+
+        <!-- Content when there ARE plans -->
+        <LinearLayout
+            android:id="@+id/content_has_plans"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <!-- Create Plan card -->
             <include layout="@layout/nav_drawer_footer_create_plan" />
 
-            <!-- Título de la lista -->
+            <!-- Title -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,18 +47,44 @@
                 android:paddingBottom="5dp"
                 android:layout_marginTop="24dp"
                 android:textAlignment="center"/>
+
+            <!-- RecyclerView scrollable -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_plans"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp"
+                android:clipToPadding="false" />
+
         </LinearLayout>
 
-        <!-- RecyclerView scrollable -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_plans"
+        <!-- Content when there are NO plans -->
+        <LinearLayout
+            android:id="@+id/content_no_plans"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="16dp"
-            android:clipToPadding="false" />
+            android:orientation="vertical"
+            android:layout_marginTop="24dp"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <!-- Centered image -->
+            <ImageView
+                android:id="@+id/img_no_plans"
+                android:layout_width="240dp"
+                android:layout_height="240dp"
+                android:src="@drawable/ic_no_plans"
+                android:contentDescription="Sin planes"
+                android:layout_gravity="center" />
+
+            <!-- Create Plan card centered below image -->
+            <include layout="@layout/nav_drawer_footer_create_plan" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
