@@ -27,7 +27,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_icono_add"
-                android:contentDescription="crear plan icon"
+                android:contentDescription="@string/create_plan_icon"
                 app:tint="@color/beige_300_theme"
                 android:layout_marginStart="25dp"/>
 
@@ -35,7 +35,7 @@
                 android:id="@+id/create_plan_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Crear Plan de Estudio"
+                android:text="@string/create_study_plan"
                 android:textColor="@color/beige_300_theme"
                 android:textStyle="bold"
                 android:textSize="16sp"

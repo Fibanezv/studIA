@@ -1,0 +1,64 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "pregunta": "What is studIA?",
+      "respuesta": "studIA is an educational application designed to help you learn effectively through personalized study plans, interactive quizzes, and flashcards to memorize key concepts."
+    },
+    {
+      "id": 2,
+      "pregunta": "How do I create a study plan?",
+      "respuesta": "In the 'Plans' section, you can create a new plan by giving it a descriptive name. Once created, you can add topics and subtopics to organize your study content hierarchically."
+    },
+    {
+      "id": 3,
+      "pregunta": "What are flashcards?",
+      "respuesta": "Flashcards are study cards that contain a question on the front and an answer on the back. They are ideal for memorizing concepts, definitions, formulas, and other content in question-answer format."
+    },
+    {
+      "id": 4,
+      "pregunta": "How do I use Presentation mode for flashcards?",
+      "respuesta": "Presentation mode allows you to go through flashcards sequentially, one by one. Perfect for reviewing all content in an organized way. Use the navigation buttons to move forward and backward."
+    },
+    {
+      "id": 5,
+      "pregunta": "What is Random mode?",
+      "respuesta": "Random mode selects a flashcard at random each time you press the refresh button. It's excellent for practicing and strengthening your memory without following a specific order."
+    },
+    {
+      "id": 6,
+      "pregunta": "How do I mark flashcards as favorites?",
+      "respuesta": "Open any flashcard in the detailed view and press the star button. This will mark the card as a favorite. Use Favorites mode to study only your selected cards."
+    },
+    {
+      "id": 7,
+      "pregunta": "How do quizzes work?",
+      "respuesta": "Quizzes contain multiple-choice questions. Select your answer and the app will tell you if it's correct. At the end, you can see a summary of your performance and review all your answers."
+    },
+    {
+      "id": 8,
+      "pregunta": "Are my data synchronized in the cloud?",
+      "respuesta": "Yes, if you have a registered account, your plans, completed quizzes, finished flashcards, and favorites are automatically synchronized to the cloud so you can access them from any device."
+    },
+    {
+      "id": 9,
+      "pregunta": "Can I share my plans with other users?",
+      "respuesta": "Currently, plans are personal to your account. However, you can export or describe your plan to other users so they can recreate it in their accounts."
+    },
+    {
+      "id": 10,
+      "pregunta": "How do I monitor my study progress?",
+      "respuesta": "In the 'Progress' section, you can see a summary of your activities: completed quizzes, studied flashcards, and your overall performance. This helps you track your progress and areas that need more work."
+    },
+    {
+      "id": 11,
+      "pregunta": "What happens if I close the app without finishing a quiz?",
+      "respuesta": "Your progress is automatically saved. The next time you open the app, you can continue from where you left off. You won't lose your progress."
+    },
+    {
+      "id": 12,
+      "pregunta": "How do I change my password?",
+      "respuesta": "Go to your user profile in the 'My Account' section and look for the 'Change Password' option. Enter your current password and then your new password twice to confirm."
+    }
+  ]
+}

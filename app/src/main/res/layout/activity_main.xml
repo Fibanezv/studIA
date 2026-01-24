@@ -40,7 +40,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Tus planes de estudio"
+                android:text="@string/your_study_plans"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="?attr/navTextColor"
@@ -78,7 +78,7 @@
                 android:layout_width="240dp"
                 android:layout_height="240dp"
                 android:src="@drawable/ic_no_plans"
-                android:contentDescription="Sin planes"
+                android:contentDescription="@string/no_plans"
                 android:layout_gravity="center" />
 
             <!-- Create Plan card centered below image -->

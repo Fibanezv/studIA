@@ -1,7 +1,161 @@
 <resources>
     <string name="app_name">EstudiaApp</string>
+    <string name="app_title">EstudIA</string>
     <!-- OpenAI API key (temporary): paste your key here for in-app testing. -->
     <!-- WARNING: embedding secrets in the app is insecure. Use a server proxy for production. -->
     <string name="openai_api_key"></string>
     <!-- OpenAI / functions removed: cloud function URLs no longer used -->
+    
+    <!-- Authentication -->
+    <string name="sign_in">Iniciar sesión</string>
+    <string name="sign_up">Crear cuenta</string>
+    <string name="register">Registrarse</string>
+    <string name="sign_in_google">Iniciar sesión con Google</string>
+    <string name="no_account">¿No tienes cuenta? Regístrate</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="username_hint">Usuario</string>
+    <string name="name_hint">Nombre</string>
+    
+    <!-- Activity Upload / Create Study Plan -->
+    <string name="configure_study_plan">Configura tu plan de estudio</string>
+    <string name="create_study_plan">Crear Plan de Estudio</string>
+    <string name="processing">Procesando…</string>
+    <string name="language">Idioma</string>
+    <string name="level">Nivel</string>
+    <string name="quiz_type">Tipo de Quiz</string>
+    <string name="total_quizzes">Total de Quizzes</string>
+    <string name="total_questions">Total de preguntas</string>
+    <string name="total_flashcards">Total de Flashcards</string>
+    <string name="total_hot_topics">Total de Hot Topics</string>
+    <string name="priority_points">Puntos prioritarios (separados por comas)</string>
+    <string name="priority_points_hint">e.g. Tema 1, Punto 3, Capitulo 5</string>
+    <string name="document">Documento (.pdf, .doc, .docx)</string>
+    <string name="select_document">Seleccionar Documento</string>
+    <string name="create">Crear</string>
+    <string name="preparing_plan">Preparando tu plan…</string>
+    <string name="delete_document">Eliminar documento</string>
+    <string name="plan_creation_illustration">Ilustración del progreso de creación del plan</string>
+    <string name="upload_document">Subir Documento</string>
+    <string name="upload_document_description">Comienza creando tu plan de estudio a partir de un archivo.</string>
+    
+    <!-- Main Activity -->
+    <string name="your_study_plans">Tus planes de estudio</string>
+    <string name="your_generated_plans">Tus planes generados</string>
+    <string name="your_study_plans_colon">Tus planes de estudio: </string>
+    
+    <!-- User / Profile -->
+    <string name="demo_user">Usuario Demo</string>
+    <string name="demo_email">email@ejemplo.com</string>
+    <string name="plans">Planes</string>
+    <string name="user_membership">Membresía usuario</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="dark_mode">Modo oscuro (experimental)</string>
+    <string name="history">Historial</string>
+    <string name="export_data">Exportar datos</string>
+    <string name="sign_out">Cerrar sesión</string>
+    <string name="choose_avatar">Elegir avatar</string>
+    
+    <!-- Membership -->
+    <string name="memberships">Membresías</string>
+    <string name="membership_free">FREE</string>
+    <string name="membership_pro">PRO</string>
+    <string name="membership_pro_plus">PRO+</string>
+    <string name="membership_free_description">Condiciones: Acceso limitado a recursos básicos.\nBeneficios: Uso sin coste, anuncios ligeros.</string>
+    <string name="membership_pro_description">Condiciones: Suscripción mensual.\nBeneficios: Acceso a contenidos exclusivos, sin anuncios, prioridad en soporte.</string>
+    <string name="membership_pro_plus_description">Condiciones: Suscripción anual o plan avanzado.\nBeneficios: Todo PRO + ventajas exclusivas, contenido beta y descuentos.</string>
+    <string name="become_premium">¡Hazte premium!</string>
+    
+    <!-- Plan Details -->
+    <string name="plan_name">Plan name</string>
+    <string name="total">Total</string>
+    <string name="progress">Progreso</string>
+    <string name="flashcards_progress">Flashcards progreso (0/0)</string>
+    <string name="quizzes_completed">Quizzes completados (0/0)</string>
+    <string name="questions_answered">Preguntas respondidas (0/0)</string>
+    <string name="questions_correct">Preguntas acertadas (0/0)</string>
+    <string name="description">Descripción</string>
+    <string name="achievements">Logros</string>
+    <string name="reset_plan">Reiniciar Plan</string>
+    <string name="delete_plan">Eliminar Plan</string>
+    <string name="generated_by_document">Generado por el documento: %s</string>
+    <string name="generating">Generando…</string>
+    
+    <!-- Quiz -->
+    <string name="question_number">Pregunta %d</string>
+    <string name="question">Pregunta</string>
+    <string name="answer">Responder</string>
+    <string name="quiz_title">Quiz title</string>
+    <string name="quiz_type_label">Tipo: %s</string>
+    <string name="progress_label">Progreso:</string>
+    <string name="final_grade">Nota final:</string>
+    <string name="results">Resultados</string>
+    <string name="restart">Reiniciar</string>
+    <string name="grade">Nota</string>
+    <string name="accept">Aceptar</string>
+    <string name="your_answer">Tu respuesta: </string>
+    <string name="correct_answer">Correcta: </string>
+    
+    <!-- Flashcards -->
+    <string name="presentation">Presentación</string>
+    <string name="random">Aleatorio</string>
+    <string name="favorites">Favoritas</string>
+    
+    <!-- Navigation / Menu -->
+    <string name="help">Ayuda</string>
+    <string name="library">Biblioteca</string>
+    <string name="logout">Cerrar sesión</string>
+    <string name="confirm_logout">Confirmar Cerrar sesión</string>
+    <string name="loading">Cargando</string>
+    <string name="my_plans">Mis planes</string>
+    <string name="my_profile">Mi perfil</string>
+    <string name="information">Información</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="flashcards">Flashcards</string>
+    <string name="hot_topics">Hot Topics</string>
+    <string name="quizzes">Quizzes</string>
+    
+    <!-- Progress -->
+    <string name="progress_description">Aquí verás tu progreso en los quizzes y planes de estudio.</string>
+    
+    <!-- FAQ -->
+    <string name="faq_question">Pregunta</string>
+    <string name="faq_answer">Respuesta</string>
+    
+    <!-- Content Descriptions (for accessibility) -->
+    <string name="app_icon">icono_app</string>
+    <string name="open_menu">Abrir menú</string>
+    <string name="avatar">avatar</string>
+    <string name="edit">Editar</string>
+    <string name="previous">Anterior</string>
+    <string name="discard">Descartar</string>
+    <string name="favorite">Favorito</string>
+    <string name="another_random">Otra aleatoria</string>
+    <string name="next">Siguiente</string>
+    <string name="no_plans">Sin planes</string>
+    <string name="flashcards_icon">Flashcards</string>
+    <string name="hot_topics_icon">Hot Topics</string>
+    <string name="quizzes_icon">Quizzes</string>
+    <string name="premium_icon">premium icon</string>
+    <string name="create_plan_icon">crear plan icon</string>
+    <string name="badge">badge</string>
+    <string name="expand_collapse">Expandir/contraer</string>
+    <string name="favorite_icon">Favorita</string>
+    <string name="completed">Completada</string>
+    <string name="icon_plan">icon_plan</string>
+    <string name="icon_flashcard">icon_flashcard</string>
+    <string name="icon_hottopics">icon_hottopics</string>
+    <string name="icon_quiz">icon_quiz</string>
+    <string name="profile_1">profile1</string>
+    <string name="profile_2">profile2</string>
+    <string name="profile_3">profile3</string>
+    <string name="profile_4">profile4</string>
+    <string name="profile_5">profile5</string>
+    
+    <!-- Empty strings for dynamic content -->
+    <string name="empty"></string>
+    <string name="zero">0</string>
+    <string name="zero_percent">0%</string>
+    <string name="checkmark">✔️</string>
+    <string name="grade_emoji">🎓 0%</string>
 </resources>

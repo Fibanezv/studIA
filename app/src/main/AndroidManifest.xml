@@ -7,37 +7,37 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-    android:icon="@drawable/ic_play_store_icon"
+    android:icon="@drawable/ic_icon_installed_app"
         android:label="@string/app_name"
-    android:roundIcon="@drawable/ic_play_store_icon"
+    android:roundIcon="@drawable/ic_icon_installed_app"
         android:supportsRtl="true"
         android:theme="@style/Theme.EstudiaApp"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="31">
-        <activity android:name=".SplashActivity" android:exported="true">
+        <activity android:name=".SplashActivity" android:exported="true" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SignInActivity" />
-        <activity android:name=".SignUpActivity" />
-        <activity android:name=".MainActivity" />
-        <activity android:name=".UploadActivity" />
-        <activity android:name=".QuizActivity" />
-        <activity android:name=".QuizResultsActivity" />
-        <activity android:name=".QuizListActivity" />
-        <activity android:name=".PlanDetailsActivity" />
-        <activity android:name=".UserActivity" />
-        <activity android:name=".PlansListActivity" />
-        <activity android:name=".ProgressActivity" />
-        <activity android:name=".FlashcardActivity" />
-        <activity android:name=".HotTopicsActivity" />
-        <activity android:name=".FlashcardDetailActivity" />
-    <activity android:name=".MembershipActivity" />
-    <activity android:name=".BibliotecaActivity" />
-    <activity android:name=".InfoActivity" />
-    <activity android:name=".LogoutActivity" />
+        <activity android:name=".SignInActivity" android:screenOrientation="portrait" />
+        <activity android:name=".SignUpActivity" android:screenOrientation="portrait" />
+        <activity android:name=".MainActivity" android:screenOrientation="portrait" />
+        <activity android:name=".UploadActivity" android:screenOrientation="portrait" />
+        <activity android:name=".QuizActivity" android:screenOrientation="portrait" />
+        <activity android:name=".QuizResultsActivity" android:screenOrientation="portrait" />
+        <activity android:name=".QuizListActivity" android:screenOrientation="portrait" />
+        <activity android:name=".PlanDetailsActivity" android:screenOrientation="portrait" />
+        <activity android:name=".UserActivity" android:screenOrientation="portrait" />
+        <activity android:name=".PlansListActivity" android:screenOrientation="portrait" />
+        <activity android:name=".ProgressActivity" android:screenOrientation="portrait" />
+        <activity android:name=".FlashcardActivity" android:screenOrientation="portrait" />
+        <activity android:name=".HotTopicsActivity" android:screenOrientation="portrait" />
+        <activity android:name=".FlashcardDetailActivity" android:screenOrientation="portrait" />
+    <activity android:name=".MembershipActivity" android:screenOrientation="portrait" />
+    <activity android:name=".BibliotecaActivity" android:screenOrientation="portrait" />
+    <activity android:name=".InfoActivity" android:screenOrientation="portrait" />
+    <activity android:name=".LogoutActivity" android:screenOrientation="portrait" />
 
 
     </application>

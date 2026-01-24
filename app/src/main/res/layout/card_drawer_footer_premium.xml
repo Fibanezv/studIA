@@ -26,7 +26,7 @@
                 android:layout_width="65dp"
                 android:layout_height="65dp"
                 android:src="@drawable/ic_premium_membership"
-                android:contentDescription="premium icon"
+                android:contentDescription="@string/premium_icon"
                 app:tint="@color/black"
                 android:layout_marginStart="25dp"/>
 
@@ -34,7 +34,7 @@
                 android:id="@+id/premium_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¡Hazte premium!"
+                android:text="@string/become_premium"
                 android:textColor="@color/black"
                 android:textStyle="bold"
                 android:textSize="32sp"

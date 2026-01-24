@@ -58,7 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Generando..."
+            android:text="@string/generating"
             android:textSize="12sp"
             android:textColor="@color/beige_300_theme"
             android:textStyle="bold" />
@@ -106,7 +106,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Flashcards"
+                android:text="@string/flashcards"
                 android:textColor="@color/beige_300_theme"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"
@@ -156,7 +156,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hot topics"
+                android:text="@string/hot_topics"
                 android:textColor="@color/beige_300_theme"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"
@@ -206,7 +206,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Quizzes"
+                android:text="@string/quizzes"
                 android:textColor="@color/beige_300_theme"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"

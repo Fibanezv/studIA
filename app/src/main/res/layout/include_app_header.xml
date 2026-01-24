@@ -15,7 +15,7 @@
             android:layout_gravity="start|center_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_menu_24"
-            android:contentDescription="Abrir menú"
+            android:contentDescription="@string/open_menu"
             android:tint="?attr/headerIconColor" />
 
         <ImageView
@@ -24,7 +24,7 @@
             android:layout_height="40dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_icono_app"
-            android:contentDescription="icono_app"
+            android:contentDescription="@string/app_icon"
             android:tint="?attr/headerIconColor"
             android:adjustViewBounds="true"
             android:scaleType="centerInside" />

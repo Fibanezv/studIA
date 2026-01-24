@@ -36,7 +36,7 @@
                 android:id="@+id/splash_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cargando"
+                android:text="@string/loading"
                 android:textSize="18sp"
                 android:textColor="?attr/colorPrimary"
                 android:layout_marginTop="12dp"

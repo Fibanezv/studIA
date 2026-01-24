@@ -30,7 +30,7 @@
                     android:id="@+id/user_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Plan name"
+                    android:text="@string/plan_name"
                     android:textStyle="bold"
                     android:textSize="18sp"
                     android:textColor="?attr/navTextColor"
@@ -72,7 +72,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Total"
+                                    android:text="@string/total"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -89,14 +89,14 @@
                                         android:layout_height="28dp"
                                         android:layout_marginEnd="6dp"
                                         android:src="@drawable/ic_flashcard_24"
-                                        android:contentDescription="Flashcards"
+                                        android:contentDescription="@string/flashcards_icon"
                                         app:tint="@color/beige_300_theme" />
 
                                     <TextView
                                         android:id="@+id/tv_overview_flashcards_total"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="0"
+                                        android:text="@string/zero"
                                         android:textStyle="bold"
                                         android:textSize="18sp"
                                         android:textColor="@color/black" />
@@ -106,7 +106,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Flashcards"
+                                    android:text="@string/flashcards"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -132,7 +132,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Total"
+                                    android:text="@string/total"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -149,14 +149,14 @@
                                         android:layout_height="28dp"
                                         android:layout_marginEnd="6dp"
                                         android:src="@drawable/ic_hot_topics_24"
-                                        android:contentDescription="Hot Topics"
+                                        android:contentDescription="@string/hot_topics_icon"
                                         app:tint="@color/beige_300_theme" />
 
                                     <TextView
                                         android:id="@+id/tv_overview_hot_topics_total"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="0"
+                                        android:text="@string/zero"
                                         android:textStyle="bold"
                                         android:textSize="18sp"
                                         android:textColor="@color/black" />
@@ -166,7 +166,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Hot Topics"
+                                    android:text="@string/hot_topics"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -192,7 +192,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Total"
+                                    android:text="@string/total"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -209,14 +209,14 @@
                                         android:layout_height="28dp"
                                         android:layout_marginEnd="6dp"
                                         android:src="@drawable/ic_quizz_24"
-                                        android:contentDescription="Quizzes"
+                                        android:contentDescription="@string/quizzes_icon"
                                         app:tint="@color/beige_300_theme" />
 
                                     <TextView
                                         android:id="@+id/tv_overview_quizzes_total"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="0"
+                                        android:text="@string/zero"
                                         android:textStyle="bold"
                                         android:textSize="18sp"
                                         android:textColor="@color/black" />
@@ -226,7 +226,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Quizzes"
+                                    android:text="@string/hot_topics"
                                     android:textStyle="bold"
                                     android:textSize="11sp"
                                     android:textColor="@color/beige_300_theme"
@@ -254,7 +254,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Progreso"
+                                android:text="@string/progress"
                                 android:textStyle="bold"
                                 android:textSize="16sp"
                                 android:textColor="@color/beige_300_theme"
@@ -280,7 +280,7 @@
                                         android:id="@+id/tv_flashcards_label"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Flashcards progreso (0/0)"
+                                        android:text="@string/flashcards_progress"
                                         android:textSize="13sp"
                                         android:textStyle="bold"
                                         android:textColor="@color/black"
@@ -307,7 +307,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
-                                            android:text="0%"
+                                            android:text="@string/zero_percent"
                                             android:textStyle="bold"
                                             android:textSize="13sp"
                                             android:textColor="@color/black" />
@@ -327,7 +327,7 @@
                                         android:id="@+id/tv_quizzes_completed_label"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Quizzes completados (0/0)"
+                                        android:text="@string/quizzes_completed"
                                         android:textSize="13sp"
                                         android:textStyle="bold"
                                         android:textColor="@color/black"
@@ -353,7 +353,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
-                                            android:text="0%"
+                                            android:text="@string/zero_percent"
                                             android:textStyle="bold"
                                             android:textSize="13sp"
                                             android:textColor="@color/black" />
@@ -373,7 +373,7 @@
                                         android:id="@+id/tv_questions_answered_label"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Preguntas respondidas (0/0)"
+                                        android:text="@string/questions_answered"
                                         android:textSize="13sp"
                                         android:textStyle="bold"
                                         android:textColor="@color/black"
@@ -399,7 +399,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
-                                            android:text="0%"
+                                            android:text="@string/zero_percent"
                                             android:textStyle="bold"
                                             android:textSize="13sp"
                                             android:textColor="@color/black" />
@@ -418,7 +418,7 @@
                                         android:id="@+id/tv_questions_correct_label"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Preguntas acertadas (0/0)"
+                                        android:text="@string/questions_correct"
                                         android:textSize="13sp"
                                         android:textStyle="bold"
                                         android:textColor="@color/black"
@@ -444,7 +444,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_gravity="center"
-                                            android:text="0%"
+                                            android:text="@string/zero_percent"
                                             android:textStyle="bold"
                                             android:textSize="13sp"
                                             android:textColor="@color/black" />
@@ -480,7 +480,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Descripción"
+                                android:text="@string/description"
                                 android:textStyle="bold"
                                 android:textSize="16sp"
                                 android:textColor="@color/beige_300_theme"
@@ -521,7 +521,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Logros"
+                                android:text="@string/achievements"
                                 android:textStyle="bold"
                                 android:textSize="16sp"
                                 android:textColor="@color/beige_300_theme"
@@ -555,7 +555,7 @@
                         android:id="@+id/user_reset_plan"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Reiniciar Plan"
+                        android:text="@string/reset_plan"
                         android:layout_marginTop="10dp"
                         app:backgroundTint="?attr/actionButtonColor"
                         android:textColor="@color/white" />
@@ -564,7 +564,7 @@
                         android:id="@+id/user_delete_plan"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Eliminar Plan"
+                        android:text="@string/delete_plan"
                         android:layout_marginTop="5dp"
                         app:backgroundTint="@color/red"
                         android:textColor="@color/white" />

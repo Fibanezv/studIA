@@ -7,7 +7,7 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tus planes generados"
+        android:text="@string/your_generated_plans"
         android:textStyle="bold"
         android:textSize="18sp"
         android:layout_marginBottom="8dp"

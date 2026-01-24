@@ -12,7 +12,7 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:src="@drawable/ic_responder_10"
-        android:contentDescription="badge"
+        android:contentDescription="@string/badge"
         android:scaleType="centerInside" />
 
     <!-- Label removed; badges are icons-only per design -->

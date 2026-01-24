@@ -43,7 +43,7 @@
                             android:id="@+id/user_avatar"
                             android:layout_width="64dp"
                             android:layout_height="64dp"
-                            android:contentDescription="avatar"
+                            android:contentDescription="@string/avatar"
                             android:scaleType="centerCrop" />
 
                         <LinearLayout
@@ -59,14 +59,14 @@
                                 android:layout_height="wrap_content"
                                 android:textStyle="bold"
                                 android:textSize="16sp"
-                                android:text="Usuario Demo"
+                                android:text="@string/demo_user"
                                 android:textColor="@color/beige_300_theme" />
 
                             <TextView
                                 android:id="@+id/user_email"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="email@ejemplo.com"
+                                android:text="@string/demo_email"
                                 android:layout_marginTop="4dp"
                                 android:textColor="@color/beige_300_theme" />
 
@@ -78,7 +78,7 @@
                             android:layout_height="40dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_settings_user"
-                            android:contentDescription="Editar"
+                            android:contentDescription="@string/edit"
                             android:tint="@color/beige_300_theme" />
 
                     </LinearLayout>
@@ -124,7 +124,7 @@
                                     android:id="@+id/tv_plans_count"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/zero"
                                     android:textStyle="bold"
                                     android:textSize="18sp"
                                     android:textColor="@color/beige_300_theme" />
@@ -133,7 +133,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Planes"
+                                android:text="@string/plans"
                                 android:textColor="@color/beige_300_theme" />
                         </LinearLayout>
 
@@ -154,7 +154,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Membresía usuario"
+                                android:text="@string/user_membership"
                                 android:textSize="12sp"
                                 android:textColor="@color/beige_300_theme" />
 
@@ -162,7 +162,7 @@
                                 android:id="@+id/tv_membership_type"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="FREE"
+                                android:text="@string/membership_free"
                                 android:textStyle="bold"
                                 android:textSize="18sp"
                                 android:textColor="@color/beige_300_theme"
@@ -205,7 +205,7 @@
                                     android:id="@+id/tv_flashcards_count"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/zero"
                                     android:textStyle="bold"
                                     android:textSize="16sp"
                                     android:textColor="@color/beige_300_theme" />
@@ -214,7 +214,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Flashcards"
+                                android:text="@string/flashcards"
                                 android:textColor="@color/beige_300_theme" />
                         </LinearLayout>
 
@@ -249,7 +249,7 @@
                                     android:id="@+id/tv_hot_topics_count"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/zero"
                                     android:textStyle="bold"
                                     android:textSize="16sp"
                                     android:textColor="@color/beige_300_theme" />
@@ -258,7 +258,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Hot topics"
+                                android:text="@string/hot_topics"
                                 android:textColor="@color/beige_300_theme" />
                         </LinearLayout>
 
@@ -293,7 +293,7 @@
                                     android:id="@+id/tv_quizzes_count"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/zero"
                                     android:textStyle="bold"
                                     android:textSize="16sp"
                                     android:textColor="@color/beige_300_theme" />
@@ -302,7 +302,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Quizzes"
+                                android:text="@string/quizzes"
                                 android:textColor="@color/beige_300_theme" />
                         </LinearLayout>
 
@@ -336,7 +336,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Notificaciones"
+                                android:text="@string/notifications"
                                 android:textColor="@color/beige_300_theme" />
                             <Switch
                                 android:id="@+id/switch_notifications"
@@ -356,7 +356,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Modo oscuro (experimental)"
+                                android:text="@string/dark_mode"
                                 android:textColor="@color/beige_300_theme" />
                             <Switch
                                 android:id="@+id/switch_dark_mode"
@@ -391,7 +391,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Historial"
+                        android:text="@string/history"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:paddingBottom="8dp"
@@ -412,7 +412,7 @@
                 android:id="@+id/btn_export_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Exportar datos"
+                android:text="@string/export_data"
                 android:layout_marginTop="12dp"
                 app:backgroundTint="?attr/actionButtonColor"
                 android:textColor="@color/white" />
@@ -421,7 +421,7 @@
                 android:id="@+id/btn_sign_out"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Cerrar sesión"
+                android:text="@string/sign_out"
                 android:layout_marginTop="8dp"
                 app:backgroundTint="@color/colorError"
                 android:textColor="@color/white" />

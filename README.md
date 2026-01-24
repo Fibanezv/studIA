@@ -8,10 +8,10 @@
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)](https://firebase.google.com/)
 [![OpenAI](https://img.shields.io/badge/AI-OpenAI-blue.svg)](https://openai.com/)
 
-**Última actualización:** 14 de diciembre de 2025  
+**Última actualización:** 24 de enero de 2026  
 **Versión:** 1.0 (beta/0.0.1)  
 **Repositorio:** [Fibanezv/studIA](https://github.com/Fibanezv/studIA)  
-**Últimas funcionalidades:** InfoActivity con FAQs expandibles, flashcards con modos Presentación/Aleatorio/Favoritas, persistencia local y Firestore
+**Últimas funcionalidades:** Internacionalización completa (español/inglés), orientación bloqueada a vertical, optimización de interfaz responsive
 
 ---
 
@@ -142,6 +142,15 @@
 
 ## Estado actual de la app
 - Build `assembleDebug` exitoso.
+- **Internacionalización (i18n) completada**: 160+ strings en español e inglés
+  - Todas las pantallas y textos del usuario traducibles (español por defecto, inglés automático)
+  - Sistema de categorización: Autenticación, Planes, Navegación, Perfil, Membresías, Quizzes, Flashcards, FAQs, Accesibilidad
+  - Validación exhaustiva: 100% de strings visibles al usuario migrados a resources
+  - Locales soportadas: Español (es) y English (en); fallback automático a Español para otros idiomas
+- **Orientación de pantalla bloqueada a vertical**: Todas las 19 activities configuradas para `android:screenOrientation="portrait"`
+  - Previene rotación a horizontal que rompía el layout
+  - Experiencia consistente en todos los dispositivos
+  - Configuración aplicada a: SplashActivity, SignInActivity, SignUpActivity, MainActivity, UploadActivity, QuizActivity, QuizResultsActivity, QuizListActivity, PlanDetailsActivity, UserActivity, PlansListActivity, ProgressActivity, FlashcardActivity, HotTopicsActivity, FlashcardDetailActivity, MembershipActivity, BibliotecaActivity, InfoActivity, LogoutActivity
 - **InfoActivity completado**: FAQs expandibles, header funcional, drawer lateral integrado.
 - UI de flashcards integrada: controles superiores, grid 2 columnas, detalle con FABs, indicadores en items.
 - Navegación completa en modos Presentación, Aleatorio y Favoritas con retorno a lista al finalizar.
@@ -150,7 +159,6 @@
   - CardView fijo (320x320dp) sin elevación
   - Sistema de estados con cola FIFO y duración mínima de 10s por estado
   - Tres imágenes dinámicas: ic_load_plan_1 (procesando) → ic_load_plan_2 (subiendo) → ic_load_plan_3 (generando)
-
   - Mensajes de estado centrados debajo de cada imagen
   - Sin progress bar circular, diseño más limpio
 - **Formulario de creación mejorado**: 
@@ -165,6 +173,10 @@
   - Respeto de preferencias de accesibilidad (reduce motion)
   - Helpers centralizados en `BaseActivity` para consistencia
   - Recursos de animación personalizados (fade_in/out, slide_in/out)
+- **UI/UX refinement**:
+  - activity_upload.xml: Card background beige_300_theme, titles and separators black, consistent button styling (colorPrimary bg, beige_300 text)
+  - Proper margin and spacing alignment across all screens
+  - Responsive layout testing across multiple screen sizes
 
 ---
 
@@ -733,6 +745,19 @@ match /users/{userId}/plans/{planId} {
 
 ## 🗺️ Roadmap y Tareas Pendientes
 
+### Tareas Completadas ✅
+
+- [x] **Internacionalización (i18n)**: 160+ strings en español e inglés con locale automático
+  - Sistema de categorización completo (Auth, Plans, Navigation, Profile, Memberships, Quizzes, Flashcards, FAQ, Accessibility)
+  - Validación exhaustiva: 100% de strings visibles al usuario migrados a resources
+  - Fallback automático a Español para idiomas no soportados
+- [x] **Bloqueo de orientación**: Todas las 19 activities configuradas para modo vertical (portrait)
+  - Previene rotación que rompía layouts
+  - Experiencia consistente y responsive
+- [x] **UI/UX Refinement**: activity_upload.xml y otras pantallas optimizadas
+  - Card backgrounds, margins, separators y button styling consistentes
+  - Material Design 3 compliance
+
 ### Alta Prioridad 🔴
 
 - [ ] **Expandir tests instrumentados**: navegación completa Main→Upload→PlanDetails→QuizList→Quiz, validación de transacciones concurrentes, tests de estrés (30+ usuarios simultáneos)
@@ -763,8 +788,8 @@ match /users/{userId}/plans/{planId} {
 
 ### Prioridad Baja 🟢
 
-- [ ] **Localización**: soporte multi-idioma (inglés, francés)
-- [ ] **Accesibilidad**: contentDescription completo, TalkBack testing
+- [ ] **Expansión de idiomas**: soporte adicional (francés, alemán, portugués)
+- [ ] **Accesibilidad**: contentDescription completo, TalkBack testing, contraste mejorado
 - [ ] **Widget de home screen**: acceso rápido a planes recientes
 - [ ] **Limpieza de `server/`**: documentar o eliminar artefactos legacy (logs de emulador/WorkManager) para evitar confusión
 

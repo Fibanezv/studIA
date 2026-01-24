@@ -9,12 +9,12 @@
         android:id="@+id/edit_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre" />
+        android:hint="@string/name_hint" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Elegir avatar"
+        android:text="@string/choose_avatar"
         android:layout_marginTop="12dp"
         android:textStyle="bold" />
 
@@ -41,7 +41,7 @@
                 android:src="@drawable/ic_profile_1"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerCrop"
-                android:contentDescription="profile1"
+                android:contentDescription="@string/profile_1"
                 android:tag="ic_profile_1" />
 
             <ImageButton
@@ -51,7 +51,7 @@
                 android:src="@drawable/ic_profile_2"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerCrop"
-                android:contentDescription="profile2"
+                android:contentDescription="@string/profile_2"
                 android:tag="ic_profile_2"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="12dp" />
@@ -63,7 +63,7 @@
                 android:src="@drawable/ic_profile_3"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerCrop"
-                android:contentDescription="profile3"
+                android:contentDescription="@string/profile_3"
                 android:tag="ic_profile_3" />
 
         </LinearLayout>
@@ -84,7 +84,7 @@
                 android:src="@drawable/ic_profile_4"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerCrop"
-                android:contentDescription="profile4"
+                android:contentDescription="@string/profile_4"
                 android:tag="ic_profile_4"
                 android:layout_marginEnd="12dp" />
 
@@ -95,7 +95,7 @@
                 android:src="@drawable/ic_profile_5"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerCrop"
-                android:contentDescription="profile5"
+                android:contentDescription="@string/profile_5"
                 android:tag="ic_profile_5"
                 android:layout_marginStart="12dp" />
 

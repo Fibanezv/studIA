@@ -1,0 +1,157 @@
+<resources>
+    <string name="app_name">EstudiaApp</string>
+    <string name="app_title">EstudIA</string>
+    
+    <!-- Authentication -->
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Create Account</string>
+    <string name="register">Register</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="no_account">Don\'t have an account? Sign up</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="username_hint">Username</string>
+    <string name="name_hint">Name</string>
+    
+    <!-- Activity Upload / Create Study Plan -->
+    <string name="configure_study_plan">Configure your study plan</string>
+    <string name="create_study_plan">Create Study Plan</string>
+    <string name="processing">Processing…</string>
+    <string name="language">Language</string>
+    <string name="level">Level</string>
+    <string name="quiz_type">Quiz Type</string>
+    <string name="total_quizzes">Total Quizzes</string>
+    <string name="total_questions">Total Questions</string>
+    <string name="total_flashcards">Total Flashcards</string>
+    <string name="total_hot_topics">Total Hot Topics</string>
+    <string name="priority_points">Priority Points (comma separated)</string>
+    <string name="priority_points_hint">e.g. Topic 1, Point 3, Chapter 5</string>
+    <string name="document">Document (.pdf, .doc, .docx)</string>
+    <string name="select_document">Select Document</string>
+    <string name="create">Create</string>
+    <string name="preparing_plan">Preparing your plan…</string>
+    <string name="delete_document">Delete document</string>
+    <string name="plan_creation_illustration">Plan creation progress illustration</string>
+    <string name="upload_document">Upload Document</string>
+    <string name="upload_document_description">Start by creating your study plan from a file.</string>
+    
+    <!-- Main Activity -->
+    <string name="your_study_plans">Your study plans</string>
+    <string name="your_generated_plans">Your generated plans</string>
+    <string name="your_study_plans_colon">Your study plans: </string>
+    
+    <!-- User / Profile -->
+    <string name="demo_user">Demo User</string>
+    <string name="demo_email">email@example.com</string>
+    <string name="plans">Plans</string>
+    <string name="user_membership">User Membership</string>
+    <string name="notifications">Notifications</string>
+    <string name="dark_mode">Dark mode (experimental)</string>
+    <string name="history">History</string>
+    <string name="export_data">Export data</string>
+    <string name="sign_out">Sign out</string>
+    <string name="choose_avatar">Choose avatar</string>
+    
+    <!-- Membership -->
+    <string name="memberships">Memberships</string>
+    <string name="membership_free">FREE</string>
+    <string name="membership_pro">PRO</string>
+    <string name="membership_pro_plus">PRO+</string>
+    <string name="membership_free_description">Conditions: Limited access to basic resources.\nBenefits: Free usage, light ads.</string>
+    <string name="membership_pro_description">Conditions: Monthly subscription.\nBenefits: Access to exclusive content, no ads, priority support.</string>
+    <string name="membership_pro_plus_description">Conditions: Annual subscription or advanced plan.\nBenefits: All PRO features + exclusive perks, beta content and discounts.</string>
+    <string name="become_premium">Become premium!</string>
+    
+    <!-- Plan Details -->
+    <string name="plan_name">Plan name</string>
+    <string name="total">Total</string>
+    <string name="progress">Progress</string>
+    <string name="flashcards_progress">Flashcards progress (0/0)</string>
+    <string name="quizzes_completed">Quizzes completed (0/0)</string>
+    <string name="questions_answered">Questions answered (0/0)</string>
+    <string name="questions_correct">Correct answers (0/0)</string>
+    <string name="description">Description</string>
+    <string name="achievements">Achievements</string>
+    <string name="reset_plan">Reset Plan</string>
+    <string name="delete_plan">Delete Plan</string>
+    <string name="generated_by_document">Generated from document: %s</string>
+    <string name="generating">Generating…</string>
+    
+    <!-- Quiz -->
+    <string name="question_number">Question %d</string>
+    <string name="question">Question</string>
+    <string name="answer">Answer</string>
+    <string name="quiz_title">Quiz title</string>
+    <string name="quiz_type_label">Type: %s</string>
+    <string name="progress_label">Progress:</string>
+    <string name="final_grade">Final grade:</string>
+    <string name="results">Results</string>
+    <string name="restart">Restart</string>
+    <string name="grade">Grade</string>
+    <string name="accept">Accept</string>
+    <string name="your_answer">Your answer: </string>
+    <string name="correct_answer">Correct: </string>
+    
+    <!-- Flashcards -->
+    <string name="presentation">Presentation</string>
+    <string name="random">Random</string>
+    <string name="favorites">Favorites</string>
+    
+    <!-- Navigation / Menu -->
+    <string name="help">Help</string>
+    <string name="library">Library</string>
+    <string name="logout">Sign out</string>
+    <string name="confirm_logout">Confirm Sign out</string>
+    <string name="loading">Loading</string>
+    <string name="my_plans">My plans</string>
+    <string name="my_profile">My profile</string>
+    <string name="information">Information</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="flashcards">Flashcards</string>
+    <string name="hot_topics">Hot Topics</string>
+    <string name="quizzes">Quizzes</string>
+    
+    <!-- Progress -->
+    <string name="progress_description">Here you\'ll see your progress in quizzes and study plans.</string>
+    
+    <!-- FAQ -->
+    <string name="faq_question">Question</string>
+    <string name="faq_answer">Answer</string>
+    
+    <!-- Content Descriptions (for accessibility) -->
+    <string name="app_icon">app_icon</string>
+    <string name="open_menu">Open menu</string>
+    <string name="avatar">avatar</string>
+    <string name="edit">Edit</string>
+    <string name="previous">Previous</string>
+    <string name="discard">Discard</string>
+    <string name="favorite">Favorite</string>
+    <string name="another_random">Another random</string>
+    <string name="next">Next</string>
+    <string name="no_plans">No plans</string>
+    <string name="flashcards_icon">Flashcards</string>
+    <string name="hot_topics_icon">Hot Topics</string>
+    <string name="quizzes_icon">Quizzes</string>
+    <string name="premium_icon">premium icon</string>
+    <string name="create_plan_icon">create plan icon</string>
+    <string name="badge">badge</string>
+    <string name="expand_collapse">Expand/collapse</string>
+    <string name="favorite_icon">Favorite</string>
+    <string name="completed">Completed</string>
+    <string name="icon_plan">icon_plan</string>
+    <string name="icon_flashcard">icon_flashcard</string>
+    <string name="icon_hottopics">icon_hottopics</string>
+    <string name="icon_quiz">icon_quiz</string>
+    <string name="profile_1">profile1</string>
+    <string name="profile_2">profile2</string>
+    <string name="profile_3">profile3</string>
+    <string name="profile_4">profile4</string>
+    <string name="profile_5">profile5</string>
+    
+    <!-- Empty strings for dynamic content -->
+    <string name="empty"></string>
+    <string name="zero">0</string>
+    <string name="zero_percent">0%</string>
+    <string name="checkmark">✔️</string>
+    <string name="grade_emoji">🎓 0%</string>
+</resources>

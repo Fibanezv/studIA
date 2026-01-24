@@ -98,7 +98,7 @@
                                     app:backgroundTint="@color/white"
                                     app:tint="@color/colorPrimary"
                                     android:src="@android:drawable/ic_media_previous"
-                                    android:contentDescription="Anterior" />
+                                    android:contentDescription="@string/previous" />
 
                                 <!-- Botón X (cerrar/no me gusta) -->
                                 <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -110,7 +110,7 @@
                                     app:backgroundTint="@color/colorAccent"
                                     app:tint="@color/white"
                                     android:src="@android:drawable/ic_delete"
-                                    android:contentDescription="Descartar" />
+                                    android:contentDescription="@string/discard" />
 
                                 <!-- Botón Like (favorito) -->
                                 <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -122,7 +122,7 @@
                                     app:backgroundTint="@color/colorSecondary"
                                     app:tint="@color/colorOnSecondary"
                                     android:src="@android:drawable/btn_star_big_on"
-                                    android:contentDescription="Favorito" />
+                                    android:contentDescription="@string/favorite" />
 
                                 <!-- Botón Reload (aleatorio) - solo visible en modo aleatorio -->
                                 <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -134,7 +134,7 @@
                                     app:backgroundTint="@color/colorPrimaryVariant"
                                     app:tint="@color/white"
                                     android:src="@android:drawable/ic_popup_sync"
-                                    android:contentDescription="Otra aleatoria"
+                                    android:contentDescription="@string/another_random"
                                     android:visibility="gone" />
 
                                 <!-- Botón Siguiente -->
@@ -147,7 +147,7 @@
                                     app:backgroundTint="@color/white"
                                     app:tint="@color/colorPrimary"
                                     android:src="@android:drawable/ic_media_next"
-                                    android:contentDescription="Siguiente" />
+                                    android:contentDescription="@string/next" />
 
                             </LinearLayout>
 

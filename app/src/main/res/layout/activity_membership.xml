@@ -29,7 +29,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Membresías"
+                    android:text="@string/memberships"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:paddingBottom="12dp" />
@@ -51,14 +51,14 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="FREE"
+                            android:text="@string/membership_free"
                             android:textStyle="bold"
                             android:textSize="18sp" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Condiciones: Acceso limitado a recursos básicos.\nBeneficios: Uso sin coste, anuncios ligeros."
+                            android:text="@string/membership_free_description"
                             android:layout_marginTop="8dp" />
 
                     </LinearLayout>
@@ -81,14 +81,14 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="PRO"
+                            android:text="@string/membership_pro"
                             android:textStyle="bold"
                             android:textSize="18sp" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Condiciones: Suscripción mensual.\nBeneficios: Acceso a contenidos exclusivos, sin anuncios, prioridad en soporte."
+                            android:text="@string/membership_pro_description"
                             android:layout_marginTop="8dp" />
 
                     </LinearLayout>
@@ -111,14 +111,14 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="PRO+"
+                            android:text="@string/membership_pro_plus"
                             android:textStyle="bold"
                             android:textSize="18sp" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Condiciones: Suscripción anual o plan avanzado.\nBeneficios: Todo PRO + ventajas exclusivas, contenido beta y descuentos." 
+                            android:text="@string/membership_pro_plus_description" 
                             android:layout_marginTop="8dp" />
 
                     </LinearLayout>

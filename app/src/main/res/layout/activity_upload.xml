@@ -30,7 +30,19 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="12dp"
-                    android:background="@color/colorPrimary">
+                    android:background="@color/beige_300_theme">
+
+                    <!-- Título -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/configure_study_plan"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textAlignment="center"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="24dp" />
 
                     <!-- Inline processing view (kept for backward compatibility but not used by OverlayManager) -->
                     <FrameLayout
@@ -58,7 +70,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="12dp"
                                 android:layout_weight="1"
-                                android:text="Procesando..."
+                                android:text="@string/processing"
                                 android:textColor="@color/beige_300_theme"
                                 android:textSize="16sp"/>
                         </LinearLayout>
@@ -67,182 +79,59 @@
 
                     <!-- Formulario de especificaciones del plan (titulo generado en servidor) -->
 
-
+                    <!-- Idioma and Nivel as label-left / spinner-right rows to match other blocks -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
 
-                        <LinearLayout
-                            android:layout_width="8dp"
-                            android:layout_height="wrap_content" />
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/language"
+                                    android:textColor="@color/black"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <Spinner
+                            android:id="@+id/spinner_language"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:layout_marginTop="8dp">
+                            android:entries="@array/languages"
+                            android:spinnerMode="dropdown"
+                            android:textAlignment="textEnd"
+                            android:gravity="end"
+                            android:popupBackground="@color/beige_300_theme" />
 
-                            <!-- Idioma and Nivel as label-left / spinner-right rows to match other blocks -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginTop="4dp">
+                    </LinearLayout>
 
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Idioma"
-                                    android:textColor="@color/beige_300_theme"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-
-                                <Spinner
-                                    android:id="@+id/spinner_language"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:entries="@array/languages"
-                                    android:spinnerMode="dropdown"
-                                    android:textAlignment="textEnd"
-                                    android:gravity="end"
-                                    android:popupBackground="@color/colorPrimary" />
-
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="8dp" />
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginTop="4dp">
-
-                                <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Nivel"
-                                    android:textColor="@color/beige_300_theme"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold" />
-
-                                <Spinner
-                                    android:id="@+id/spinner_level"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:entries="@array/levels"
-                                    android:spinnerMode="dropdown"
-                                    android:textAlignment="textEnd"
-                                    android:gravity="end"
-                                    android:popupBackground="@color/colorPrimary" />
-
-                            </LinearLayout>
-                </LinearLayout>
-            <!-- Separator -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/beige_300_theme"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp" />
-            </LinearLayout>
-                    
-                    <!-- Quiz controls: show limits as label + select on one row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
                         android:layout_marginTop="8dp">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/level"
+                                    android:textColor="@color/black"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                        <Spinner
+                            android:id="@+id/spinner_level"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="4dp">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Tipo de Quiz"
-                                android:textColor="@color/beige_300_theme"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <Spinner
-                                android:id="@+id/spinner_quiz_type"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/quiz_types"
-                                android:spinnerMode="dropdown"
-                                android:textAlignment="textEnd"
-                                android:gravity="end"
-                                android:popupBackground="@color/colorPrimary" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="8dp">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Total de Quizzes"
-                                android:textColor="@color/beige_300_theme"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <Spinner
-                                android:id="@+id/spinner_quiz_limit"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/quiz_limits"
-                                android:spinnerMode="dropdown"
-                                android:textAlignment="textEnd"
-                                android:gravity="end"
-                                android:popupBackground="@color/colorPrimary" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="8dp">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Total de preguntas"
-                                android:textColor="@color/beige_300_theme"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <Spinner
-                                android:id="@+id/spinner_questions_limit"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/question_limits"
-                                android:spinnerMode="dropdown"
-                                android:textAlignment="textEnd"
-                                android:gravity="end"
-                                android:popupBackground="@color/colorPrimary" />
-
-                        </LinearLayout>
+                            android:entries="@array/levels"
+                            android:spinnerMode="dropdown"
+                            android:textAlignment="textEnd"
+                            android:gravity="end"
+                            android:popupBackground="@color/beige_300_theme" />
 
                     </LinearLayout>
 
@@ -250,11 +139,38 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/beige_300_theme"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp" />
+                        android:background="@color/black"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
 
-                    <!-- Flashcards limit (label + select) -->
+                    <!-- Quiz controls: show limits as label + select on one row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/quiz_type"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <Spinner
+                            android:id="@+id/spinner_quiz_type"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:entries="@array/quiz_types"
+                            android:spinnerMode="dropdown"
+                            android:textAlignment="textEnd"
+                            android:gravity="end"
+                            android:popupBackground="@color/beige_300_theme" />
+
+                    </LinearLayout>
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -266,8 +182,72 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Total de Flashcards"
-                            android:textColor="@color/beige_300_theme"
+                            android:text="@string/total_quizzes"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <Spinner
+                            android:id="@+id/spinner_quiz_limit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:entries="@array/quiz_limits"
+                            android:spinnerMode="dropdown"
+                            android:textAlignment="textEnd"
+                            android:gravity="end"
+                            android:popupBackground="@color/beige_300_theme" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/total_questions"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <Spinner
+                            android:id="@+id/spinner_questions_limit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:entries="@array/question_limits"
+                            android:spinnerMode="dropdown"
+                            android:textAlignment="textEnd"
+                            android:gravity="end"
+                            android:popupBackground="@color/beige_300_theme" />
+
+                    </LinearLayout>
+
+                    <!-- Separator -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/black"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Flashcards limit (label + select) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/total_flashcards"
+                            android:textColor="@color/black"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -279,32 +259,30 @@
                             android:spinnerMode="dropdown"
                             android:textAlignment="textEnd"
                             android:gravity="end"
-                            android:popupBackground="@color/colorPrimary" />
+                            android:popupBackground="@color/beige_300_theme" />
 
                     </LinearLayout>
                     <!-- Separator debajo de Flashcards -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/beige_300_theme"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp" />
-                    
+                        android:background="@color/black"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
 
                     <!-- Hot Topics limit (label + select) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="8dp">
+                        android:gravity="center_vertical">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Total de Hot Topics"
-                            android:textColor="@color/beige_300_theme"
+                            android:text="@string/total_hot_topics"
+                            android:textColor="@color/black"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -316,7 +294,7 @@
                             android:spinnerMode="dropdown"
                             android:textAlignment="textEnd"
                             android:gravity="end"
-                            android:popupBackground="@color/colorPrimary" />
+                            android:popupBackground="@color/beige_300_theme" />
 
                     </LinearLayout>
 
@@ -324,40 +302,39 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/beige_300_theme"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp" />
-
+                        android:background="@color/black"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Puntos prioritarios (separados por comas)"
-                        android:layout_marginTop="8dp"
+                        android:text="@string/priority_points"
                         android:textSize="16sp"
-                        android:textColor="@color/beige_300_theme"
+                        android:textColor="@color/black"
                         android:textStyle="bold"/>
 
                     <EditText
                         android:id="@+id/input_priority_topics"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g. Tema 1, Punto 3, Capitulo 5"
+                        android:hint="@string/priority_points_hint"
                         android:inputType="textMultiLine"
                         android:minLines="2"
                         android:textSize="14sp"
-                        android:textColor="@color/beige_300_theme"
-                        android:textColorHint="@color/beige_300_theme"/>
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/black"
+                        android:layout_marginBottom="16dp"/>
 
                     <!-- Selector de fichero -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Documento (.pdf, .doc, .docx)"
+                        android:text="@string/document"
                         android:textStyle="bold"
-                        android:layout_marginTop="12dp"
-                        android:layout_marginBottom="6dp"
-                        android:textColor="@color/beige_300_theme"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="12dp"
+                        android:textColor="@color/black"
                         android:textSize="16sp"/>
 
                     <!-- Selected file name with delete button (hidden until a file is chosen) -->
@@ -390,7 +367,7 @@
                             android:layout_marginStart="8dp"
                             android:src="@android:drawable/ic_menu_close_clear_cancel"
                             android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Eliminar documento"
+                            android:contentDescription="@string/delete_document"
                             android:scaleType="fitCenter"
                             app:tint="@color/red" />
 
@@ -400,9 +377,11 @@
                         android:id="@+id/button_upload_file"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Seleccionar Documento"
-                        android:backgroundTint="@color/beige_300_theme"
-                        android:textColor="@color/black"/>
+                        android:text="@string/select_document"
+                        android:backgroundTint="@color/colorPrimary"
+                        android:textColor="@color/beige_300_theme"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -414,9 +393,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Crear Plan de Estudio"
-            app:backgroundTint="?attr/actionButtonColor"
-            android:textColor="@color/white"/>
+            android:text="@string/create"
+            android:backgroundTint="@color/colorPrimary"
+            android:textColor="@color/beige_300_theme"
+            android:textStyle="bold"/>
     </LinearLayout>
 
     <!-- Fullscreen centered processing overlay (hidden by default). OverlayManager will use these ids: processing_overlay, processing_message, processing_cancel_button -->
@@ -446,7 +426,7 @@
                     android:layout_width="160dp"
                     android:layout_height="160dp"
                     android:src="@drawable/ic_load_plan_1"
-                    android:contentDescription="Ilustración del progreso de creación del plan"
+                    android:contentDescription="@string/plan_creation_illustration"
                     android:scaleType="fitCenter" />
 
                 <TextView
@@ -454,7 +434,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Preparando tu plan..."
+                    android:text="@string/preparing_plan"
                     android:textSize="14sp"
                     android:textColor="@color/black"
                     android:textStyle="normal" />

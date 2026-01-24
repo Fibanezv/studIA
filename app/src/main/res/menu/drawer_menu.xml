@@ -4,26 +4,26 @@
     <item
         android:id="@+id/nav_drawer_plans"
         android:icon="@drawable/ic_plan_study"
-        android:title="Mis planes" />
+        android:title="@string/my_plans" />
 
     <item
         android:id="@+id/nav_drawer_user"
         android:icon="@drawable/ic_user_profile"
-        android:title="Mi perfil" />
+        android:title="@string/my_profile" />
 
     <item
         android:id="@+id/nav_drawer_library"
         android:icon="@drawable/ic_biblioteca"
-        android:title="Biblioteca" />
+        android:title="@string/library" />
 
     <item
         android:id="@+id/nav_drawer_info"
         android:icon="@drawable/ic_informacion"
-        android:title="Información" />
+        android:title="@string/information" />
 
     <item
         android:id="@+id/nav_drawer_logout"
         android:icon="@drawable/ic_log_out"
-        android:title="Cerrar sesión" />
+        android:title="@string/logout" />
 
 </menu>

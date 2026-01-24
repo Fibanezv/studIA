@@ -1,6 +1,7 @@
 package com.app.estudiaapp;
 
 import android.os.Bundle;
+import java.util.Locale;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,9 +42,17 @@ public class InfoActivity extends BaseActivity {
         List<FAQ> faqs = new ArrayList<>();
 
         try {
+            // Determine which FAQ file to load based on device locale
+            String language = Locale.getDefault().getLanguage();
+            String faqFileName = "faqs.json"; // Default to Spanish
+            
+            if ("en".equals(language)) {
+                faqFileName = "faqs_en.json";
+            }
+            
             // Read JSON file from assets
             BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(getAssets().open("faqs.json"))
+                    new InputStreamReader(getAssets().open(faqFileName))
             );
 
             StringBuilder jsonString = new StringBuilder();

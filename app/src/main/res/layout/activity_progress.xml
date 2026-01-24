@@ -7,6 +7,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Aquí verás tu progreso en los quizzes y planes de estudio."
+        android:text="@string/progress_description"
         android:textSize="18sp" />
 </LinearLayout>

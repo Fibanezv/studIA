@@ -20,7 +20,7 @@
             android:id="@+id/question_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Pregunta"
+            android:text="@string/question"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -31,7 +31,7 @@
             android:id="@+id/user_answer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tu respuesta: "
+            android:text="@string/your_answer"
             android:textSize="13sp"
             android:textColor="@color/black"
             android:layout_marginBottom="2dp" />
@@ -41,7 +41,7 @@
             android:id="@+id/correct_answer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Correcta: "
+            android:text="@string/correct_answer"
             android:textSize="13sp"
             android:textColor="@color/colorPrimary"
             android:visibility="gone" />
@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginTop="4dp"
-            android:text="✔️"
+            android:text="@string/checkmark"
             android:textSize="14sp" />
 
     </LinearLayout>
